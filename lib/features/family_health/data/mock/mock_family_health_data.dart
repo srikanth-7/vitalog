@@ -1,5 +1,4 @@
 import '../../domain/entities/family_member.dart';
-import '../../domain/entities/health_category.dart';
 import '../../domain/entities/health_report.dart';
 import '../../domain/entities/lab_result.dart';
 
@@ -32,51 +31,6 @@ const familyMembers = <FamilyMember>[
       initials: 'MR',
       colorValue: 0xFFEAE1F6,
       age: 63),
-];
-
-const healthCategories = <HealthCategory>[
-  HealthCategory(
-      id: 'blood',
-      name: 'Blood & CBC',
-      iconKey: 'bloodtype_outlined',
-      colorValue: 0xFFB85E58),
-  HealthCategory(
-      id: 'glucose',
-      name: 'Glucose',
-      iconKey: 'water_drop_outlined',
-      colorValue: 0xFFC18A37),
-  HealthCategory(
-      id: 'kidney',
-      name: 'Kidney',
-      iconKey: 'filter_alt_outlined',
-      colorValue: 0xFF4C8D82),
-  HealthCategory(
-      id: 'liver',
-      name: 'Liver',
-      iconKey: 'spa_outlined',
-      colorValue: 0xFF94734B),
-  HealthCategory(
-      id: 'lipid',
-      name: 'Lipid profile',
-      iconKey: 'monitor_heart_outlined',
-      colorValue: 0xFF6E7FA9),
-  HealthCategory(
-      id: 'thyroid',
-      name: 'Thyroid',
-      iconKey: 'bubble_chart_outlined',
-      colorValue: 0xFF8A6D9F),
-  HealthCategory(
-      id: 'vitamins',
-      name: 'Vitamins',
-      iconKey: 'wb_sunny_outlined',
-      colorValue: 0xFFB38A43),
-  HealthCategory(
-      id: 'iron', name: 'Iron', iconKey: 'grain', colorValue: 0xFFB46B50),
-  HealthCategory(
-      id: 'urine',
-      name: 'Urine',
-      iconKey: 'opacity_outlined',
-      colorValue: 0xFF5588A2),
 ];
 
 final mockResults = <LabResult>[
@@ -279,7 +233,7 @@ final mockReports = <HealthReport>[
       lab: 'CityCare Diagnostics',
       reportDate: DateTime(2026, 9, 18),
       uploadDate: DateTime(2026, 9, 19),
-      status: 'Reviewed',
+      status: ReportStatus.ready,
       resultCount: 5),
   HealthReport(
       id: 'r-maya-2',
@@ -288,7 +242,7 @@ final mockReports = <HealthReport>[
       lab: 'Northside Lab',
       reportDate: DateTime(2026, 3, 2),
       uploadDate: DateTime(2026, 3, 4),
-      status: 'Reviewed',
+      status: ReportStatus.ready,
       resultCount: 3),
   HealthReport(
       id: 'r-arjun-1',
@@ -297,7 +251,7 @@ final mockReports = <HealthReport>[
       lab: 'Harbor Health Labs',
       reportDate: DateTime(2026, 8, 7),
       uploadDate: DateTime(2026, 8, 7),
-      status: 'Reviewed',
+      status: ReportStatus.ready,
       resultCount: 3),
   HealthReport(
       id: 'r-meera-1',
@@ -306,6 +260,6 @@ final mockReports = <HealthReport>[
       lab: 'Green Cross Lab',
       reportDate: DateTime(2026, 10, 2),
       uploadDate: DateTime(2026, 10, 3),
-      status: 'Needs review',
+      status: ReportStatus.needsReview,
       resultCount: 3),
 ];

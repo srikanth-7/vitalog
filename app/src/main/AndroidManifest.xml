@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.hcm_flutter">
+    package="com.fammo.app">
    <application
-        android:label="hcm_flutter"
+        android:label="Fammo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -23,7 +23,37 @@ class FamilyHealthSnapshot {
       results.where((result) => result.profileId == memberId).toList()
         ..sort((a, b) => b.reportDate.compareTo(a.reportDate));
 
+  /// [memberId]'s results grouped by category id, newest first, in one pass
+  /// (a result filed under two categories appears in both).
+  Map<String, List<LabResult>> resultsByCategory(String memberId) {
+    final groups = <String, List<LabResult>>{};
+    for (final r in resultsFor(memberId)) {
+      for (final id in r.categoryIds) {
+        (groups[id] ??= []).add(r);
+      }
+    }
+    return groups;
+  }
+
   List<HealthReport> reportsFor(String memberId) =>
       reports.where((report) => report.profileId == memberId).toList()
         ..sort((a, b) => b.reportDate.compareTo(a.reportDate));
+
+  /// Results that came from [report]. Sample results carry no reportId, so
+  /// they're matched by profile, lab and report date instead.
+  List<LabResult> resultsForReport(HealthReport report) => results
+      .where((r) => r.reportId == null
+          ? r.profileId == report.profileId &&
+              r.lab == report.lab &&
+              r.reportDate == report.reportDate
+          : r.reportId == report.id)
+      .toList();
+
+  /// A copy narrowed to one report, so any dashboard can render just it.
+  FamilyHealthSnapshot scopedTo(HealthReport report) => FamilyHealthSnapshot(
+        members: members,
+        categories: categories,
+        results: resultsForReport(report),
+        reports: [report],
+      );
 }

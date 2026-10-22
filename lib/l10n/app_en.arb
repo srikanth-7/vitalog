@@ -1,0 +1,357 @@
+{
+  "@@locale": "en",
+  "appTitle": "Vitalog • Family Health",
+  "navHome": "Home",
+  "navCategories": "Categories",
+  "navReports": "Reports",
+  "navFamily": "Family",
+  "loadFailed": "Could not load family health: {message}",
+  "@loadFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "tryAgain": "Try again",
+  "noProfiles": "No family profiles yet.",
+  "cancel": "Cancel",
+  "homeEyebrow": "Family health",
+  "homeTitle": "A clearer picture,\ntogether.",
+  "switchProfileTooltip": "Switch family profile",
+  "viewingHealthFor": "Viewing health for",
+  "latestReport": "Latest report",
+  "noReportsYet": "No reports yet",
+  "healthCategories": "Health categories",
+  "seeAll": "See all",
+  "recentResults": "Recent results",
+  "allResults": "All results",
+  "noResultsTitle": "No results yet",
+  "noResultsMessage": "Add a report to begin a timeline for this family member.",
+  "labRangeDisclaimer": "Lab ranges can vary. Status labels reflect the range printed with each result; they are not a diagnosis.",
+  "reportEyebrow": "Report",
+  "reportDateValue": "Report date {date}",
+  "@reportDateValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "collectionDateValue": "Collected {date}",
+  "@collectionDateValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "labNotDetected": "Lab not detected",
+  "resultsCount": "{count, plural, =0{No results} =1{1 result} other{{count} results}}",
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "testsCount": "{count, plural, =1{1 test} other{{count} tests}}",
+  "@testsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toReviewCount": "{count} to review",
+  "@toReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportResultsHeading": "Results in this report",
+  "statusWithinRange": "Within lab range",
+  "statusHighPerReport": "High · per report",
+  "statusLowPerReport": "Low · per report",
+  "statusNeedsReview": "Needs review",
+  "categoriesTitle": "Categories",
+  "categoriesSubtitle": "Results grouped by system. A test may appear in more than one group.",
+  "resultsLatest": "{results} · Latest {date}",
+  "@resultsLatest": {
+    "placeholders": {
+      "results": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noCategoriesTitle": "No categories yet",
+  "noCategoriesMessage": "Results will be grouped here after a report is read.",
+  "latestValuesFirst": "Latest values first",
+  "datePrintedNote": "Each date is the date printed on the report.",
+  "noCategoryResultsTitle": "No results in this category",
+  "noCategoryResultsMessage": "Results will appear after a report has been read.",
+  "testHistory": "Test history",
+  "unitNotPrinted": "Unit not printed",
+  "latestResult": "Latest result",
+  "referenceRangePrinted": "Reference range as printed: {range}",
+  "@referenceRangePrinted": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeNotPrinted": "not printed",
+  "history": "History",
+  "chartNote": "Values shown in the same unit from their report dates.",
+  "trendEmptyTitle": "More results build the trend",
+  "trendEmptyMessage": "A chart appears when at least two comparable numeric results are available.",
+  "notDiagnosis": "This view records values printed by the lab and does not interpret them as a diagnosis.",
+  "reportsTitle": "Reports",
+  "reportsSubtitle": "Every uploaded report, newest first. Tap one to see just its results.",
+  "addReport": "Add a report",
+  "sync": "Sync",
+  "syncing": "Syncing…",
+  "unsyncedCount": "{count, plural, =1{1 report not synced} other{{count} reports not synced}}",
+  "@unsyncedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allSynced": "All reports synced",
+  "reportsEmptyTitle": "No reports yet",
+  "reportsEmptyMessage": "Add a photo or PDF of a lab report. It's read on this phone and every test is filed into its category.",
+  "uploadedOn": "Uploaded {date}",
+  "@uploadedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reportStatusProcessing": "Reading…",
+  "reportStatusReady": "Ready",
+  "reportStatusNeedsReview": "Needs review",
+  "reportStatusFailed": "Couldn't read",
+  "syncedBadge": "Synced",
+  "onDeviceBadge": "On this device",
+  "sampleBadge": "Sample",
+  "retry": "Try again",
+  "delete": "Delete",
+  "deleteReportTitle": "Delete this report?",
+  "deleteReportMessage": "The document and its results are removed from this phone.",
+  "addReportSheetTitle": "Add a lab report",
+  "takePhoto": "Take a photo",
+  "choosePhoto": "Choose from Photos",
+  "choosePdf": "Choose a PDF",
+  "addReportPrivacy": "Reports are read on this phone. Nothing is uploaded until you tap Sync.",
+  "noticeReportReady": "{count, plural, =1{1 test added} other{{count} tests added}}",
+  "@noticeReportReady": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeReportNeedsReview": "{count, plural, =1{1 test added — some details need review} other{{count} tests added — some details need review}}",
+  "@noticeReportNeedsReview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeReportFailed": "Couldn't find any tests in that document.",
+  "noticeSynced": "{count, plural, =1{1 report synced} other{{count} reports synced}}",
+  "@noticeSynced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeNothingToSync": "Everything is already synced.",
+  "noticeSyncFailed": "Sync failed. Your reports are safe on this phone — try again later.",
+  "noticeSignInRequired": "Sign in to sync your reports.",
+  "noticeBackendNotConfigured": "Cloud sync isn't set up in this build yet.",
+  "familyEyebrow": "Your household",
+  "familyTitle": "Family profiles",
+  "familySubtitle": "Choose whose health timeline you want to view.",
+  "relationAge": "{relation} · {age} years",
+  "@relationAge": {
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "reportCount": "{count, plural, =0{No reports} =1{1 report} other{{count} reports}}",
+  "@reportCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addFamilyMember": "Add family member",
+  "addFamilyMemberSoon": "Adding family members will be available soon.",
+  "sampleDataNote": "Family profiles are sample data in this prototype. Uploaded reports are stored on this phone.",
+  "accountTitle": "Account",
+  "signedInAs": "Signed in as {email}",
+  "@signedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "signedOutMessage": "Sign in to back up reports to the cloud with Sync.",
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "signInTitle": "Sign in",
+  "createAccountTitle": "Create account",
+  "signInSubtitle": "Your account is only used to back up reports when you tap Sync.",
+  "continueWithGoogle": "Continue with Google",
+  "orDivider": "or",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "signInButton": "Sign in",
+  "createAccountButton": "Create account",
+  "noAccount": "New here? Create an account",
+  "haveAccount": "Already have an account? Sign in",
+  "forgotPassword": "Forgot password?",
+  "resetSent": "Check your email for a reset link.",
+  "confirmEmailSent": "Check your email to confirm your account.",
+  "emailInvalid": "Enter a valid email",
+  "passwordTooShort": "Use at least 8 characters",
+  "authFailed": "Couldn't sign in: {message}",
+  "@authFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryName": "{id, select, blood{Blood & CBC} glucose{Glucose} kidney{Kidney} liver{Liver} lipid{Lipid profile} thyroid{Thyroid} vitamins{Vitamins} iron{Iron} urine{Urine} heart{Heart} pancreas{Pancreas} immunity{Immunity & inflammation} cancer{Cancer markers} hormones{Hormones} infections{Infections} clotting{Clotting} other{Other}}",
+  "@categoryName": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "editValue": "Edit value",
+  "editResultTitle": "Fix this result",
+  "editResultHint": "Type what's printed on your report. We'll check it against the range again.",
+  "fieldTestName": "Test name",
+  "fieldValue": "Value",
+  "fieldUnit": "Unit",
+  "fieldRange": "Reference range",
+  "fieldRequired": "Enter what's printed on the report",
+  "save": "Save",
+  "compareOriginal": "Compare with original",
+  "editedBadge": "Edited by you",
+  "needsReviewBanner": "We couldn't read this one clearly. Check it against your report.",
+  "checkAndFix": "Check & fix",
+  "noticeResultEdited": "Saved. Status updated from the printed range.",
+  "viewReport": "View",
+  "readingSecurely": "Reading on this phone · encrypted",
+  "splashTagline": "A clearer picture, together.",
+  "customizeHome": "Customize home",
+  "customizeHomeHint": "Choose what shows on your Home screen. Hidden sections aren't loaded.",
+  "sectionLatestReport": "Latest report",
+  "sectionCategories": "Health categories",
+  "sectionRecentResults": "Recent results",
+  "sectionRangeNote": "Lab range note",
+  "hiddenInSimpleMode": "Hidden while Simple mode is on",
+  "simpleMode": "Simple mode",
+  "simpleModeHint": "Bigger text and buttons, fewer things on screen.",
+  "testedHeading": "Tested",
+  "yetToTestHeading": "Yet to test",
+  "yetToTestNote": "No results yet. These are commonly checked. Ask your doctor whether you need them.",
+  "keyTestsLine": "Usually includes {tests}",
+  "@keyTestsLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "notYetLine": "Not yet: {tests}",
+  "@notYetLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "notTestedBadge": "Not tested",
+  "onAdviceLine": "When your doctor advises · {tests}",
+  "@onAdviceLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldCategory": "Category",
+  "chooseCategory": "Choose a category",
+  "needCategory": "{count, plural, =1{1 needs a category} other{{count} need a category}}",
+  "@needCategory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "themeTitle": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "accentTitle": "Accent colour",
+  "accentVitalog": "Vitalog",
+  "accentOcean": "Ocean",
+  "accentPlum": "Plum",
+  "accentEmber": "Ember",
+  "accentGraphite": "Graphite",
+  "chooseFile": "Choose a file (PDF, Word, Excel…)",
+  "unsupportedFileLine": "This file type can't be read",
+  "noticeReportUnsupported": "That file type can't be read. Try a photo, PDF, Word, Excel, CSV or text file.",
+  "sectionOverview": "Health at a glance",
+  "sectionTrends": "Trends",
+  "overviewTitle": "At a glance",
+  "overviewOfTotal": "{total, plural, =1{of 1 latest result within lab range} other{of {total} latest results within lab range}}",
+  "@overviewOfTotal": {"placeholders": {"total": {"type": "int"}}},
+  "overviewNote": "Counts each test's most recent value once.",
+  "legendWithinRange": "Within range",
+  "legendNeedsReview": "Needs review",
+  "legendOutsideRange": "Outside range",
+  "overviewSemantics": "{good} within range, {review} need review, {outside} outside range",
+  "@overviewSemantics": {"placeholders": {"good": {"type": "int"}, "review": {"type": "int"}, "outside": {"type": "int"}}},
+  "trendsTitle": "Trends",
+  "trendsSubtitle": "Tests with more than one result. Shaded band = the lab's printed range.",
+  "trendSince": "since {date}",
+  "@trendSince": {"placeholders": {"date": {"type": "String"}}},
+  "trendNoChange": "No change",
+  "trendSemantics": "{name}, latest {value}, {change}, {status}",
+  "@trendSemantics": {"placeholders": {"name": {"type": "String"}, "value": {"type": "String"}, "change": {"type": "String"}, "status": {"type": "String"}}},
+  "shortHigh": "High",
+  "shortLow": "Low",
+  "moreActions": "More actions",
+  "deleteReportNamed": "Delete “{name}”?",
+  "@deleteReportNamed": {"placeholders": {"name": {"type": "String"}}},
+  "deleteReportDetail": "{count, plural, =0{The original document will be removed from this phone. This can't be undone.} =1{The original document and its 1 result will be removed from this phone. This can't be undone.} other{The original document and its {count} results will be removed from this phone. This can't be undone.}}",
+  "@deleteReportDetail": {"placeholders": {"count": {"type": "int"}}},
+  "deleteReportSyncedNote": "Data you already synced stays in your cloud backup.",
+  "deleteReportConfirm": "Delete Report"
+}

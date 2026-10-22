@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../domain/entities/family_member.dart';
 import '../domain/entities/health_category.dart';
+import '../domain/entities/health_report.dart';
 import '../domain/entities/lab_result.dart';
 
 export '../domain/entities/family_member.dart';
@@ -16,6 +21,12 @@ extension FamilyMemberPresentation on FamilyMember {
 extension HealthCategoryPresentation on HealthCategory {
   Color get color => Color(colorValue);
 
+  /// Translated name; falls back to the stored name for custom categories.
+  String label(AppLocalizations l10n) {
+    final translated = l10n.categoryName(id);
+    return translated == l10n.categoryName('_') ? name : translated;
+  }
+
   IconData get icon => _categoryIcons[iconKey] ?? Icons.category_outlined;
 }
 
@@ -29,36 +40,39 @@ const _categoryIcons = <String, IconData>{
   'wb_sunny_outlined': Icons.wb_sunny_outlined,
   'grain': Icons.grain,
   'opacity_outlined': Icons.opacity_outlined,
+  'favorite_border': Icons.favorite_border,
+  'science_outlined': Icons.science_outlined,
+  'shield_outlined': Icons.shield_outlined,
+  'biotech_outlined': Icons.biotech_outlined,
+  'balance': Icons.balance,
+  'coronavirus_outlined': Icons.coronavirus_outlined,
+  'healing_outlined': Icons.healing_outlined,
 };
 
-String formatDate(DateTime date) =>
-    '${_month(date.month)} ${date.day}, ${date.year}';
+/// Medium date in the active locale (e.g. "Sep 18, 2026" / "18 Sept 2026").
+/// `Intl.defaultLocale` is kept in sync with the app locale in main.dart.
+String formatDate(DateTime date) => DateFormat.yMMMd().format(date);
 
-String _month(int month) => const [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ][month];
+String statusLabel(AppLocalizations l10n, ResultStatus status) =>
+    switch (status) {
+      ResultStatus.withinRange => l10n.statusWithinRange,
+      ResultStatus.high => l10n.statusHighPerReport,
+      ResultStatus.low => l10n.statusLowPerReport,
+      ResultStatus.needsReview => l10n.statusNeedsReview,
+    };
 
-String statusLabel(ResultStatus status) {
-  switch (status) {
-    case ResultStatus.withinRange:
-      return 'Within lab range';
-    case ResultStatus.high:
-      return 'High';
-    case ResultStatus.low:
-      return 'Low';
-    case ResultStatus.needsReview:
-      return 'Needs review';
-  }
-}
+String reportStatusLabel(AppLocalizations l10n, ReportStatus status) =>
+    switch (status) {
+      ReportStatus.processing => l10n.reportStatusProcessing,
+      ReportStatus.ready => l10n.reportStatusReady,
+      ReportStatus.needsReview => l10n.reportStatusNeedsReview,
+      ReportStatus.failed => l10n.reportStatusFailed,
+    };
+
+/// Foreground / background colours for a status, from the active theme.
+(Color, Color) statusColors(AppColors c, ResultStatus status) =>
+    switch (status) {
+      ResultStatus.withinRange => (c.success, c.successSoft),
+      ResultStatus.high || ResultStatus.low => (c.danger, c.dangerSoft),
+      ResultStatus.needsReview => (c.warning, c.warningSoft),
+    };

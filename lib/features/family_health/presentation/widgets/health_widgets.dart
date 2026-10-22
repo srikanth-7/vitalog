@@ -1,6 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../health_presentation.dart';
+import 'motion.dart';
+import '../../../../core/theme/app_shape.dart';
+
+/// Press-down squish with a haptic tick and a springy release, so taps feel
+/// physical. Doesn't intercept gestures; the wrapped InkWell handles the tap.
+class PressScale extends StatefulWidget {
+  const PressScale({super.key, required this.child});
+  final Widget child;
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _down = false;
+  void _set(bool down) {
+    if (_down == down) return;
+    if (down) HapticFeedback.selectionClick();
+    setState(() => _down = down);
+  }
+
+  @override
+  Widget build(BuildContext context) => Listener(
+        onPointerDown: (_) => _set(true),
+        onPointerUp: (_) => _set(false),
+        onPointerCancel: (_) => _set(false),
+        child: AnimatedScale(
+          scale: _down ? 0.955 : 1,
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : Duration(milliseconds: _down ? 110 : 460),
+          // Quick squeeze in, overshooting bounce back out.
+          curve: _down ? Curves.easeOutCubic : Curves.elasticOut,
+          child: widget.child,
+        ),
+      );
+}
+
+/// White rounded tappable surface with a hairline border, used by every card.
+class TapCard extends StatelessWidget {
+  const TapCard(
+      {super.key,
+      required this.child,
+      this.onTap,
+      this.padding = const EdgeInsets.all(15),
+      this.borderColor});
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
+  final Color? borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    // Material animates the border colour change between shapes.
+    final card = Material(
+      color: c.surface,
+      shape: AppShape.of(AppRadius.lg,
+          side: BorderSide(color: borderColor ?? c.border)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: AppShape.of(AppRadius.lg),
+        child: Padding(padding: padding, child: child),
+      ),
+    );
+    return onTap == null ? card : PressScale(child: card);
+  }
+}
+
+class Eyebrow extends StatelessWidget {
+  const Eyebrow(this.text, {super.key, this.color});
+  final String text;
+  final Color? color;
+  @override
+  Widget build(BuildContext context) => Text(text.toUpperCase(),
+      style: TextStyle(
+          color: color ?? context.colors.textMuted,
+          fontSize: 10,
+          letterSpacing: 1.3,
+          fontWeight: FontWeight.w700));
+}
 
 class ProfilePicker extends StatelessWidget {
   const ProfilePicker({super.key, required this.profile, required this.onTap});
@@ -8,38 +91,32 @@ class ProfilePicker extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => TapCard(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE5EAE6))),
-          child: Row(children: [
-            MemberAvatar(member: profile, size: 44),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text('VIEWING HEALTH FOR',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: const Color(0xFF7B8981),
-                          letterSpacing: .8,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 3),
-                  Text(profile.name,
-                      style: const TextStyle(
+        padding: const EdgeInsets.all(13),
+        child: Row(children: [
+          MemberAvatar(member: profile, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Eyebrow(context.l10n.viewingHealthFor),
+                const SizedBox(height: 3),
+                // Cross-fades when the selected family member changes.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(profile.name,
+                      key: ValueKey(profile.id),
+                      style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
-                          color: Color(0xFF18231F)))
-                ])),
-            const Icon(Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF53645C)),
-          ]),
-        ),
+                          color: context.colors.textPrimary)),
+                ),
+              ])),
+          Icon(Icons.keyboard_arrow_down_rounded,
+              color: context.colors.textSecondary),
+        ]),
       );
 }
 
@@ -53,7 +130,7 @@ class MemberAvatar extends StatelessWidget {
       backgroundColor: member.color,
       child: Text(member.initials,
           style: TextStyle(
-              color: const Color(0xFF263B33),
+              color: context.colors.onAvatar,
               fontWeight: FontWeight.w700,
               fontSize: size * .28)));
 }
@@ -69,14 +146,15 @@ class SectionHeading extends StatelessWidget {
         Expanded(
             child: Text(title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFF18231F),
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700))),
         if (action != null)
           TextButton(
               onPressed: onAction,
               child: Text(action!,
-                  style: const TextStyle(
-                      color: Color(0xFF247A68), fontWeight: FontWeight.w700)))
+                  style: TextStyle(
+                      color: context.colors.brand,
+                      fontWeight: FontWeight.w700)))
       ]);
 }
 
@@ -94,68 +172,59 @@ class CategoryCard extends StatelessWidget {
   final int flaggedCount;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE8ECE9))),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(children: [
-                    Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                            color: category.color.withValues(alpha: .12),
-                            borderRadius: BorderRadius.circular(11)),
-                        child: Icon(category.icon,
-                            size: 19, color: category.color)),
-                    const Spacer(),
-                    if (flaggedCount > 0)
-                      Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: const Color(0xFFFFEFEA),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: Text('$flaggedCount review',
-                              style: const TextStyle(
-                                  fontSize: 9,
-                                  color: Color(0xFFAC5543),
-                                  fontWeight: FontWeight.w700)))
-                  ]),
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(category.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF24322C),
-                                fontSize: 13)),
-                        const SizedBox(height: 3),
-                        Text(
-                            lastDate == null
-                                ? '$testCount tests'
-                                : '$testCount tests · ${formatDate(lastDate!)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 10, color: Color(0xFF78867F)))
-                      ]),
-                ]),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    return TapCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(children: [
+              CategoryIcon(category: category, size: 34),
+              const Spacer(),
+              if (flaggedCount > 0)
+                Pill(
+                    label: l10n.toReviewCount(flaggedCount),
+                    color: c.danger,
+                    background: c.dangerSoft),
+            ]),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(category.label(l10n),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: c.textPrimary,
+                      fontSize: 13)),
+              const SizedBox(height: 3),
+              Text(
+                  lastDate == null
+                      ? l10n.testsCount(testCount)
+                      : '${l10n.testsCount(testCount)} · ${formatDate(lastDate!)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10, color: c.textMuted))
+            ]),
+          ]),
+    );
+  }
+}
+
+class CategoryIcon extends StatelessWidget {
+  const CategoryIcon({super.key, required this.category, this.size = 42});
+  final HealthCategory category;
+  final double size;
+  @override
+  Widget build(BuildContext context) => Container(
+      width: size,
+      height: size,
+      decoration: AppShape.decoration(
+          radius: AppRadius.tile(size),
+          color: category.color.withValues(alpha: .14)),
+      child: Icon(category.icon, size: size * .55, color: category.color));
 }
 
 class ResultTile extends StatelessWidget {
@@ -164,51 +233,64 @@ class ResultTile extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    final color = result.status == ResultStatus.withinRange
-        ? const Color(0xFF287D65)
-        : (result.status == ResultStatus.needsReview
-            ? const Color(0xFF9A7735)
-            : const Color(0xFFB35A45));
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-            padding: const EdgeInsets.all(15),
-            child: Row(children: [
-              Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Text(result.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF26332D))),
-                    const SizedBox(height: 5),
-                    Text(formatDate(result.reportDate),
-                        style: const TextStyle(
-                            color: Color(0xFF7C8982), fontSize: 12)),
-                    const SizedBox(height: 9),
-                    StatusPill(status: result.status)
-                  ])),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(result.value,
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 21,
-                        fontWeight: FontWeight.w700)),
-                if (result.unit.isNotEmpty)
-                  Text(result.unit,
-                      style: const TextStyle(
-                          color: Color(0xFF78867F), fontSize: 12)),
-                const SizedBox(height: 5),
-                const Icon(Icons.chevron_right,
-                    color: Color(0xFF8D9992), size: 19)
-              ]),
-            ])),
-      ),
+    final c = context.colors;
+    final (color, _) = statusColors(c, result.status);
+    return TapCard(
+      onTap: onTap,
+      child: Row(children: [
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(result.name,
+              style:
+                  TextStyle(fontWeight: FontWeight.w700, color: c.textPrimary)),
+          const SizedBox(height: 5),
+          Text(formatDate(result.reportDate),
+              style: TextStyle(color: c.textMuted, fontSize: 12)),
+          const SizedBox(height: 9),
+          StatusPill(status: result.status)
+        ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          CountUpText(result.value,
+              style: TextStyle(
+                  color: color, fontSize: 21, fontWeight: FontWeight.w700)),
+          if (result.unit.isNotEmpty)
+            Text(result.unit,
+                style: TextStyle(color: c.textMuted, fontSize: 12)),
+          const SizedBox(height: 5),
+          Icon(Icons.chevron_right, color: c.textMuted, size: 19)
+        ]),
+      ]),
     );
   }
+}
+
+class Pill extends StatelessWidget {
+  const Pill(
+      {super.key,
+      required this.label,
+      required this.color,
+      required this.background,
+      this.icon});
+  final String label;
+  final Color color;
+  final Color background;
+  final IconData? icon;
+  @override
+  Widget build(BuildContext context) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      // Badges are capsules, as on iOS.
+      decoration:
+          ShapeDecoration(color: background, shape: const StadiumBorder()),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+        ],
+        Text(label,
+            style: TextStyle(
+                color: color, fontSize: 10, fontWeight: FontWeight.w700)),
+      ]));
 }
 
 class StatusPill extends StatelessWidget {
@@ -216,77 +298,100 @@ class StatusPill extends StatelessWidget {
   final ResultStatus status;
   @override
   Widget build(BuildContext context) {
-    String label;
-    Color color;
-    Color bg;
-    if (status == ResultStatus.withinRange) {
-      label = 'Within lab range';
-      color = const Color(0xFF26775F);
-      bg = const Color(0xFFE6F3EC);
-    } else if (status == ResultStatus.high) {
-      label = 'High · per report';
-      color = const Color(0xFFA64E41);
-      bg = const Color(0xFFFFECE7);
-    } else if (status == ResultStatus.low) {
-      label = 'Low · per report';
-      color = const Color(0xFFA64E41);
-      bg = const Color(0xFFFFECE7);
-    } else {
-      label = 'Needs review';
-      color = const Color(0xFF8B6B2E);
-      bg = const Color(0xFFFFF4DB);
-    }
-    return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
-        child: Text(label,
-            style: TextStyle(
-                color: color, fontSize: 10, fontWeight: FontWeight.w700)));
+    final (color, bg) = statusColors(context.colors, status);
+    return Pill(
+        // An icon as well as a colour, so status reads without colour vision.
+        icon: switch (status) {
+          ResultStatus.withinRange => Icons.check_circle_outline,
+          ResultStatus.high => Icons.arrow_upward_rounded,
+          ResultStatus.low => Icons.arrow_downward_rounded,
+          ResultStatus.needsReview => Icons.help_outline,
+        },
+        label: statusLabel(context.l10n, status),
+        color: color,
+        background: bg);
   }
 }
 
 class EmptyMessage extends StatelessWidget {
-  const EmptyMessage({super.key, required this.title, required this.message});
+  const EmptyMessage(
+      {super.key, required this.title, required this.message, this.icon});
   final String title;
   final String message;
+  final IconData? icon;
   @override
   Widget build(BuildContext context) => Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: AppShape.decoration(
+          radius: AppRadius.lg, color: context.colors.surface),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        if (icon != null) ...[
+          Icon(icon, color: context.colors.brand, size: 28),
+          const SizedBox(height: 10),
+        ],
+        Text(title,
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: context.colors.textPrimary)),
         const SizedBox(height: 5),
         Text(message,
-            style: const TextStyle(color: Color(0xFF718078), height: 1.4))
+            style: TextStyle(color: context.colors.textMuted, height: 1.4))
+      ]));
+}
+
+class InfoNote extends StatelessWidget {
+  const InfoNote(this.text, {super.key});
+  final String text;
+  @override
+  Widget build(BuildContext context) => Container(
+      padding: const EdgeInsets.all(16),
+      decoration: AppShape.decoration(
+          radius: AppRadius.md, color: context.colors.brandSoft),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.info_outline, size: 19, color: context.colors.textSecondary),
+        const SizedBox(width: 10),
+        Expanded(
+            child: Text(text,
+                style: TextStyle(
+                    color: context.colors.textSecondary,
+                    height: 1.4,
+                    fontSize: 12)))
       ]));
 }
 
 class PageTitle extends StatelessWidget {
   const PageTitle(
-      {super.key, required this.eyebrow, required this.title, this.subtitle});
+      {super.key,
+      required this.eyebrow,
+      required this.title,
+      this.subtitle,
+      this.trailing});
   final String eyebrow;
   final String title;
   final String? subtitle;
+  final Widget? trailing;
   @override
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(eyebrow.toUpperCase(),
-            style: const TextStyle(
-                color: Color(0xFF718078),
-                fontSize: 10,
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        Text(title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700, color: const Color(0xFF18231F))),
-        if (subtitle != null) ...[
-          const SizedBox(height: 6),
-          Text(subtitle!,
-              style: const TextStyle(color: Color(0xFF718078), height: 1.4))
-        ]
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Eyebrow(eyebrow),
+            const SizedBox(height: 6),
+            Text(title,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textPrimary)),
+            if (subtitle != null) ...[
+              const SizedBox(height: 6),
+              Text(subtitle!,
+                  style:
+                      TextStyle(color: context.colors.textMuted, height: 1.4))
+            ]
+          ]),
+        ),
+        if (trailing != null) trailing!,
       ]));
 }

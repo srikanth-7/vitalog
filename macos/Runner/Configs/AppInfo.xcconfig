@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = hcm_flutter
+PRODUCT_NAME = Vitalog
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.hcmFlutter
+PRODUCT_BUNDLE_IDENTIFIER = com.vitalog.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Vitalog. All rights reserved.
