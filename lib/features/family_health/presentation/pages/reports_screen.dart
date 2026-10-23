@@ -1,8 +1,10 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/theme/app_shape.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/family_health_snapshot.dart';
 import '../bloc/health_bloc.dart';
@@ -31,12 +33,7 @@ class ReportsScreen extends StatelessWidget {
         .where((r) => r.profileId == profile.id)
         .toList()
       ..sort((a, b) => b.uploadDate.compareTo(a.uploadDate));
-    final unsynced = snapshot.reports
-        .where((r) =>
-            r.filePath != null &&
-            !r.synced &&
-            r.status != ReportStatus.processing)
-        .length;
+    final unsynced = snapshot.unsyncedCount;
 
     return Scaffold(
         body: SafeArea(
@@ -46,19 +43,7 @@ class ReportsScreen extends StatelessWidget {
           eyebrow: profile.name,
           title: l10n.reportsTitle,
           subtitle: l10n.reportsSubtitle),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-        child: Row(children: [
-          Expanded(
-            child: FilledButton.icon(
-                onPressed: () => showAddReportSheet(context),
-                icon: const Icon(Icons.add),
-                label: Text(l10n.addReport)),
-          ),
-          const SizedBox(width: 10),
-          _SyncButton(unsynced: unsynced, isSyncing: isSyncing),
-        ]),
-      ),
+      // Add and Sync live in the bottom dock, within thumb reach.
       Padding(
         padding: const EdgeInsets.fromLTRB(22, 0, 20, 8),
         child: Text(
@@ -66,47 +51,65 @@ class ReportsScreen extends StatelessWidget {
             style: TextStyle(color: context.colors.textMuted, fontSize: 11)),
       ),
       Expanded(
-          child: reports.isEmpty
-              ? ListView(padding: const EdgeInsets.all(20), children: [
-                  EmptyMessage(
-                      icon: Icons.document_scanner_outlined,
-                      title: l10n.reportsEmptyTitle,
-                      message: l10n.reportsEmptyMessage)
-                ])
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                  itemCount: reports.length,
-                  itemBuilder: (context, i) => Reveal(
-                      key: ValueKey(reports[i].id),
-                      index: i,
-                      child: _TimelineEntry(
-                          report: reports[i],
-                          isFirst: i == 0,
-                          isLast: i == reports.length - 1)),
-                )),
+          // Pull down to check on reports still being read.
+          child: RefreshIndicator(
+        onRefresh: () async {
+          final bloc = context.read<HealthBloc>();
+          final next = bloc.stream.first;
+          bloc.add(RefreshHealthData());
+          await next;
+        },
+        child: reports.isEmpty
+            ? ListView(padding: const EdgeInsets.all(20), children: [
+                EmptyMessage(
+                    icon: Icons.document_scanner_outlined,
+                    title: l10n.reportsEmptyTitle,
+                    message: l10n.reportsEmptyMessage)
+              ])
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                itemCount: reports.length,
+                itemBuilder: (context, i) => Reveal(
+                    key: ValueKey(reports[i].id),
+                    index: i,
+                    child: _TimelineEntry(
+                        report: reports[i],
+                        profile: profile,
+                        members: snapshot.members,
+                        isFirst: i == 0,
+                        isLast: i == reports.length - 1)),
+              ),
+      )),
     ])));
   }
 }
 
-class _SyncButton extends StatelessWidget {
-  const _SyncButton({required this.unsynced, required this.isSyncing});
+/// Round Sync button with the unsynced count, for the bottom dock.
+class SyncChip extends StatelessWidget {
+  const SyncChip({super.key, required this.unsynced, required this.isSyncing});
   final int unsynced;
   final bool isSyncing;
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return OutlinedButton.icon(
+    return IconButton.outlined(
+      key: const ValueKey('sync'),
+      tooltip: isSyncing ? context.l10n.syncing : context.l10n.sync,
       onPressed: isSyncing
           ? null
           : () => context.read<HealthBloc>().add(SyncReports()),
-      style: OutlinedButton.styleFrom(foregroundColor: c.brand),
+      style: IconButton.styleFrom(
+          foregroundColor: c.brand,
+          side: BorderSide(color: c.border),
+          shape: AppShape.of(AppRadius.lg),
+          minimumSize: const Size.square(52)),
       icon: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: isSyncing
             ? SizedBox(
                 key: const ValueKey('spin'),
-                width: 16,
-                height: 16,
+                width: 18,
+                height: 18,
                 child:
                     CircularProgressIndicator(strokeWidth: 2, color: c.brand))
             : Badge(
@@ -115,15 +118,20 @@ class _SyncButton extends StatelessWidget {
                 label: Text('$unsynced'),
                 child: const Icon(Icons.cloud_upload_outlined)),
       ),
-      label: Text(isSyncing ? context.l10n.syncing : context.l10n.sync),
     );
   }
 }
 
 class _TimelineEntry extends StatelessWidget {
   const _TimelineEntry(
-      {required this.report, required this.isFirst, required this.isLast});
+      {required this.report,
+      required this.profile,
+      required this.members,
+      required this.isFirst,
+      required this.isLast});
   final HealthReport report;
+  final FamilyMember profile;
+  final List<FamilyMember> members;
   final bool isFirst;
   final bool isLast;
 
@@ -166,6 +174,9 @@ class _TimelineEntry extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: TapCard(
               onTap: processing ? null : () => openReport(context, report),
+              onLongPress: isUploaded && !processing
+                  ? () => _showEntryActions(context, report)
+                  : null,
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -209,11 +220,38 @@ class _TimelineEntry extends StatelessWidget {
                                 style: TextStyle(
                                     fontSize: 12, color: c.textSecondary))),
                       ]),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                            key: ValueKey('cancel-${report.id}'),
+                            onPressed: () => context
+                                .read<HealthBloc>()
+                                .add(CancelReport(report.id)),
+                            style: TextButton.styleFrom(
+                                foregroundColor: c.textSecondary),
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            label: Text(l10n.cancelReading)),
+                      ),
+                    ],
+                    if (report.patientName case final printed?
+                        when !processing &&
+                            !profile.matchesPrintedName(printed)) ...[
+                      const SizedBox(height: 10),
+                      _NameMismatch(
+                          report: report,
+                          printed: printed,
+                          profile: profile,
+                          members: members),
                     ],
                     const SizedBox(height: 10),
                     Wrap(spacing: 6, runSpacing: 6, children: [
+                      // The status pops in place when reading finishes.
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 250),
+                        transitionBuilder: (child, a) => ScaleTransition(
+                            scale: CurvedAnimation(
+                                parent: a, curve: Curves.easeOutBack),
+                            child: FadeTransition(opacity: a, child: child)),
                         child: Pill(
                             key: ValueKey(report.status),
                             label: reportStatusLabel(l10n, report.status),
@@ -238,6 +276,11 @@ class _TimelineEntry extends StatelessWidget {
                             color: c.textSecondary,
                             background: c.canvas),
                     ]),
+                    if (report.timedOut) ...[
+                      const SizedBox(height: 8),
+                      Text(l10n.timedOutLine,
+                          style: TextStyle(fontSize: 12, color: c.danger)),
+                    ],
                     if (report.unsupported) ...[
                       const SizedBox(height: 8),
                       Text(l10n.unsupportedFileLine,
@@ -257,6 +300,120 @@ class _TimelineEntry extends StatelessWidget {
         ),
       ]),
     );
+  }
+}
+
+/// The name printed on the report isn't the member it's filed under: keep
+/// it (the name is just written differently) or move it to the right person.
+class _NameMismatch extends StatelessWidget {
+  const _NameMismatch(
+      {required this.report,
+      required this.printed,
+      required this.profile,
+      required this.members});
+  final HealthReport report;
+  final String printed;
+  final FamilyMember profile;
+  final List<FamilyMember> members;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    final bloc = context.read<HealthBloc>();
+    final others = members.where((m) => m.id != profile.id).toList();
+    final match =
+        others.where((m) => m.matchesPrintedName(printed)).firstOrNull;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 4),
+      decoration:
+          AppShape.decoration(radius: AppRadius.sm, color: c.warningSoft),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.person_search_outlined, size: 18, color: c.warning),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(l10n.nameMismatchLine(printed, profile.name),
+                  style:
+                      TextStyle(fontSize: 12, color: c.warning, height: 1.35))),
+        ]),
+        Wrap(alignment: WrapAlignment.end, spacing: 4, children: [
+          TextButton(
+              onPressed: () => bloc.add(AssignReport(report.id, profile.id)),
+              child: Text(l10n.keepHere)),
+          if (others.isNotEmpty)
+            TextButton(
+                onPressed: () async {
+                  final id =
+                      match?.id ?? await _pickMember(context, others, printed);
+                  if (id != null) bloc.add(AssignReport(report.id, id));
+                },
+                child: Text(match == null
+                    ? l10n.moveReport
+                    : l10n.moveToMember(match.name))),
+        ]),
+      ]),
+    );
+  }
+
+  static Future<String?> _pickMember(
+          BuildContext context, List<FamilyMember> others, String printed) =>
+      showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(context.l10n.moveReportTitle,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.textPrimary)),
+            const SizedBox(height: 8),
+            for (final m in others)
+              ListTile(
+                leading: MemberAvatar(member: m, size: 38),
+                title: Text(m.name),
+                subtitle: Text(m.relation),
+                onTap: () => Navigator.pop(context, m.id),
+              ),
+            const SizedBox(height: 8),
+          ]),
+        ),
+      );
+}
+
+/// Long-press actions, as a sheet from the bottom (thumb reach).
+Future<void> _showEntryActions(
+    BuildContext context, HealthReport report) async {
+  HapticFeedback.mediumImpact();
+  final bloc = context.read<HealthBloc>();
+  final l10n = context.l10n;
+  final action = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (!report.unsupported)
+          ListTile(
+              leading: const Icon(Icons.refresh_rounded),
+              title: Text(l10n.retry),
+              onTap: () => Navigator.pop(context, 'retry')),
+        ListTile(
+            leading: Icon(Icons.delete_outline_rounded,
+                color: context.colors.danger),
+            title: Text(l10n.delete,
+                style: TextStyle(color: context.colors.danger)),
+            onTap: () => Navigator.pop(context, 'delete')),
+        const SizedBox(height: 8),
+      ]),
+    ),
+  );
+  if (!context.mounted) return;
+  if (action == 'retry') {
+    bloc.add(RetryReport(report.id));
+  } else if (action == 'delete' &&
+      await confirmDeleteReport(context, report) &&
+      context.mounted) {
+    bloc.add(DeleteReport(report.id));
   }
 }
 
@@ -310,6 +467,22 @@ Future<bool> confirmDeleteReport(BuildContext context, HealthReport report) {
 
 /// Camera / Photos / PDF picker. The chosen file is handed to the bloc, which
 /// stores and reads it on-device.
+const _scanner = MethodChannel('vitalog/document_scanner');
+
+/// The phone's document camera: finds the page edges, flattens and crops,
+/// which reads far better than a plain photo. Returns a PDF path, null if
+/// the user cancelled, or '' if there's no document camera here (simulator,
+/// phones without Play services): then the plain camera is used.
+Future<String?> _scan() async {
+  try {
+    return await _scanner.invokeMethod<String>('scan');
+  } on PlatformException catch (e) {
+    return e.code == 'unavailable' ? '' : null;
+  } on MissingPluginException {
+    return '';
+  }
+}
+
 Future<void> showAddReportSheet(BuildContext context) async {
   final bloc = context.read<HealthBloc>();
   final source = await showModalBottomSheet<String>(
@@ -331,7 +504,7 @@ Future<void> showAddReportSheet(BuildContext context) async {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700, color: c.textPrimary)),
             const SizedBox(height: 8),
-            option('camera', Icons.photo_camera_outlined, l10n.takePhoto),
+            option('camera', Icons.document_scanner_outlined, l10n.takePhoto),
             option('photos', Icons.photo_library_outlined, l10n.choosePhoto),
             option('file', Icons.upload_file_outlined, l10n.chooseFile),
             Padding(
@@ -359,11 +532,19 @@ Future<void> showAddReportSheet(BuildContext context) async {
     path = picked?.path;
     name = picked?.name;
   } else {
-    final image = await ImagePicker().pickImage(
-        source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
-        imageQuality: 92);
-    path = image?.path;
-    name = image?.name;
+    final scanned = source == 'camera' ? await _scan() : '';
+    if (scanned != '') {
+      // Scanned, or null if the user cancelled.
+      path = scanned;
+      name = scanned?.split('/').last;
+    } else {
+      final image = await ImagePicker().pickImage(
+          source:
+              source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+          imageQuality: 92);
+      path = image?.path;
+      name = image?.name;
+    }
   }
   if (path != null && name != null) {
     bloc.add(UploadReport(sourcePath: path, fileName: name));

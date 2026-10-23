@@ -114,6 +114,32 @@ class AppColors extends ThemeExtension<AppColors> {
   @override
   AppColors copyWith() => this;
 
+  /// Simple mode: secondary text one step darker, so nothing is faint.
+  AppColors legible() => AppColors(
+        canvas: canvas,
+        surface: surface,
+        border: border,
+        textPrimary: textPrimary,
+        textSecondary: textPrimary,
+        textMuted: textSecondary,
+        textDisabled: textMuted,
+        brand: brand,
+        brandSoft: brandSoft,
+        hero: hero,
+        onHero: onHero,
+        onHeroMuted: onHero,
+        success: success,
+        successSoft: successSoft,
+        danger: danger,
+        dangerSoft: dangerSoft,
+        warning: warning,
+        warningSoft: warningSoft,
+        onAvatar: onAvatar,
+        chartGood: chartGood,
+        chartReview: chartReview,
+        chartOut: chartOut,
+      );
+
   AppColors withAccent((Color, Color, Color, Color) accent) {
     final (brand, brandSoft, hero, onHeroMuted) = accent;
     return AppColors(
@@ -241,6 +267,26 @@ enum ThemeAccent {
 }
 
 class AppTheme {
+  /// Simple mode on top of [t]: taller buttons, bigger icons, darker
+  /// secondary text. Local `styleFrom` sizes still win where a screen sets one.
+  static ThemeData simple(ThemeData t) {
+    ButtonStyle big(ButtonStyle? s) => (s ?? const ButtonStyle()).copyWith(
+        minimumSize: const WidgetStatePropertyAll(Size(64, 56)),
+        iconSize: const WidgetStatePropertyAll(24));
+    return t.copyWith(
+      filledButtonTheme:
+          FilledButtonThemeData(style: big(t.filledButtonTheme.style)),
+      outlinedButtonTheme:
+          OutlinedButtonThemeData(style: big(t.outlinedButtonTheme.style)),
+      textButtonTheme: TextButtonThemeData(style: big(t.textButtonTheme.style)),
+      iconTheme: t.iconTheme.copyWith(size: 28),
+      extensions: [
+        ...t.extensions.values.where((e) => e is! AppColors),
+        t.extension<AppColors>()!.legible(),
+      ],
+    );
+  }
+
   static ThemeData light([ThemeAccent accent = ThemeAccent.vitalog]) =>
       _build(AppColors.light.withAccent(accent.light), Brightness.light);
   static ThemeData dark([ThemeAccent accent = ThemeAccent.vitalog]) =>

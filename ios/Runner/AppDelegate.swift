@@ -3,6 +3,7 @@ import Flutter
 import PDFKit
 import Vision
 import ImageIO
+import VisionKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -18,6 +19,77 @@ import ImageIO
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ReportOcrPlugin") {
       ReportOcrPlugin.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "DocumentScannerPlugin") {
+      DocumentScannerPlugin.register(with: registrar)
+    }
+  }
+}
+
+/// Apple's document camera (VisionKit): finds the page edges, flattens and
+/// crops each page, which reads far better than a plain photo. Returns the
+/// path of a PDF of the pages in the app's temp folder (removed once the
+/// report is stored encrypted), or nil if the user cancelled. "unavailable"
+/// (e.g. the simulator) means: fall back to the plain camera.
+class DocumentScannerPlugin: NSObject, FlutterPlugin, VNDocumentCameraViewControllerDelegate {
+  private var pending: FlutterResult?
+
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let channel = FlutterMethodChannel(name: "vitalog/document_scanner", binaryMessenger: registrar.messenger())
+    registrar.addMethodCallDelegate(DocumentScannerPlugin(), channel: channel)
+  }
+
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard call.method == "scan" else { result(FlutterMethodNotImplemented); return }
+    guard VNDocumentCameraViewController.isSupported, pending == nil,
+          var top = UIApplication.shared.connectedScenes
+            .compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController else {
+      result(FlutterError(code: "unavailable", message: nil, details: nil))
+      return
+    }
+    while let next = top.presentedViewController { top = next }
+    pending = result
+    let camera = VNDocumentCameraViewController()
+    camera.delegate = self
+    top.present(camera, animated: true)
+  }
+
+  func documentCameraViewController(_ controller: VNDocumentCameraViewController,
+                                    didFinishWith scan: VNDocumentCameraScan) {
+    controller.dismiss(animated: true)
+    guard scan.pageCount > 0 else { return finish(nil) }
+    let url = FileManager.default.temporaryDirectory
+      .appendingPathComponent("scan-\(UUID().uuidString).pdf")
+    let first = scan.imageOfPage(at: 0)
+    do {
+      try UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: first.size))
+        .writePDF(to: url) { context in
+          for i in 0..<scan.pageCount {
+            let page = scan.imageOfPage(at: i)
+            let bounds = CGRect(origin: .zero, size: page.size)
+            context.beginPage(withBounds: bounds, pageInfo: [:])
+            page.draw(in: bounds)
+          }
+        }
+      finish(url.path)
+    } catch {
+      finish(FlutterError(code: "scan_failed", message: error.localizedDescription, details: nil))
+    }
+  }
+
+  func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+    controller.dismiss(animated: true)
+    finish(nil)
+  }
+
+  func documentCameraViewController(_ controller: VNDocumentCameraViewController,
+                                    didFailWithError error: Error) {
+    controller.dismiss(animated: true)
+    finish(FlutterError(code: "scan_failed", message: error.localizedDescription, details: nil))
+  }
+
+  private func finish(_ value: Any?) {
+    pending?(value)
+    pending = nil
   }
 }
 

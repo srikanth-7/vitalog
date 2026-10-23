@@ -1,11 +1,11 @@
 # Graph Report - flutter_hcm_bloc-family-health-architecture  (2026-10-22)
 
 ## Corpus Check
-- 101 files · ~88,487 words
+- 103 files · ~90,483 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1612 nodes · 2086 edges · 72 communities (59 shown, 6 thin omitted)
+- 1703 nodes · 2204 edges · 77 communities (62 shown, 8 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
@@ -22,7 +22,7 @@
 - lab_result.dart
 - health_widgets.dart
 - sign_in_screen.dart
-- mock_family_health_data_source.dart
+- ../../domain/entities/family_health_snapshot.dart
 - health_subscreens.dart
 - my_application.cc
 - dash_board_screen.dart
@@ -65,16 +65,21 @@
 - health_categories.dart
 - icons.sh
 - report_cipher.dart
-- local_report_store.dart
+- apple_menus.dart
 - List
 - load_family_health.dart
 - family_member.dart
 - health_category.dart
-- MaterialPageRoute
+- navigation.dart
 - report_sync_service.dart
 - redactor.dart
 - vitalog_splash.dart
+- vitalog_mark.dart
 - bool?
+- package:flutter/material.dart
+- _PullDownRoute
+- SpringCurve
+- Rect
 
 ## God Nodes (most connected - your core abstractions)
 1. `HealthBloc` - 33 edges
@@ -103,19 +108,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (72 total, 6 thin omitted)
+## Communities (77 total, 8 thin omitted)
 
 ### Community 0 - "app_localizations.dart"
 Cohesion: 0.01
-Nodes (198): app_localizations_en.dart, class, accentEmber, accentGraphite, accentOcean, accentPlum, accentTitle, accentVitalog (+190 more)
+Nodes (203): app_localizations_en.dart, class, accentEmber, accentGraphite, accentOcean, accentPlum, accentTitle, accentVitalog (+195 more)
 
 ### Community 1 - "app_localizations_en.dart"
 Cohesion: 0.01
-Nodes (185): app_localizations.dart, accentEmber, accentGraphite, accentOcean, accentPlum, accentTitle, accentVitalog, accountTitle (+177 more)
+Nodes (190): app_localizations.dart, accentEmber, accentGraphite, accentOcean, accentPlum, accentTitle, accentVitalog, accountTitle (+182 more)
 
 ### Community 2 - "Win32Window"
 Cohesion: 0.05
-Nodes (57): FlutterViewController, PluginRegistry, unique_ptr, RegisterPlugins(), DartProject, HWND, LPARAM, LRESULT (+49 more)
+Nodes (58): FlutterViewController, PluginRegistry, unique_ptr, RegisterPlugins(), DartProject, HWND, LPARAM, LRESULT (+50 more)
 
 ### Community 3 - "lab_report_parser.dart"
 Cohesion: 0.04
@@ -135,7 +140,7 @@ Nodes (12): package:vitalog/features/family_health/presentation/pages/home_scree
 
 ### Community 7 - "app_theme.dart"
 Cohesion: 0.05
-Nodes (38): @immutable, AppColors get, AppLocalizations get, BuildContext, AppColors, AppContext, AppTheme, border (+30 more)
+Nodes (39): @immutable, app_shape.dart, AppColors get, AppLocalizations get, BuildContext, AppColors, AppContext, AppTheme (+31 more)
 
 ### Community 8 - "family_health_snapshot.dart"
 Cohesion: 0.14
@@ -153,37 +158,37 @@ Nodes (30): EdgeInsetsGeometry, action, background, borderColor, build, category
 Cohesion: 0.11
 Nodes (18): dart:async, FormState, _auth, build, _busy, createState, _creating, dispose (+10 more)
 
-### Community 12 - "mock_family_health_data_source.dart"
-Cohesion: 0.29
-Nodes (6): ../datasources/family_health_data_source.dart, ../../domain/health_categories.dart, FamilyHealthDataSource, fetchFamilyHealth, MockFamilyHealthDataSource, mock_family_health_data.dart
+### Community 12 - "../../domain/entities/family_health_snapshot.dart"
+Cohesion: 0.22
+Nodes (8): ../datasources/family_health_data_source.dart, ../../domain/entities/family_health_snapshot.dart, ../../domain/health_categories.dart, FamilyHealthDataSource, fetchFamilyHealth, fetchFamilyHealth, MockFamilyHealthDataSource, mock_family_health_data.dart
 
 ### Community 13 - "health_subscreens.dart"
 Cohesion: 0.06
-Nodes (31): HealthCategory, HealthCategoryPresentation, build, CategoriesScreen, category, CategoryResultsScreen, color, count (+23 more)
+Nodes (33): HealthCategory, HealthCategoryPresentation, build, CategoriesScreen, category, CategoryResultsScreen, color, count (+25 more)
 
 ### Community 14 - "my_application.cc"
 Cohesion: 0.11
 Nodes (18): FlPluginRegistry, GApplication, gboolean, gchar, GObject, GtkApplication, fl_register_plugins(), main() (+10 more)
 
 ### Community 15 - "dash_board_screen.dart"
-Cohesion: 0.11
-Nodes (24): ../../../auth/sign_in_screen.dart, ../bloc/health_bloc.dart, ../bloc/health_event.dart, ../bloc/health_state.dart, ../health_presentation.dart, health_subscreens.dart, home_screen.dart, child (+16 more)
+Cohesion: 0.12
+Nodes (19): ../../../auth/sign_in_screen.dart, ../bloc/health_event.dart, ../bloc/health_state.dart, core/theme/app_theme.dart, home_screen.dart, child, _controller, createState (+11 more)
 
 ### Community 16 - "home_screen.dart"
 Cohesion: 0.10
 Nodes (19): date, eyebrow, footer, _Greeting, _HeroCard, icon, _LatestReportBanner, onCategoryTap (+11 more)
 
 ### Community 17 - "family_health_repository_impl.dart"
-Cohesion: 0.07
-Nodes (26): dart:isolate, ../extraction/document_reader.dart, ../extraction/lab_report_parser.dart, ../extraction/lab_test_catalog.dart, ../extraction/report_text_recognizer.dart, LabReportParser, addReport, _dataSource (+18 more)
+Cohesion: 0.08
+Nodes (25): dart:isolate, ../extraction/document_reader.dart, ../extraction/lab_report_parser.dart, ../extraction/lab_test_catalog.dart, ../extraction/report_text_recognizer.dart, LabReportParser, addReport, _dataSource (+17 more)
 
 ### Community 18 - "reports_screen.dart"
-Cohesion: 0.12
-Nodes (15): bloc, confirmDeleteReport, isFirst, isLast, isSyncing, name, path, profile (+7 more)
+Cohesion: 0.11
+Nodes (18): bloc, confirmDeleteReport, isFirst, isLast, isSyncing, l10n, name, path (+10 more)
 
 ### Community 19 - "profile_screen.dart"
 Cohesion: 0.12
-Nodes (15): ../../domain/entities/family_health_snapshot.dart, fetchFamilyHealth, _AccountCard, member, onSelect, onTap, _ProfileCard, ProfileScreen (+7 more)
+Nodes (15): FamilyMember, FamilyMemberPresentation, _AccountCard, member, onSelect, onTap, _ProfileCard, ProfileScreen (+7 more)
 
 ### Community 20 - "Health apps sync: implementation plan"
 Cohesion: 0.11
@@ -195,7 +200,7 @@ Nodes (26): ../../../../core/brand/vitalog_mark.dart, background, _bits, build, 
 
 ### Community 22 - "main.dart"
 Cohesion: 0.12
-Nodes (18): core/brand/vitalog_splash.dart, features/family_health/domain/repositories/family_health_repository.dart, features/family_health/domain/usecases/load_family_health.dart, features/family_health/family_health_dependencies.dart, features/family_health/presentation/bloc/health_bloc.dart, features/family_health/presentation/bloc/health_event.dart, features/family_health/presentation/bloc/health_state.dart, features/family_health/presentation/pages/dash_board_screen.dart (+10 more)
+Nodes (18): core/brand/vitalog_splash.dart, core/settings/settings_cubit.dart, features/family_health/domain/repositories/family_health_repository.dart, features/family_health/domain/usecases/load_family_health.dart, features/family_health/family_health_dependencies.dart, features/family_health/presentation/bloc/health_bloc.dart, features/family_health/presentation/bloc/health_event.dart, features/family_health/presentation/bloc/health_state.dart (+10 more)
 
 ### Community 23 - "family_health_dependencies.dart"
 Cohesion: 0.25
@@ -235,19 +240,19 @@ Nodes (14): bloc, build, _category, createState, dispose, _form, _name, _range (
 
 ### Community 32 - "vitalog_nav_bar.dart"
 Cohesion: 0.12
-Nodes (16): IconData, build, icon, item, items, label, onSelected, onTap (+8 more)
+Nodes (15): IconData, build, icon, item, items, label, onSelected, onTap (+7 more)
 
 ### Community 33 - "State"
-Cohesion: 0.21
-Nodes (15): _TabFade, _TabFadeState, _EditResultSheet, _EditResultSheetState, PressScale, _PressScaleState, _Confetti, _ConfettiState (+7 more)
+Cohesion: 0.18
+Nodes (17): _TabFade, _TabFadeState, _PressRow, _PressRowState, _EditResultSheet, _EditResultSheetState, PressScale, _PressScaleState (+9 more)
 
 ### Community 34 - "health_data.dart"
 Cohesion: 0.33
 Nodes (5): features/family_health/domain/entities/family_member.dart, features/family_health/domain/entities/health_category.dart, features/family_health/domain/entities/health_report.dart, features/family_health/domain/entities/lab_result.dart, features/family_health/presentation/health_presentation.dart
 
 ### Community 35 - "display_settings.dart"
-Cohesion: 0.11
-Nodes (21): core/settings/settings_cubit.dart, Cubit, l10n/app_localizations.dart, AppSettings, SettingsCubit, ThemeAccent, build, HomeScreen (+13 more)
+Cohesion: 0.12
+Nodes (20): ../../../../core/theme/app_shape.dart, Cubit, AppSettings, SettingsCubit, ThemeAccent, build, HomeScreen, accent (+12 more)
 
 ### Community 36 - "AppLocalizations"
 Cohesion: 0.50
@@ -258,16 +263,16 @@ Cohesion: 0.06
 Nodes (32): Any file type, Android, Brand, motion and display settings, Data flow: uploading a report, Hard rules, Layout, Parser notes (lab_report_parser.dart), Platform status, Privacy tiers, unfiled tests, theming (+24 more)
 
 ### Community 41 - "vitalog/app/MainActivity.kt"
-Cohesion: 0.23
-Nodes (9): FlutterActivity, MainActivity, ReportOcr, Bitmap, ByteArray, Color, FlutterEngine, ParcelFileDescriptor (+1 more)
+Cohesion: 0.25
+Nodes (8): FlutterActivity, MainActivity, ReportOcr, Bitmap, ByteArray, Color, FlutterEngine, ParcelFileDescriptor
 
 ### Community 45 - "family_health_repository.dart"
 Cohesion: 0.18
 Nodes (10): dart:typed_data, ../entities/health_report.dart, ../entities/lab_result.dart, addReport, deleteReport, loadFamilyHealth, processReport, readOriginal (+2 more)
 
 ### Community 47 - "StatelessWidget"
-Cohesion: 0.10
-Nodes (21): _ReviewBanner, _TestedCategoryCard, HealthOverviewCard, _LegendKey, _StatusBar, TrendStrip, TrendTile, CategoryCard (+13 more)
+Cohesion: 0.09
+Nodes (23): _DestructiveSheet, FrostedSurface, _MenuRow, MoreButton, HealthOverviewCard, _LegendKey, _StatusBar, TrendStrip (+15 more)
 
 ### Community 48 - "report_store_test.dart"
 Cohesion: 0.10
@@ -286,8 +291,8 @@ Cohesion: 0.10
 Nodes (19): _auth, authChanges, authRedirect, Backend, configured, init, _key, resetPassword (+11 more)
 
 ### Community 52 - "health_presentation.dart"
-Cohesion: 0.13
-Nodes (14): Color get, core/theme/app_theme.dart, ../domain/entities/health_category.dart, IconData get, FamilyMember, _categoryIcons, color, FamilyMemberPresentation (+6 more)
+Cohesion: 0.14
+Nodes (13): Color? get, ../domain/entities/health_category.dart, IconData get, l10n/app_localizations.dart, _categoryIcons, color, formatDate, icon (+5 more)
 
 ### Community 53 - "package:flutter_test/flutter_test.dart"
 Cohesion: 0.12
@@ -302,12 +307,12 @@ Cohesion: 0.33
 Nodes (6): ReportTextRecognizer, _Ocr, _Recognizer, _Lines, _Recognizer, _FakeRecognizer
 
 ### Community 58 - "report_cipher.dart"
-Cohesion: 0.04
-Nodes (46): dart:math, beat, beatAmount, build, chalk, coral, deep, _dot (+38 more)
+Cohesion: 0.05
+Nodes (43): Future, _channel, recognize, async, _cipher, keepOriginal, loadCategoryChoices, LocalReportStore (+35 more)
 
-### Community 59 - "local_report_store.dart"
-Cohesion: 0.10
-Nodes (19): Future, async, _cipher, keepOriginal, loadCategoryChoices, LocalReportStore, _migrate, readOriginal (+11 more)
+### Community 59 - "apple_menus.dart"
+Cohesion: 0.04
+Nodes (51): bool get, Duration get, anchor, barrierColor, barrierDismissible, barrierLabel, blur, box (+43 more)
 
 ### Community 60 - "List"
 Cohesion: 0.20
@@ -325,9 +330,9 @@ Nodes (6): age, colorValue, id, initials, name, relation
 Cohesion: 0.15
 Nodes (12): lab_result.dart, colorValue, iconKey, id, KeyTest, keyTests, matches, missingFrom (+4 more)
 
-### Community 64 - "MaterialPageRoute"
-Cohesion: 0.40
-Nodes (5): _showNotice, openReport, openResult, build, MaterialPageRoute
+### Community 64 - "navigation.dart"
+Cohesion: 0.18
+Nodes (11): ../bloc/health_bloc.dart, ../health_presentation.dart, health_subscreens.dart, _showNotice, openCategory, openReport, openResult, build (+3 more)
 
 ### Community 65 - "report_sync_service.dart"
 Cohesion: 0.18
@@ -341,25 +346,37 @@ Nodes (9): _addressStart, _email, labName, _phone, Redactor, text, _tidy, _url (
 Cohesion: 0.10
 Nodes (21): _afterIntro, _beat, _beatIn, build, child, createState, didChangeDependencies, didUpdateWidget (+13 more)
 
+### Community 68 - "vitalog_mark.dart"
+Cohesion: 0.09
+Nodes (22): dart:math, beat, beatAmount, build, chalk, coral, deep, _dot (+14 more)
+
+### Community 73 - "package:flutter/material.dart"
+Cohesion: 0.15
+Nodes (12): AppRadius, AppShape, decoration, lg, md, of, sheet, sm (+4 more)
+
+### Community 74 - "_PullDownRoute"
+Cohesion: 0.50
+Nodes (4): _PullDownRoute, _SheetRoute, PopupRoute, T
+
 ## Knowledge Gaps
-- **1064 isolated node(s):** `UIKit`, `Flutter`, `PDFKit`, `Vision`, `ImageIO` (+1059 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1221 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1131 isolated node(s):** `UIKit`, `Flutter`, `PDFKit`, `Vision`, `ImageIO` (+1126 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1297 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GetClientArea` connect `Win32Window` to `vitalog/app/MainActivity.kt`?**
-  _High betweenness centrality (0.085) - this node is a cross-community bridge._
-- **Why does `HealthBloc` connect `HealthBloc` to `MaterialPageRoute`, `State`, `widget_test.dart`, `dash_board_screen.dart`, `reports_screen.dart`, `edit_result_sheet.dart`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `FamilyHealthRepository` connect `main.dart` to `State`, `HealthBloc`, `family_health_repository.dart`, `load_family_health.dart`, `edit_result_sheet.dart`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `HealthBloc` connect `HealthBloc` to `navigation.dart`, `State`, `widget_test.dart`, `dash_board_screen.dart`, `reports_screen.dart`, `edit_result_sheet.dart`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `FamilyHealthSnapshot` connect `family_health_snapshot.dart` to `HealthBloc`, `health_subscreens.dart`, `home_screen.dart`, `reports_screen.dart`, `profile_screen.dart`?**
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **What connects `UIKit`, `Flutter`, `PDFKit` to the rest of the system?**
-  _1064 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1131 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `app_localizations.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.010050251256281407 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.00980392156862745 - nodes in this community are weakly interconnected._
 - **Should `app_localizations_en.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.010752688172043012 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.010471204188481676 - nodes in this community are weakly interconnected._
 - **Should `Win32Window` be split into smaller, more focused modules?**
-  _Cohesion score 0.05311676909569798 - nodes in this community are weakly interconnected._
-- **Should `lab_report_parser.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.03508771929824561 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05200341005967604 - nodes in this community are weakly interconnected._

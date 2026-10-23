@@ -35,6 +35,14 @@ class FamilyHealthSnapshot {
     return groups;
   }
 
+  /// Uploaded, finished reports not yet backed up (for the Sync badge).
+  int get unsyncedCount => reports
+      .where((r) =>
+          r.filePath != null &&
+          !r.synced &&
+          r.status != ReportStatus.processing)
+      .length;
+
   List<HealthReport> reportsFor(String memberId) =>
       reports.where((report) => report.profileId == memberId).toList()
         ..sort((a, b) => b.reportDate.compareTo(a.reportDate));

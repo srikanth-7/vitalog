@@ -65,6 +65,74 @@ void main() {
     expect(report.tests.single.categoryId, 'kidney');
   });
 
+  test('grouped ranges and µL units are judged correctly', () {
+    final report = parser.parse([
+      'COMPLETE BLOOD COUNT',
+      'Total Leucocyte Count  7.2  10^3/µL  4.0 - 11.0',
+      'Platelet Count  2,40,000  /cumm  1,50,000 - 4,50,000',
+    ]);
+    // The "L" of µL is part of the unit, not a Low flag.
+    expect(report.tests[0].status, ResultStatus.withinRange);
+    expect(report.tests[1].referenceRange, '1,50,000 - 4,50,000 /cumm');
+    expect(report.tests[1].status, ResultStatus.withinRange);
+    final high = parser
+        .parse(['Platelet Count  5,10,000  /cumm  1,50,000 - 4,50,000']);
+    expect(high.tests.single.status, ResultStatus.high);
+  });
+
+  test('cell counts printed as a span are the value, judged by their ends',
+      () {
+    final report = parser.parse([
+      'URINE ROUTINE',
+      'Pus Cells  2-3  /hpf  0 - 5',
+      'Epithelial Cells  8-10  /hpf  0 - 5',
+    ]);
+    expect(report.tests[0].value, '2-3');
+    expect(report.tests[0].referenceRange, '0 - 5 /hpf');
+    expect(report.tests[0].status, ResultStatus.withinRange);
+    expect(report.tests[1].status, ResultStatus.high);
+    expect(parser.statusFor('6-8', '0 - 5'), ResultStatus.high);
+  });
+
+  test('a range printed on the next line belongs to the test above', () {
+    final report = parser.parse([
+      'Hemoglobin  12.8  g/dL',
+      '(12.0 - 15.5)',
+      'TSH  6.1  mIU/L',
+      'Ref. Range: 0.4 - 4.0',
+      'Creatinine  0.9  mg/dL',
+      'Urea  30  mg/dL  15 - 40',
+    ]);
+    ParsedTest t(String name) => report.tests.firstWhere((t) => t.name == name);
+    expect(t('Hemoglobin').referenceRange, '12.0 - 15.5 g/dL');
+    expect(t('Hemoglobin').status, ResultStatus.withinRange);
+    expect(t('TSH').status, ResultStatus.high);
+    // Not followed by a range line: stays unjudged, and doesn't steal one.
+    expect(t('Creatinine').referenceRange, '');
+    expect(t('Urea').referenceRange, '15 - 40 mg/dL');
+  });
+
+  test('ranges printed per sex are kept whole and left for review', () {
+    final report = parser.parse([
+      'Hemoglobin  13.5  g/dL  M: 13.0 - 17.0  F: 12.0 - 15.5',
+      'MCV  88  fL  80 - 100',
+    ]);
+    expect(report.tests[0].referenceRange, 'M: 13.0 - 17.0 F: 12.0 - 15.5');
+    expect(report.tests[0].status, ResultStatus.needsReview);
+    // "fL" is a unit, not a female band.
+    expect(report.tests[1].status, ResultStatus.withinRange);
+    expect(parser.statusFor('11', 'Male 13-17 Female 12-15.5'),
+        ResultStatus.needsReview);
+  });
+
+  test('two tests printed side by side in one row are both read', () {
+    final report = parser.parse([
+      'Hemoglobin  12.8  g/dL  12.0 - 15.5  Creatinine  1.4  mg/dL  0.6 - 1.1',
+    ]);
+    expect(report.tests.map((t) => t.name), ['Hemoglobin', 'Creatinine']);
+    expect(report.tests[1].status, ResultStatus.high);
+  });
+
   test('a value with no unit, range or flag is not treated as a result', () {
     final report = parser.parse(['TSH was 4 last year']);
     expect(report.tests, isEmpty);

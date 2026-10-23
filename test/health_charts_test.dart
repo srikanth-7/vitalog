@@ -17,7 +17,8 @@ LabResult r(String name, String value, ResultStatus status, DateTime date,
         lab: 'Lab');
 
 void main() {
-  final jan = DateTime(2026, 1, 1), mar = DateTime(2026, 3, 1),
+  final jan = DateTime(2026, 1, 1),
+      mar = DateTime(2026, 3, 1),
       sep = DateTime(2026, 9, 1);
 
   test('tally counts each test once, using its latest value', () {
@@ -29,7 +30,8 @@ void main() {
       r('Glucose', '96', ResultStatus.withinRange, mar),
     ];
     final tally = StatusTally.of(latestPerTest(results));
-    expect((tally.good, tally.review, tally.outside, tally.total), (1, 1, 1, 3));
+    expect(
+        (tally.good, tally.review, tally.outside, tally.total), (1, 1, 1, 3));
   });
 
   test('trends need two numeric results in the same unit, oldest first', () {

@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../domain/entities/family_member.dart';
 import '../../domain/entities/health_report.dart';
+import '../../domain/reference/reference_range.dart';
 import '../../domain/entities/lab_result.dart';
 import 'report_cipher.dart';
 
@@ -61,14 +64,21 @@ class LocalReportStore {
 
   /// Encrypts the picked file into app storage so it survives the picker's
   /// temporary directory being cleared, without leaving a readable copy.
-  Future<String> keepOriginal(String sourcePath, String reportId) async {
+  /// Also returns the plaintext's SHA-256 (hex), from the same single read.
+  Future<({String path, String hash})> keepOriginal(
+      String sourcePath, String reportId) async {
     final dir = Directory('${(await _directory()).path}/reports');
     await dir.create(recursive: true);
     final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'bin';
     final target = File('${dir.path}/$reportId.$ext');
-    await _writeAtomically(
-        target, await _vault.encrypt(await File(sourcePath).readAsBytes()));
-    return target.path;
+    final bytes = await File(sourcePath).readAsBytes();
+    await _writeAtomically(target, await _vault.encrypt(bytes));
+    final digest = await Sha256().hash(bytes);
+    return (
+      path: target.path,
+      hash: [for (final b in digest.bytes) b.toRadixString(16).padLeft(2, '0')]
+          .join(),
+    );
   }
 
   /// Categories the user picked for tests the app couldn't file, by
@@ -84,6 +94,22 @@ class LocalReportStore {
     final file = File('${(await _directory()).path}/category_choices.json');
     await _writeAtomically(
         file, await _cipher.encrypt(utf8.encode(jsonEncode(choices))));
+  }
+
+  /// Family members added on this phone (names never leave it).
+  Future<List<FamilyMember>> loadMembers() async {
+    final file = File('${(await _directory()).path}/members.json');
+    if (!await file.exists()) return [];
+    final clear = await _cipher.decrypt(await file.readAsBytes());
+    return [for (final m in jsonDecode(utf8.decode(clear))) memberFromJson(m)];
+  }
+
+  Future<void> saveMembers(List<FamilyMember> members) async {
+    final file = File('${(await _directory()).path}/members.json');
+    await _writeAtomically(
+        file,
+        await _cipher.encrypt(utf8
+            .encode(jsonEncode([for (final m in members) memberToJson(m)]))));
   }
 
   /// The original document's bytes, decrypted in memory only.
@@ -129,6 +155,9 @@ Map<String, dynamic> reportToJson(HealthReport r) => {
       'filePath': r.filePath,
       'synced': r.synced,
       'unsupported': r.unsupported,
+      if (r.timedOut) 'timedOut': true,
+      if (r.patientName != null) 'patientName': r.patientName,
+      if (r.fileHash != null) 'fileHash': r.fileHash,
     };
 
 HealthReport reportFromJson(dynamic j) => HealthReport(
@@ -146,6 +175,9 @@ HealthReport reportFromJson(dynamic j) => HealthReport(
       filePath: j['filePath'],
       synced: j['synced'] ?? false,
       unsupported: j['unsupported'] ?? false,
+      timedOut: j['timedOut'] ?? false,
+      patientName: j['patientName'],
+      fileHash: j['fileHash'],
     );
 
 Map<String, dynamic> resultToJson(LabResult r) => {
@@ -162,6 +194,9 @@ Map<String, dynamic> resultToJson(LabResult r) => {
       'collectionDate': r.collectionDate?.toIso8601String(),
       'lab': r.lab,
       'edited': r.edited,
+      if (r.reviewed) 'reviewed': true,
+      if (r.usualRange != null) 'usualRange': r.usualRange,
+      if (r.usualSource != null) 'usualSource': r.usualSource,
     };
 
 LabResult resultFromJson(dynamic j) => LabResult(
@@ -180,4 +215,27 @@ LabResult resultFromJson(dynamic j) => LabResult(
           : DateTime.parse(j['collectionDate']),
       lab: j['lab'],
       edited: j['edited'] ?? false,
+      reviewed: j['reviewed'] ?? false,
+      usualRange: j['usualRange'],
+      usualSource: j['usualSource'],
+    );
+
+// Birth year, not age, so the age (and age-banded ranges) stay current.
+Map<String, dynamic> memberToJson(FamilyMember m) => {
+      'id': m.id,
+      'name': m.name,
+      'relation': m.relation,
+      'birthYear': DateTime.now().year - m.age,
+      'colorValue': m.colorValue,
+      if (m.sex != null) 'sex': m.sex!.name,
+    };
+
+FamilyMember memberFromJson(dynamic j) => FamilyMember(
+      id: j['id'],
+      name: j['name'],
+      relation: j['relation'],
+      initials: FamilyMember.initialsOf(j['name']),
+      colorValue: j['colorValue'],
+      age: DateTime.now().year - (j['birthYear'] as int),
+      sex: j['sex'] == null ? null : Sex.values.byName(j['sex']),
     );

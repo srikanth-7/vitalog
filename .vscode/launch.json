@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "flutter_hcm_bloc-family-health-architecture (Flutter 23076PC4BI)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}"
+      // For sign-in / Sync, add (keys are never committed):
+      // "toolArgs": ["--dart-define-from-file=supabase.json"]
+    }
+  ]
+}

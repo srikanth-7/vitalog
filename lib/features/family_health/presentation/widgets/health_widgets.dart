@@ -1,3 +1,5 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/settings/settings_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -46,10 +48,14 @@ class TapCard extends StatelessWidget {
       {super.key,
       required this.child,
       this.onTap,
+      this.onLongPress,
       this.padding = const EdgeInsets.all(15),
       this.borderColor});
   final Widget child;
   final VoidCallback? onTap;
+
+  /// Secondary actions, reachable without stretching to a corner menu.
+  final VoidCallback? onLongPress;
   final EdgeInsetsGeometry padding;
   final Color? borderColor;
 
@@ -64,11 +70,14 @@ class TapCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         customBorder: AppShape.of(AppRadius.lg),
         child: Padding(padding: padding, child: child),
       ),
     );
-    return onTap == null ? card : PressScale(child: card);
+    return onTap == null && onLongPress == null
+        ? card
+        : PressScale(child: card);
   }
 }
 
@@ -228,9 +237,16 @@ class CategoryIcon extends StatelessWidget {
 }
 
 class ResultTile extends StatelessWidget {
-  const ResultTile({super.key, required this.result, required this.onTap});
+  const ResultTile(
+      {super.key,
+      required this.result,
+      required this.onTap,
+      this.readings = 1});
   final LabResult result;
   final VoidCallback onTap;
+
+  /// How many dated values this test has; shown when there's more than one.
+  final int readings;
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -245,10 +261,16 @@ class ResultTile extends StatelessWidget {
               style:
                   TextStyle(fontWeight: FontWeight.w700, color: c.textPrimary)),
           const SizedBox(height: 5),
-          Text(formatDate(result.reportDate),
+          Text(
+              readings > 1
+                  ? '${formatDate(result.reportDate)} · ${context.l10n.readingsCount(readings)}'
+                  : formatDate(result.reportDate),
               style: TextStyle(color: c.textMuted, fontSize: 12)),
           const SizedBox(height: 9),
-          StatusPill(status: result.status)
+          StatusPill(
+              status: result.status,
+              usual: result.judgedByUsualRange,
+              reviewed: result.reviewed)
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           CountUpText(result.value,
@@ -294,11 +316,30 @@ class Pill extends StatelessWidget {
 }
 
 class StatusPill extends StatelessWidget {
-  const StatusPill({super.key, required this.status});
+  const StatusPill(
+      {super.key,
+      required this.status,
+      this.usual = false,
+      this.reviewed = false});
   final ResultStatus status;
+
+  /// Judged by the built-in usual range (the report printed none).
+  final bool usual;
+
+  /// Checked by the user (see [LabResult.reviewed]).
+  final bool reviewed;
   @override
   Widget build(BuildContext context) {
-    final (color, bg) = statusColors(context.colors, status);
+    final c = context.colors;
+    // Checked but no range to judge it by: neutral, it needs nothing more.
+    if (reviewed && status == ResultStatus.needsReview) {
+      return Pill(
+          icon: Icons.task_alt_rounded,
+          label: context.l10n.statusCheckedNoRange,
+          color: c.textSecondary,
+          background: c.canvas);
+    }
+    final (color, bg) = statusColors(c, status);
     return Pill(
         // An icon as well as a colour, so status reads without colour vision.
         icon: switch (status) {
@@ -307,7 +348,9 @@ class StatusPill extends StatelessWidget {
           ResultStatus.low => Icons.arrow_downward_rounded,
           ResultStatus.needsReview => Icons.help_outline,
         },
-        label: statusLabel(context.l10n, status),
+        label: statusLabel(context.l10n, status,
+            usual: usual,
+            plain: context.select((SettingsCubit s) => s.state.simpleMode)),
         color: color,
         background: bg);
   }
@@ -373,13 +416,11 @@ class PageTitle extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Eyebrow(eyebrow),
-            const SizedBox(height: 6),
             Text(title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -387,6 +428,8 @@ class PageTitle extends StatelessWidget {
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style:
                       TextStyle(color: context.colors.textMuted, height: 1.4))
             ]

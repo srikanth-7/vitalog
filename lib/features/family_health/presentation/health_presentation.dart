@@ -53,11 +53,22 @@ const _categoryIcons = <String, IconData>{
 /// `Intl.defaultLocale` is kept in sync with the app locale in main.dart.
 String formatDate(DateTime date) => DateFormat.yMMMd().format(date);
 
-String statusLabel(AppLocalizations l10n, ResultStatus status) =>
+/// [usual]: judged against the app's built-in usual range because the
+/// report printed none — never claim "per report" for those.
+/// [plain]: Simple mode's everyday words ("Higher than range"); the test's
+/// page still says which range judged it.
+String statusLabel(AppLocalizations l10n, ResultStatus status,
+        {bool usual = false, bool plain = false}) =>
     switch (status) {
-      ResultStatus.withinRange => l10n.statusWithinRange,
-      ResultStatus.high => l10n.statusHighPerReport,
-      ResultStatus.low => l10n.statusLowPerReport,
+      ResultStatus.withinRange when plain => l10n.statusPlainWithin,
+      ResultStatus.high when plain => l10n.statusPlainHigh,
+      ResultStatus.low when plain => l10n.statusPlainLow,
+      ResultStatus.needsReview when plain => l10n.statusPlainReview,
+      ResultStatus.withinRange =>
+        usual ? l10n.statusWithinUsual : l10n.statusWithinRange,
+      ResultStatus.high =>
+        usual ? l10n.statusHighUsual : l10n.statusHighPerReport,
+      ResultStatus.low => usual ? l10n.statusLowUsual : l10n.statusLowPerReport,
       ResultStatus.needsReview => l10n.statusNeedsReview,
     };
 

@@ -5,7 +5,6 @@
 //
 //   flutter test tool/qa_sweep_test.dart [--update-goldens]
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

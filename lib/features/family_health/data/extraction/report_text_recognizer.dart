@@ -1,8 +1,9 @@
 import 'package:flutter/services.dart';
 
 /// Reads the text of a report image or PDF on-device. iOS uses Apple Vision
-/// (see `ReportOcrPlugin` in ios/Runner/AppDelegate.swift); Android is not
-/// implemented yet and throws [UnsupportedError].
+/// (see `ReportOcrPlugin` in ios/Runner/AppDelegate.swift); Android uses
+/// ML Kit (`ReportOcr` in android/.../MainActivity.kt). Other platforms throw
+/// [UnsupportedError].
 ///
 /// Takes the document's bytes rather than a path so the decrypted original
 /// only ever exists in memory.

@@ -1,0 +1,8 @@
+Lakeview Lab
+Patient: Test Person One
+Reported On: 15/10/2026
+THYROID PROFILE
+TSH  9.9  mIU/L
+BIOCHEMISTRY
+Glucose, Fasting (FBS)  92  mg/dL
+Hemoglobin  11.0  g/dL

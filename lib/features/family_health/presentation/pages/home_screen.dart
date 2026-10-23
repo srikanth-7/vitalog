@@ -9,7 +9,6 @@ import '../widgets/health_charts.dart';
 import '../widgets/health_widgets.dart';
 import '../widgets/display_settings.dart';
 import '../widgets/motion.dart';
-import 'reports_screen.dart';
 import '../../domain/entities/family_health_snapshot.dart';
 import '../../../../core/theme/app_shape.dart';
 
@@ -66,38 +65,25 @@ class HomeScreen extends StatelessWidget {
     final children = <Widget>[
       if (report == null) ...[
         _Greeting(onProfileTap: onProfileTap),
-        const SizedBox(height: 22),
-        ProfilePicker(profile: profile, onTap: onProfileTap ?? () {}),
-        if (simple) ...[
-          const SizedBox(height: 16),
-          FilledButton.icon(
-              key: const ValueKey('simple-add-report'),
-              onPressed: () => showAddReportSheet(context),
-              style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: AppShape.of(AppRadius.lg)),
-              icon: const Icon(Icons.document_scanner_outlined, size: 26),
-              label: Text(l10n.addReport,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700))),
-        ],
-        if (show(HomeSection.latestReport)) ...[
-          const SizedBox(height: 18),
-          _LatestReportBanner(
-              date: snapshot.reportsFor(profile.id).firstOrNull?.reportDate,
-              onReportsTap: onReportsTap),
-        ],
       ] else
         _ReportBanner(report: report!, resultCount: results.length),
       // Chart data is computed only inside the visible branches, so a hidden
       // section costs nothing.
       if (show(HomeSection.overview))
         ...() {
-          final tally = StatusTally.of(latestPerTest(results));
+          final latest = latestPerTest(results);
+          final tally = StatusTally.of(latest);
+          final attention = AttentionList.pick(latest);
           return [
             if (tally.total > 0) ...[
               const SizedBox(height: 18),
               Reveal(index: 0, child: HealthOverviewCard(tally: tally)),
+            ],
+            if (attention.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Reveal(
+                  index: 1,
+                  child: AttentionList(results: attention, onTap: onResultTap)),
             ],
           ];
         }(),
@@ -117,6 +103,13 @@ class HomeScreen extends StatelessWidget {
             ],
           ];
         }(),
+      // Then when the last report was, then everything else.
+      if (isHome && show(HomeSection.latestReport)) ...[
+        const SizedBox(height: 18),
+        _LatestReportBanner(
+            date: snapshot.reportsFor(profile.id).firstOrNull?.reportDate,
+            onReportsTap: onReportsTap),
+      ],
       const SizedBox(height: 26),
       if (categories.isNotEmpty) ...[
         SectionHeading(

@@ -1,0 +1,580 @@
+{
+  "@@locale": "te",
+  "appTitle": "వైటలాగ్ • కుటుంబ ఆరోగ్యం",
+  "navHome": "హోమ్",
+  "navCategories": "వర్గాలు",
+  "navReports": "నివేదికలు",
+  "navFamily": "కుటుంబం",
+  "loadFailed": "కుటుంబ ఆరోగ్య వివరాలను లోడ్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.",
+  "tryAgain": "మళ్లీ ప్రయత్నించండి",
+  "noProfiles": "ఇంకా కుటుంబ ప్రొఫైళ్లు లేవు.",
+  "cancel": "రద్దు చేయండి",
+  "homeEyebrow": "కుటుంబ ఆరోగ్యం",
+  "homeTitle": "ఆరోగ్యంపై స్పష్టమైన అవగాహన,\nకలిసి.",
+  "switchProfileTooltip": "కుటుంబ ప్రొఫైల్ మార్చండి",
+  "viewingHealthFor": "వీరి ఆరోగ్యాన్ని చూస్తున్నారు",
+  "latestReport": "తాజా నివేదిక",
+  "noReportsYet": "ఇంకా నివేదికలు లేవు",
+  "healthCategories": "ఆరోగ్య విభాగాలు",
+  "seeAll": "అన్నీ చూడండి",
+  "recentResults": "ఇటీవలి ఫలితాలు",
+  "allResults": "అన్ని ఫలితాలు",
+  "noResultsTitle": "ఇంకా ఫలితాలు లేవు",
+  "noResultsMessage": "ఈ కుటుంబ సభ్యుని ఆరోగ్య చరిత్రను ప్రారంభించడానికి నివేదికను జోడించండి.",
+  "labRangeDisclaimer": "ల్యాబ్‌లను బట్టి సూచించిన పరిధులు మారవచ్చు. స్థితి లేబుళ్లు ఫలితంతో ముద్రించిన పరిధిని చూపుతాయి; అవి వైద్య నిర్ధారణ కావు.",
+  "reportEyebrow": "నివేదిక",
+  "reportDateValue": "నివేదిక తేదీ {date}",
+  "@reportDateValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "collectionDateValue": "నమూనా సేకరణ {date}",
+  "@collectionDateValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "labNotDetected": "ల్యాబ్ పేరు గుర్తించలేదు",
+  "resultsCount": "{count, plural, =0{ఫలితాలు లేవు} =1{1 ఫలితం} other{{count} ఫలితాలు}}",
+  "@resultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "testsCount": "{count, plural, =1{1 పరీక్ష} other{{count} పరీక్షలు}}",
+  "@testsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "toReviewCount": "సమీక్షించాల్సినవి: {count}",
+  "@toReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportResultsHeading": "ఈ నివేదికలోని ఫలితాలు",
+  "statusWithinRange": "ల్యాబ్ పరిధిలో ఉంది",
+  "statusHighPerReport": "ఎక్కువ · నివేదిక ప్రకారం",
+  "statusLowPerReport": "తక్కువ · నివేదిక ప్రకారం",
+  "statusNeedsReview": "సమీక్షించాలి",
+  "categoriesTitle": "వర్గాలు",
+  "categoriesSubtitle": "వ్యవస్థల వారీగా ఫలితాలు. ఒక పరీక్ష ఒకటి కంటే ఎక్కువ వర్గాల్లో కనిపించవచ్చు.",
+  "resultsLatest": "{results} · తాజా తేదీ {date}",
+  "@resultsLatest": {
+    "placeholders": {
+      "results": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "noCategoriesTitle": "ఇంకా వర్గాలు లేవు",
+  "noCategoriesMessage": "నివేదిక చదివిన తర్వాత ఫలితాలు ఇక్కడ వర్గాలుగా కనిపిస్తాయి.",
+  "latestValuesFirst": "తాజా ఫలితాలు ముందుగా",
+  "datePrintedNote": "ప్రతి తేదీ నివేదికపై ముద్రించిన తేదీ.",
+  "noCategoryResultsTitle": "ఈ వర్గంలో ఫలితాలు లేవు",
+  "noCategoryResultsMessage": "నివేదిక చదివిన తర్వాత ఫలితాలు ఇక్కడ కనిపిస్తాయి.",
+  "testHistory": "పరీక్ష చరిత్ర",
+  "unitNotPrinted": "యూనిట్ ముద్రించలేదు",
+  "latestResult": "తాజా ఫలితం",
+  "referenceRangePrinted": "ముద్రించిన సాధారణ పరిధి: {range}",
+  "@referenceRangePrinted": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "rangeNotPrinted": "ముద్రించలేదు",
+  "history": "చరిత్ర",
+  "chartNote": "నివేదిక తేదీల ప్రకారం, ఒకే యూనిట్‌లోని విలువలు చూపబడతాయి.",
+  "trendEmptyTitle": "మరిన్ని ఫలితాలతో మార్పు తెలుస్తుంది",
+  "trendEmptyMessage": "పోల్చదగిన కనీసం రెండు సంఖ్యాత్మక ఫలితాలు ఉన్నప్పుడు చార్ట్ కనిపిస్తుంది.",
+  "notDiagnosis": "ఈ స్క్రీన్ ల్యాబ్ ముద్రించిన విలువలను నమోదు చేస్తుంది; వాటిని వైద్య నిర్ధారణగా అర్థం చేసుకోదు.",
+  "reportsTitle": "నివేదికలు",
+  "reportsSubtitle": "అప్‌లోడ్ చేసిన నివేదికలు, కొత్తవి ముందు. ఒక్క నివేదిక ఫలితాలను చూడటానికి దాన్ని నొక్కండి.",
+  "addReport": "నివేదికను జోడించండి",
+  "sync": "సింక్",
+  "syncing": "సింక్ అవుతోంది…",
+  "unsyncedCount": "{count, plural, =1{1 నివేదిక సింక్ కాలేదు} other{{count} నివేదికలు సింక్ కాలేదు}}",
+  "@unsyncedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "allSynced": "అన్ని నివేదికలు సింక్ అయ్యాయి",
+  "reportsEmptyTitle": "ఇంకా నివేదికలు లేవు",
+  "reportsEmptyMessage": "ల్యాబ్ నివేదిక ఫోటో లేదా PDF జోడించండి. అది ఈ ఫోన్‌లోనే చదవబడుతుంది; ప్రతి పరీక్ష తన వర్గంలో చేరుతుంది.",
+  "uploadedOn": "అప్‌లోడ్ చేసిన తేదీ {date}",
+  "@uploadedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reportStatusProcessing": "చదువుతోంది…",
+  "reportStatusReady": "సిద్ధం",
+  "reportStatusNeedsReview": "సమీక్షించాలి",
+  "reportStatusFailed": "చదవలేకపోయాం",
+  "syncedBadge": "సింక్ అయింది",
+  "onDeviceBadge": "ఈ పరికరంలో",
+  "sampleBadge": "నమూనా",
+  "retry": "మళ్లీ ప్రయత్నించండి",
+  "delete": "తొలగించండి",
+  "deleteReportTitle": "ఈ నివేదికను తొలగించాలా?",
+  "deleteReportMessage": "ఈ ఫోన్ నుంచి పత్రం మరియు దాని ఫలితాలు తొలగించబడతాయి.",
+  "addReportSheetTitle": "ల్యాబ్ నివేదికను జోడించండి",
+  "takePhoto": "కెమెరాతో స్కాన్ చేయండి",
+  "choosePhoto": "ఫోటోల నుంచి ఎంచుకోండి",
+  "choosePdf": "PDF ఎంచుకోండి",
+  "addReportPrivacy": "నివేదికలు ఈ ఫోన్‌లోనే చదవబడతాయి. మీరు Sync నొక్కేవరకు ఏదీ అప్‌లోడ్ కాదు.",
+  "noticeReportReady": "{count, plural, =1{1 పరీక్ష జోడించబడింది} other{{count} పరీక్షలు జోడించబడ్డాయి}}",
+  "@noticeReportReady": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeReportNeedsReview": "{count, plural, =1{1 పరీక్ష జోడించబడింది — కొన్ని వివరాలు సమీక్షించాలి} other{{count} పరీక్షలు జోడించబడ్డాయి — కొన్ని వివరాలు సమీక్షించాలి}}",
+  "@noticeReportNeedsReview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeReportFailed": "ఆ పత్రంలో పరీక్షలు కనుగొనలేకపోయాం.",
+  "noticeSynced": "{count, plural, =1{1 నివేదిక సింక్ అయింది} other{{count} నివేదికలు సింక్ అయ్యాయి}}",
+  "@noticeSynced": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeNothingToSync": "అన్నీ ఇప్పటికే సింక్ అయ్యాయి.",
+  "noticeSyncFailed": "సింక్ విఫలమైంది. నివేదికలు ఈ ఫోన్‌లో సురక్షితంగా ఉన్నాయి — తర్వాత మళ్లీ ప్రయత్నించండి.",
+  "noticeSignInRequired": "మీ నివేదికలను సింక్ చేయడానికి సైన్ ఇన్ చేయండి.",
+  "noticeBackendNotConfigured": "ఈ బిల్డ్‌లో క్లౌడ్ సింక్ ఇంకా సెటప్ కాలేదు.",
+  "familyEyebrow": "మీ కుటుంబం",
+  "familyTitle": "కుటుంబ ప్రొఫైళ్లు",
+  "familySubtitle": "ఎవరి ఆరోగ్య చరిత్రను చూడాలో ఎంచుకోండి.",
+  "relationAge": "{relation} · {age} సంవత్సరాలు",
+  "@relationAge": {
+    "placeholders": {
+      "relation": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "reportCount": "{count, plural, =0{నివేదికలు లేవు} =1{1 నివేదిక} other{{count} నివేదికలు}}",
+  "@reportCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addFamilyMember": "కుటుంబ సభ్యుడిని జోడించండి",
+  "sampleDataNote": "మొదటి నాలుగు ప్రొఫైళ్లు నమూనా డేటా. మీరు జోడించే సభ్యులు, అప్‌లోడ్ చేసే నివేదికలు ఈ ఫోన్‌లోనే ఉంటాయి.",
+  "accountTitle": "ఖాతా",
+  "signedInAs": "{email}గా సైన్ ఇన్ అయ్యారు",
+  "@signedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "signedOutMessage": "నివేదికలను క్లౌడ్‌లో బ్యాకప్ చేయడానికి Sync ద్వారా సైన్ ఇన్ చేయండి.",
+  "signIn": "సైన్ ఇన్",
+  "signOut": "సైన్ అవుట్",
+  "signInTitle": "సైన్ ఇన్",
+  "createAccountTitle": "ఖాతా సృష్టించండి",
+  "signInSubtitle": "మీరు Sync నొక్కినప్పుడు నివేదికలను బ్యాకప్ చేయడానికి మాత్రమే ఖాతా ఉపయోగించబడుతుంది.",
+  "continueWithGoogle": "Googleతో కొనసాగించండి",
+  "orDivider": "లేదా",
+  "emailLabel": "ఇమెయిల్",
+  "passwordLabel": "పాస్‌వర్డ్",
+  "signInButton": "సైన్ ఇన్",
+  "createAccountButton": "ఖాతా సృష్టించండి",
+  "noAccount": "కొత్తవారా? ఖాతా సృష్టించండి",
+  "haveAccount": "ఇప్పటికే ఖాతా ఉందా? సైన్ ఇన్ చేయండి",
+  "forgotPassword": "పాస్‌వర్డ్ మర్చిపోయారా?",
+  "resetSent": "పాస్‌వర్డ్ రీసెట్ లింక్ కోసం ఇమెయిల్ చూడండి.",
+  "confirmEmailSent": "ఖాతాను నిర్ధారించడానికి ఇమెయిల్ చూడండి.",
+  "emailInvalid": "చెల్లుబాటు అయ్యే ఇమెయిల్ నమోదు చేయండి",
+  "passwordTooShort": "కనీసం 8 అక్షరాలు ఉపయోగించండి",
+  "authFailed": "సైన్ ఇన్ కాలేదు. మీ వివరాలు తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.",
+  "categoryName": "{id, select, blood{రక్తం & CBC} glucose{గ్లూకోజ్} kidney{మూత్రపిండాలు} liver{కాలేయం} lipid{లిపిడ్ ప్రొఫైల్} thyroid{థైరాయిడ్} vitamins{విటమిన్లు} iron{ఐరన్} urine{మూత్రం} heart{గుండె} pancreas{క్లోమం} immunity{రోగనిరోధక శక్తి & వాపు} cancer{క్యాన్సర్ సూచికలు} hormones{హార్మోన్లు} infections{సంక్రమణలు} clotting{రక్తం గడ్డకట్టడం} other{ఇతర}}",
+  "@categoryName": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "editValue": "విలువను మార్చండి",
+  "editResultTitle": "ఈ ఫలితాన్ని సరిచేయండి",
+  "editResultHint": "నివేదికలో ముద్రించినదాన్ని నమోదు చేయండి. మళ్లీ పరిధితో పోల్చి చూస్తాం.",
+  "fieldTestName": "పరీక్ష పేరు",
+  "fieldValue": "విలువ",
+  "fieldUnit": "యూనిట్",
+  "fieldRange": "సూచించిన పరిధి",
+  "fieldRangeHint": "ఉదాహరణకు, 0.4 - 4.0",
+  "fieldRequired": "నివేదికలో ముద్రించినదాన్ని నమోదు చేయండి",
+  "save": "భద్రపరచండి",
+  "compareOriginal": "అసలు నివేదికతో పోల్చండి",
+  "editedBadge": "మీరు మార్చారు",
+  "needsReviewBanner": "ఈ ఫలితాన్ని స్పష్టంగా చదవలేకపోయాం. నివేదికతో సరిపోల్చండి.",
+  "checkAndFix": "పరిశీలించి సరిచేయండి",
+  "looksRight": "సరిగ్గా ఉంది",
+  "statusCheckedNoRange": "తనిఖీ చేశారు · పరిధి లేదు",
+  "noticeResultEdited": "భద్రపరచాం. ముద్రించిన పరిధి ఆధారంగా స్థితి నవీకరించబడింది.",
+  "noticeResultChecked": "తనిఖీ చేసినట్లు గుర్తించబడింది.",
+  "noticeReportDuplicate": "ఈ నివేదికను ఇప్పటికే జోడించారు.",
+  "viewReport": "చూడండి",
+  "readingSecurely": "ఈ ఫోన్‌లో సురక్షితంగా చదువుతోంది",
+  "splashTagline": "ఆరోగ్యంపై స్పష్టమైన అవగాహన, కలిసి.",
+  "customizeHome": "హోమ్‌ను అనుకూలీకరించండి",
+  "customizeHomeHint": "హోమ్ స్క్రీన్‌లో ఏమి కనిపించాలో ఎంచుకోండి. దాచిన విభాగాలు లోడ్ కావు.",
+  "sectionLatestReport": "తాజా నివేదిక",
+  "sectionCategories": "ఆరోగ్య వర్గాలు",
+  "sectionRecentResults": "ఇటీవలి ఫలితాలు",
+  "sectionRangeNote": "ల్యాబ్ పరిధి గమనిక",
+  "hiddenInSimpleMode": "సరళ మోడ్‌లో దాచబడుతుంది",
+  "simpleMode": "సరళ మోడ్",
+  "simpleModeHint": "పెద్ద అక్షరాలు, స్పష్టమైన పదాలు, పెద్ద బటన్లు; తక్కువ అంశాలు.",
+  "testedHeading": "పరీక్షించినవి",
+  "yetToTestHeading": "ఇంకా పరీక్షించనివి",
+  "yetToTestNote": "ఇంకా ఫలితాలు లేవు. వీటిని సాధారణంగా పరీక్షిస్తారు. మీకు అవసరమా అని వైద్యుడిని అడగండి.",
+  "keyTestsLine": "సాధారణంగా ఇందులో {tests} ఉంటాయి",
+  "@keyTestsLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "notYetLine": "ఇంకా చేయనివి: {tests}",
+  "@notYetLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "notTestedBadge": "పరీక్షించలేదు",
+  "onAdviceLine": "వైద్యుడు సూచించినప్పుడు · {tests}",
+  "@onAdviceLine": {
+    "placeholders": {
+      "tests": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldCategory": "వర్గం",
+  "chooseCategory": "వర్గాన్ని ఎంచుకోండి",
+  "needCategory": "{count, plural, =1{1 పరీక్షకు వర్గం కావాలి} other{{count} పరీక్షలకు వర్గం కావాలి}}",
+  "@needCategory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "themeTitle": "రూపం",
+  "themeSystem": "సిస్టమ్ ప్రకారం",
+  "themeLight": "లైట్",
+  "themeDark": "డార్క్",
+  "languageTitle": "భాష",
+  "languageSystem": "పరికరం భాష",
+  "languageEnglish": "English",
+  "languageTelugu": "తెలుగు",
+  "accentTitle": "ప్రధాన రంగు",
+  "accentVitalog": "వైటలాగ్",
+  "accentOcean": "సముద్ర నీలం",
+  "accentPlum": "ప్లమ్",
+  "accentEmber": "ఎంబర్",
+  "accentGraphite": "గ్రాఫైట్",
+  "chooseFile": "ఫైల్ ఎంచుకోండి (PDF, Word, Excel…)",
+  "unsupportedFileLine": "ఈ ఫైల్ రకాన్ని చదవలేం",
+  "noticeReportUnsupported": "ఈ ఫైల్ రకాన్ని చదవలేం. ఫోటో, PDF, Word, Excel, CSV లేదా టెక్స్ట్ ఫైల్ ప్రయత్నించండి.",
+  "sectionOverview": "ఆరోగ్యం ఒక చూపులో",
+  "sectionTrends": "మార్పులు",
+  "overviewTitle": "ఒక చూపులో",
+  "overviewOfTotal": "{total, plural, =1{తాజా 1 ఫలితంలో పరిధిలో ఉంది} other{తాజా {total} ఫలితాల్లో పరిధిలో ఉన్నాయి}}",
+  "@overviewOfTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "overviewNote": "ప్రతి పరీక్షలో అత్యంత ఇటీవలి విలువను ఒక్కసారి మాత్రమే లెక్కిస్తుంది.",
+  "legendWithinRange": "పరిధిలో",
+  "legendNeedsReview": "సమీక్షించాలి",
+  "legendOutsideRange": "పరిధికి బయట",
+  "overviewSemantics": "పరిధిలో {good}, సమీక్షించాల్సినవి {review}, పరిధికి బయట {outside}",
+  "@overviewSemantics": {
+    "placeholders": {
+      "good": {
+        "type": "int"
+      },
+      "review": {
+        "type": "int"
+      },
+      "outside": {
+        "type": "int"
+      }
+    }
+  },
+  "trendsTitle": "మార్పుల ధోరణి",
+  "trendsSubtitle": "ఒకటి కంటే ఎక్కువ ఫలితాలున్న పరీక్షలు. నీడ ప్రాంతం = ల్యాబ్ ముద్రించిన పరిధి.",
+  "trendSince": "{date} నుంచి",
+  "@trendSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "trendNoChange": "మార్పు లేదు",
+  "trendSemantics": "{name}, తాజా {value}, {change}, {status}",
+  "@trendSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "change": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "shortHigh": "ఎక్కువ",
+  "shortLow": "తక్కువ",
+  "moreActions": "మరిన్ని చర్యలు",
+  "deleteReportNamed": "“{name}”ను తొలగించాలా?",
+  "@deleteReportNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteReportDetail": "{count, plural, =0{అసలు పత్రం ఈ ఫోన్ నుంచి తొలగించబడుతుంది. దీన్ని తిరిగి పొందలేరు.} =1{అసలు పత్రం మరియు దాని 1 ఫలితం ఈ ఫోన్ నుంచి తొలగించబడతాయి. తిరిగి పొందలేరు.} other{అసలు పత్రం మరియు దాని {count} ఫలితాలు ఈ ఫోన్ నుంచి తొలగించబడతాయి. తిరిగి పొందలేరు.}}",
+  "@deleteReportDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteReportSyncedNote": "మీరు ఇప్పటికే సింక్ చేసిన డేటా క్లౌడ్ బ్యాకప్‌లో ఉంటుంది.",
+  "deleteReportConfirm": "నివేదికను తొలగించండి",
+  "statusWithinUsual": "సాధారణ పరిధిలో",
+  "statusHighUsual": "ఎక్కువ · సాధారణ పరిధి",
+  "statusLowUsual": "తక్కువ · సాధారణ పరిధి",
+  "usualRangeUsed": "ముద్రించిన పరిధి లేదు; అందువల్ల సాధారణ పరిధి ఉపయోగించబడింది: {range} ({source}).",
+  "@usualRangeUsed": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "usualRangeDiffers": "మీ ల్యాబ్ పరిధి సాధారణ పరిధి ({range}) కంటే భిన్నంగా ఉంది. ల్యాబ్ పరిధినే ఉపయోగిస్తున్నాం.",
+  "@usualRangeDiffers": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "attentionTitle": "శ్రద్ధ అవసరం",
+  "attentionSubtitle": "ల్యాబ్ లేదా సాధారణ పరిధికి బయట ఉంది. ఇది నిర్ధారణ కాదు — వైద్యుడిని సంప్రదించండి.",
+  "attentionBelow": "{value} పరిధి ({range}) కంటే తక్కువగా ఉంది",
+  "@attentionBelow": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "attentionAbove": "{value} పరిధి ({range}) కంటే ఎక్కువగా ఉంది",
+  "@attentionAbove": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "attentionUsualTag": "సాధారణ పరిధి",
+  "noticeReportAttention": "{count, plural, =1{1 పరీక్ష జోడించబడింది} other{{count} పరీక్షలు జోడించబడ్డాయి}} · {attention, plural, =1{1 పరీక్షకు శ్రద్ధ అవసరం} other{{attention} పరీక్షలకు శ్రద్ధ అవసరం}}",
+  "@noticeReportAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "attention": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeReportTimedOut": "ఆ నివేదిక చదవడానికి చాలా సమయం పట్టింది. స్పష్టమైన ఫోటో లేదా తక్కువ పేజీలు ప్రయత్నించండి.",
+  "noticeReportOtherPerson": "ఈ నివేదికలో {name} అని ఉంది. ఇది ఎవరి ప్రొఫైల్‌లో ఉందో తనిఖీ చేయండి.",
+  "@noticeReportOtherPerson": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeReportCancelled": "చదవడం రద్దయింది. ఏదీ భద్రపరచలేదు.",
+  "noticeMemberAdded": "{name} మీ కుటుంబానికి జోడించబడ్డారు.",
+  "@noticeMemberAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reviewAction": "సమీక్షించండి",
+  "cancelReading": "చదవడాన్ని రద్దు చేయండి",
+  "timedOutLine": "చదవడానికి చాలా సమయం పట్టింది. స్పష్టమైన ఫోటో లేదా తక్కువ పేజీలు ప్రయత్నించండి.",
+  "nameMismatchLine": "ఈ నివేదికలో పేరు: {name}. ఇది {member} పేరుతో దాఖలైంది.",
+  "@nameMismatchLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "member": {
+        "type": "String"
+      }
+    }
+  },
+  "keepHere": "ఇక్కడే ఉంచండి",
+  "moveToMember": "{name} వద్దకు మార్చండి",
+  "@moveToMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moveReport": "మార్చండి…",
+  "moveReportTitle": "ఈ నివేదిక ఎవరిది?",
+  "nameMatchesBadge": "పేరు సరిపోలింది",
+  "readingsCount": "{count, plural, =1{1 రీడింగ్} other{{count} రీడింగ్‌లు}}",
+  "@readingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addMemberTitle": "కుటుంబ సభ్యుడిని జోడించండి",
+  "memberNameLabel": "ల్యాబ్ నివేదికల్లో ఉన్న పూర్తి పేరు",
+  "memberNameRequired": "పేరు నమోదు చేయండి",
+  "relationLabel": "సంబంధం",
+  "relationSelf": "మీరు",
+  "relationPartner": "భాగస్వామి",
+  "relationChild": "పిల్లలు",
+  "relationParent": "తల్లిదండ్రులు",
+  "relationSibling": "తోబుట్టువు",
+  "relationGrandparent": "తాతయ్య / నానమ్మ",
+  "relationOther": "ఇతరులు",
+  "ageLabel": "వయసు (సంవత్సరాలు)",
+  "ageInvalid": "0 నుంచి 120 మధ్య వయసు నమోదు చేయండి",
+  "sexLabel": "లింగం",
+  "sexFemale": "స్త్రీ",
+  "sexMale": "పురుషుడు",
+  "sexUnset": "ఎంచుకోలేదు",
+  "sexHelp": "కొన్ని సాధారణ పరిధులు లింగాన్ని బట్టి మారతాయి. లింగం ఎంచుకోకపోతే ఆ పరిధులు ఉపయోగించబడవు.",
+  "saveMember": "సభ్యుడిని జోడించండి",
+  "memberPrivacy": "ఈ ఫోన్‌లో మాత్రమే భద్రపరచబడుతుంది.",
+  "onboardingSkip": "దాటవేయండి",
+  "onboardingNext": "తర్వాత",
+  "onboardingStart": "ప్రారంభించండి",
+  "onboardingTitle1": "ప్రతి ల్యాబ్ నివేదిక ఒకేచోట",
+  "onboardingBody1": "ఫోటో తీయండి, PDF లేదా ఏదైనా ఫైల్ ఎంచుకోండి. ప్రతి పరీక్ష రక్తం, థైరాయిడ్, విటమిన్లు వంటి వర్గాల్లో చేరుతుంది.",
+  "onboardingTitle2": "మీ ఫోన్‌లోనే చదవబడుతుంది",
+  "onboardingBody2": "నివేదికలు ఈ ఫోన్‌లోనే చదవబడతాయి. మీరు Sync నొక్కితే తప్ప ఏదీ పంపబడదు.",
+  "onboardingTitle3": "కుటుంబమంతటికీ ఆరోగ్య సంరక్షణ",
+  "onboardingBody3": "మీరు చూసుకునే ప్రతి ఒక్కరికీ చరిత్రను ఉంచి, కాలక్రమంలో విలువల మార్పును చూడండి.",
+  "welcomeTitle": "వైటలాగ్‌కు స్వాగతం",
+  "continueWithoutAccount": "ఖాతా లేకుండా కొనసాగండి",
+  "showPassword": "పాస్‌వర్డ్ చూపించండి",
+  "hidePassword": "పాస్‌వర్డ్ దాచండి",
+  "statusPlainWithin": "పరిధిలో ఉంది",
+  "statusPlainHigh": "పరిధి కంటే ఎక్కువ",
+  "statusPlainLow": "పరిధి కంటే తక్కువ",
+  "statusPlainReview": "దయచేసి తనిఖీ చేయండి",
+  "onboardingPage": "{count}లో {page}వ పేజీ",
+  "@onboardingPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notNow": "ఇప్పుడు వద్దు",
+  "createPasswordHint": "కనీసం 8 అక్షరాలు",
+  "welcomeBack": "తిరిగి స్వాగతం",
+  "nameCheckNote": "ప్రతి నివేదికలో ముద్రించిన రోగి పేరుతో ఈ పేరును పోలుస్తాం. తప్పు వ్యక్తి కింద దాఖలైన నివేదికను గుర్తించడానికి ఇది సహాయపడుతుంది.",
+  "nameMustInclude": "సరిపోలడానికి నివేదికలో “{name}” ఉండాలి.",
+  "@nameMustInclude": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "nameLooksLikeNickname": "“{name}” ముద్దుపేరులా ఉంది. ల్యాబ్‌లు పూర్తి పేరును ముద్రిస్తాయి; అందువల్ల వాటి నివేదికలు సరిపోలకపోవచ్చు.",
+  "@nameLooksLikeNickname": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

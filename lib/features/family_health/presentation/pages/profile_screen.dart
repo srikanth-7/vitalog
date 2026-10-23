@@ -4,6 +4,7 @@ import '../../../../core/backend/backend.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/sign_in_screen.dart';
 import '../health_presentation.dart';
+import '../widgets/add_member_sheet.dart';
 import '../widgets/display_settings.dart';
 import '../widgets/health_widgets.dart';
 import '../widgets/motion.dart';
@@ -50,8 +51,8 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   const SizedBox(height: 4),
                   OutlinedButton.icon(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.addFamilyMemberSoon))),
+                    key: const ValueKey('add-member'),
+                    onPressed: () => showAddMemberSheet(context),
                     icon: const Icon(Icons.person_add_alt_1),
                     label: Text(l10n.addFamilyMember),
                     style: OutlinedButton.styleFrom(
@@ -82,42 +83,46 @@ class _AccountCard extends StatelessWidget {
     final l10n = context.l10n;
     final c = context.colors;
     // Rebuilds on sign-in / sign-out.
-    return StreamBuilder<Object>(
-      stream: Backend.authChanges,
-      builder: (context, _) {
-        final email = Backend.userEmail;
-        return TapCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(children: [
-            Icon(
-                email == null
-                    ? Icons.cloud_off_outlined
-                    : Icons.cloud_done_outlined,
-                color: c.brand),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Eyebrow(l10n.accountTitle),
-                    const SizedBox(height: 3),
-                    Text(
-                        email == null
-                            ? l10n.signedOutMessage
-                            : l10n.signedInAs(email),
-                        style: TextStyle(color: c.textSecondary, fontSize: 12)),
-                  ]),
-            ),
-            TextButton(
-              onPressed: email == null
-                  ? () => Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => const SignInScreen()))
-                  : Backend.signOut,
-              child: Text(email == null ? l10n.signIn : l10n.signOut),
-            ),
-          ]),
-        );
-      },
+    return ListenableBuilder(
+      listenable: Backend.googleUser,
+      builder: (context, _) => StreamBuilder<Object>(
+        stream: Backend.authChanges,
+        builder: (context, _) {
+          final email = Backend.userEmail;
+          return TapCard(
+            padding: const EdgeInsets.all(16),
+            child: Row(children: [
+              Icon(
+                  email == null
+                      ? Icons.cloud_off_outlined
+                      : Icons.cloud_done_outlined,
+                  color: c.brand),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Eyebrow(l10n.accountTitle),
+                      const SizedBox(height: 3),
+                      Text(
+                          email == null
+                              ? l10n.signedOutMessage
+                              : l10n.signedInAs(email),
+                          style:
+                              TextStyle(color: c.textSecondary, fontSize: 12)),
+                    ]),
+              ),
+              TextButton(
+                onPressed: email == null
+                    ? () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => const SignInScreen()))
+                    : Backend.signOut,
+                child: Text(email == null ? l10n.signIn : l10n.signOut),
+              ),
+            ]),
+          );
+        },
+      ),
     );
   }
 }

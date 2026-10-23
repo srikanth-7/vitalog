@@ -1,0 +1,10 @@
+Greenleaf Diagnostics
+Patient Name: Test Person One   Age/Sex: 40 Y / M
+Collected On: 20/10/2026 08:00   Reported On: 21/10/2026 12:00
+COMPLETE BLOOD COUNT
+Hemoglobin  14.2  g/dL  13.0 - 17.0
+Total Leucocyte Count  7.2  10^3/µL  4.0 - 11.0
+Platelet Count  2,40,000  /cumm  1,50,000 - 4,50,000
+BIOCHEMISTRY
+Glucose, Fasting (FBS)  88  mg/dL  70 - 99
+Creatinine  0.9  mg/dL  0.7 - 1.3

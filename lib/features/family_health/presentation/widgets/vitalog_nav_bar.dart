@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_shape.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class VitalogNavItem {
@@ -9,9 +10,9 @@ class VitalogNavItem {
   final String label;
 }
 
-/// Flat bottom bar with a hairline top edge and a single thin indicator that
-/// springs to the selected tab. Deliberately crisp rather than Material's
-/// soft pill highlight.
+/// Tab row for the floating bottom tray: the selected tab sits on a soft
+/// continuous-corner highlight that springs between tabs. Its radius is
+/// AppRadius.lg, concentric with the tray (xl) around it.
 class VitalogNavBar extends StatelessWidget {
   const VitalogNavBar(
       {super.key,
@@ -29,43 +30,33 @@ class VitalogNavBar extends StatelessWidget {
     // Labels may grow with Simple mode, but not past what fits four tabs.
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.3,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-            color: c.surface, border: Border(top: BorderSide(color: c.border))),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 64,
-            child: LayoutBuilder(builder: (context, box) {
-              final slot = box.maxWidth / items.length;
-              const bar = 28.0;
-              return Stack(children: [
-                AnimatedPositioned(
-                  duration:
-                      still ? Duration.zero : const Duration(milliseconds: 420),
-                  curve: Curves.easeOutBack,
-                  top: 0,
-                  left: slot * selectedIndex + (slot - bar) / 2,
-                  width: bar,
-                  height: 3,
-                  child: DecoratedBox(
-                      decoration: BoxDecoration(
-                          color: c.brand,
-                          borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(3)))),
-                ),
-                Row(children: [
-                  for (final (i, item) in items.indexed)
-                    Expanded(
-                        child: _Tab(
-                            item: item,
-                            selected: i == selectedIndex,
-                            onTap: () => onSelected(i))),
-                ]),
-              ]);
-            }),
-          ),
-        ),
+      child: SizedBox(
+        height: 58,
+        child: LayoutBuilder(builder: (context, box) {
+          final slot = box.maxWidth / items.length;
+          return Stack(children: [
+            AnimatedPositioned(
+              duration:
+                  still ? Duration.zero : const Duration(milliseconds: 380),
+              curve: Curves.easeOutBack,
+              top: 0,
+              bottom: 0,
+              left: slot * selectedIndex,
+              width: slot,
+              child: DecoratedBox(
+                  decoration: AppShape.decoration(
+                      radius: AppRadius.lg, color: c.brandSoft)),
+            ),
+            Row(children: [
+              for (final (i, item) in items.indexed)
+                Expanded(
+                    child: _Tab(
+                        item: item,
+                        selected: i == selectedIndex,
+                        onTap: () => onSelected(i))),
+            ]),
+          ]);
+        }),
       ),
     );
   }

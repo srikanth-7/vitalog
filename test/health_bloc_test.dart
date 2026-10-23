@@ -25,7 +25,8 @@ class _Recognizer extends ReportTextRecognizer {
 
 void main() {
   late Directory dir;
-  setUp(() async => dir = await Directory.systemTemp.createTemp('vitalog_bloc'));
+  setUp(
+      () async => dir = await Directory.systemTemp.createTemp('vitalog_bloc'));
   tearDown(() => dir.delete(recursive: true));
 
   Future<HealthBloc> loadedBloc(List<String> ocrLines) async {

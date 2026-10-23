@@ -24,9 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navFamily => 'Family';
 
   @override
-  String loadFailed(String message) {
-    return 'Could not load family health: $message';
-  }
+  String get loadFailed => 'Could not load family health. Please try again.';
 
   @override
   String get tryAgain => 'Try again';
@@ -284,7 +282,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addReportSheetTitle => 'Add a lab report';
 
   @override
-  String get takePhoto => 'Take a photo';
+  String get takePhoto => 'Scan with camera';
 
   @override
   String get choosePhoto => 'Choose from Photos';
@@ -376,12 +374,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addFamilyMember => 'Add family member';
 
   @override
-  String get addFamilyMemberSoon =>
-      'Adding family members will be available soon.';
-
-  @override
   String get sampleDataNote =>
-      'Family profiles are sample data in this prototype. Uploaded reports are stored on this phone.';
+      'The first four profiles are sample data. Members you add and reports you upload stay on this phone.';
 
   @override
   String get accountTitle => 'Account';
@@ -451,9 +445,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordTooShort => 'Use at least 8 characters';
 
   @override
-  String authFailed(String message) {
-    return 'Couldn\'t sign in: $message';
-  }
+  String get authFailed =>
+      'Could not sign in. Check your details and try again.';
 
   @override
   String categoryName(String id) {
@@ -505,6 +498,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldRange => 'Reference range';
 
   @override
+  String get fieldRangeHint => 'For example, 0.4 - 4.0';
+
+  @override
   String get fieldRequired => 'Enter what\'s printed on the report';
 
   @override
@@ -524,14 +520,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkAndFix => 'Check & fix';
 
   @override
+  String get looksRight => 'Looks right';
+
+  @override
+  String get statusCheckedNoRange => 'Checked · no range';
+
+  @override
   String get noticeResultEdited =>
       'Saved. Status updated from the printed range.';
+
+  @override
+  String get noticeResultChecked => 'Marked as checked.';
+
+  @override
+  String get noticeReportDuplicate => 'You\'ve already added this report.';
 
   @override
   String get viewReport => 'View';
 
   @override
-  String get readingSecurely => 'Reading on this phone · encrypted';
+  String get readingSecurely => 'Reading on this phone';
 
   @override
   String get splashTagline => 'A clearer picture, together.';
@@ -563,7 +571,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeHint =>
-      'Bigger text and buttons, fewer things on screen.';
+      'Bigger, bolder text and buttons, plain words, fewer things on screen.';
 
   @override
   String get testedHeading => 'Tested';
@@ -623,6 +631,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get languageTitle => 'Language';
+
+  @override
+  String get languageSystem => 'Device language';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageTelugu => 'తెలుగు';
+
+  @override
   String get accentTitle => 'Accent colour';
 
   @override
@@ -664,8 +684,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       total,
       locale: localeName,
-      other: 'of $total latest results within lab range',
-      one: 'of 1 latest result within lab range',
+      other: 'of $total latest results within range',
+      one: 'of 1 latest result within range',
     );
     return '$_temp0';
   }
@@ -743,4 +763,263 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteReportConfirm => 'Delete Report';
+
+  @override
+  String get statusWithinUsual => 'Within usual range';
+
+  @override
+  String get statusHighUsual => 'High · usual range';
+
+  @override
+  String get statusLowUsual => 'Low · usual range';
+
+  @override
+  String usualRangeUsed(String range, String source) {
+    return 'No range was printed, so the usual range was used: $range ($source).';
+  }
+
+  @override
+  String usualRangeDiffers(String range) {
+    return 'Your lab\'s range differs from the usual range ($range). Your lab\'s range is used.';
+  }
+
+  @override
+  String get attentionTitle => 'Needs attention';
+
+  @override
+  String get attentionSubtitle =>
+      'Outside the lab\'s range or the usual range. Not a diagnosis — talk to your doctor.';
+
+  @override
+  String attentionBelow(String value, String range) {
+    return '$value is below the range ($range)';
+  }
+
+  @override
+  String attentionAbove(String value, String range) {
+    return '$value is above the range ($range)';
+  }
+
+  @override
+  String get attentionUsualTag => 'usual range';
+
+  @override
+  String noticeReportAttention(int count, int attention) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tests added',
+      one: '1 test added',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      attention,
+      locale: localeName,
+      other: '$attention need attention',
+      one: '1 needs attention',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
+  String get noticeReportTimedOut =>
+      'That report took too long to read. Try a clearer photo or fewer pages.';
+
+  @override
+  String noticeReportOtherPerson(String name) {
+    return 'This report says $name. Check who it\'s filed under.';
+  }
+
+  @override
+  String get noticeReportCancelled => 'Reading cancelled. Nothing was kept.';
+
+  @override
+  String noticeMemberAdded(String name) {
+    return '$name added to your family.';
+  }
+
+  @override
+  String get reviewAction => 'Review';
+
+  @override
+  String get cancelReading => 'Cancel reading';
+
+  @override
+  String get timedOutLine =>
+      'Took too long to read. Try a clearer photo or fewer pages.';
+
+  @override
+  String nameMismatchLine(String name, String member) {
+    return 'Name on this report: $name. It\'s filed under $member.';
+  }
+
+  @override
+  String get keepHere => 'Keep here';
+
+  @override
+  String moveToMember(String name) {
+    return 'Move to $name';
+  }
+
+  @override
+  String get moveReport => 'Move to…';
+
+  @override
+  String get moveReportTitle => 'Whose report is this?';
+
+  @override
+  String get nameMatchesBadge => 'Name matches';
+
+  @override
+  String readingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count readings',
+      one: '1 reading',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addMemberTitle => 'Add family member';
+
+  @override
+  String get memberNameLabel => 'Full name, as on lab reports';
+
+  @override
+  String get memberNameRequired => 'Enter a name';
+
+  @override
+  String get relationLabel => 'Relation';
+
+  @override
+  String get relationSelf => 'You';
+
+  @override
+  String get relationPartner => 'Partner';
+
+  @override
+  String get relationChild => 'Child';
+
+  @override
+  String get relationParent => 'Parent';
+
+  @override
+  String get relationSibling => 'Sibling';
+
+  @override
+  String get relationGrandparent => 'Grandparent';
+
+  @override
+  String get relationOther => 'Other';
+
+  @override
+  String get ageLabel => 'Age (years)';
+
+  @override
+  String get ageInvalid => 'Enter an age from 0 to 120';
+
+  @override
+  String get sexLabel => 'Sex';
+
+  @override
+  String get sexFemale => 'Female';
+
+  @override
+  String get sexMale => 'Male';
+
+  @override
+  String get sexUnset => 'Not set';
+
+  @override
+  String get sexHelp =>
+      'Some usual ranges differ by sex. If it\'s not set, those ranges aren\'t used.';
+
+  @override
+  String get saveMember => 'Add member';
+
+  @override
+  String get memberPrivacy => 'Saved on this phone only.';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingStart => 'Get started';
+
+  @override
+  String get onboardingTitle1 => 'Every lab report, in one place';
+
+  @override
+  String get onboardingBody1 =>
+      'Take a photo, pick a PDF or any file. Each test is sorted into Blood, Thyroid, Vitamins and more.';
+
+  @override
+  String get onboardingTitle2 => 'Read right on your phone';
+
+  @override
+  String get onboardingBody2 =>
+      'Reports are read here, on this phone. Nothing is sent anywhere unless you tap Sync.';
+
+  @override
+  String get onboardingTitle3 => 'Care for the whole family';
+
+  @override
+  String get onboardingBody3 =>
+      'Keep a timeline for everyone you look after and see how each value changes over time.';
+
+  @override
+  String get welcomeTitle => 'Welcome to Vitalog';
+
+  @override
+  String get continueWithoutAccount => 'Continue without an account';
+
+  @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
+  String get statusPlainWithin => 'In range';
+
+  @override
+  String get statusPlainHigh => 'Higher than range';
+
+  @override
+  String get statusPlainLow => 'Lower than range';
+
+  @override
+  String get statusPlainReview => 'Please check';
+
+  @override
+  String onboardingPage(int page, int count) {
+    return 'Page $page of $count';
+  }
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get createPasswordHint => 'At least 8 characters';
+
+  @override
+  String get welcomeBack => 'Welcome back';
+
+  @override
+  String get nameCheckNote =>
+      'This name is checked against the patient name printed on every report, so a report filed under the wrong person gets flagged.';
+
+  @override
+  String nameMustInclude(String name) {
+    return 'Reports must include “$name” to match.';
+  }
+
+  @override
+  String nameLooksLikeNickname(String name) {
+    return '“$name” looks like a nickname. Labs print the real name, so their reports won\'t match.';
+  }
 }

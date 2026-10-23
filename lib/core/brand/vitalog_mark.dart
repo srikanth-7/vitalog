@@ -10,6 +10,15 @@ abstract final class VitalogBrand {
   static const mint = Color(0xFF8FE3C8);
   static const coral = Color(0xFFF4A98B);
   static const chalk = Color(0xFFFFFFFF);
+
+  /// Full-screen brand backdrop shared by onboarding and sign-in, so moving
+  /// from one to the other keeps the same green behind everything.
+  static const backdrop = BoxDecoration(
+      gradient: RadialGradient(
+          center: Alignment(0, -.45),
+          radius: 1.2,
+          colors: [top, hero, deep],
+          stops: [0, .5, 1]));
 }
 
 /// The Vitalog mark: a pulse trace whose dip and spike form a "V", drawn over

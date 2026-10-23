@@ -17,6 +17,7 @@ import 'package:vitalog/features/family_health/presentation/widgets/health_widge
 import 'package:vitalog/features/family_health/presentation/widgets/vitalog_nav_bar.dart';
 import 'package:vitalog/core/theme/app_theme.dart';
 import 'package:vitalog/main.dart';
+import 'package:vitalog/core/settings/settings_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class _FakeRecognizer extends ReportTextRecognizer {
@@ -70,7 +71,9 @@ void main() {
   tearDown(() => dir.delete(recursive: true));
 
   testWidgets('dashboard switches family profiles', (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
 
     expect(find.text('Maya Sharma'), findsOneWidget);
@@ -90,7 +93,9 @@ void main() {
 
   testWidgets('uploaded report is read, listed and opens its own dashboard',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     await tester.tap(nav('Reports'));
     await tester.pumpAndSettle();
@@ -129,7 +134,9 @@ void main() {
 
   testWidgets('"See all" opens the Categories tab, not one category',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     await tester.scrollUntilVisible(find.text('See all'), 300,
         scrollable: homeList());
@@ -143,7 +150,9 @@ void main() {
 
   testWidgets('home sections can be hidden and Simple mode enlarges text',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     // The charts sit above the grid, so scroll down to it.
     await tester.scrollUntilVisible(find.text('Health categories'), 300,
@@ -177,11 +186,16 @@ void main() {
     expect(find.byKey(const ValueKey('simple-add-report')), findsOneWidget);
     final scaler = MediaQuery.textScalerOf(tester.element(nav('Home')));
     expect(scaler.scale(10), greaterThanOrEqualTo(13));
+    expect(MediaQuery.boldTextOf(tester.element(nav('Home'))), isTrue);
+    // Plain words on status pills ("Higher than range", not "High · per report").
+    expect(find.textContaining('per report'), findsNothing);
   });
 
   testWidgets('a wrongly read value can be corrected and is re-judged',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     await tester.runAsync(() async {
       final source = File('${dir.path}/scan.jpg')
@@ -205,7 +219,9 @@ void main() {
                 matching: find.byType(Scrollable))
             .first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Triglycerides'));
+    // It's listed under "Needs attention" too (210 vs < 150); either opens it.
+    expect(find.text('Triglycerides'), findsNWidgets(2));
+    await tester.tap(find.text('Triglycerides').last);
     await tester.pumpAndSettle();
     expect(find.text('High · per report'), findsOneWidget);
 
@@ -227,7 +243,9 @@ void main() {
 
   testWidgets('categories list tested groups first, then yet to test',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     await tester.tap(nav('Categories'));
     await tester.pumpAndSettle();
@@ -244,7 +262,9 @@ void main() {
 
   testWidgets('theme mode and accent can be chosen in Display settings',
       (tester) async {
-    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
     await settle(tester);
     await tester.tap(nav('Family'));
     await tester.pumpAndSettle();
@@ -261,5 +281,68 @@ void main() {
     final theme = Theme.of(tester.element(nav('Home')));
     expect(theme.brightness, Brightness.dark);
     expect(theme.extension<AppColors>()!.brand, ThemeAccent.ocean.dark.$1);
+  });
+
+  testWidgets('first launch: welcome pages, then sign-in offer, then app',
+      (tester) async {
+    // The welcome pictures loop, so pump frames instead of settling.
+    Future<void> frames() async {
+      for (var i = 0; i < 8; i++) {
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+    }
+
+    await tester.pumpWidget(FamilyHealthApp(repository: repository));
+    await frames();
+    expect(find.bySemanticsLabel('Every lab report, in one place'),
+        findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('onboarding-next')));
+    await frames();
+    await tester.tap(find.byKey(const ValueKey('onboarding-next')));
+    await frames();
+    expect(find.text('Get started'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('onboarding-next')));
+    await frames();
+    expect(find.text('Welcome to Vitalog'), findsOneWidget);
+    // Email and password on the glass card, Google below it.
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.byKey(const ValueKey('google-sign-in')), findsOneWidget);
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('continue-offline')), 200,
+        scrollable: find.byType(Scrollable).first);
+    await frames();
+    await tester.tap(find.byKey(const ValueKey('continue-offline')));
+    await settle(tester);
+    expect(find.byType(VitalogNavBar), findsOneWidget);
+  });
+
+  testWidgets('a family member can be added and is selected', (tester) async {
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: repository));
+    await settle(tester);
+    // From the bottom dock: who am I looking at → add someone.
+    await tester.tap(find.byKey(const ValueKey('member-switch')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add family member').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('member-name')), 'Ravi Kumar');
+    // The name is checked against reports, and the form says so as you type.
+    await tester.pump();
+    expect(find.text('Reports must include “Ravi” to match.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('member-age')), 120,
+        scrollable: find.byType(Scrollable).last);
+    await tester.enterText(find.byKey(const ValueKey('member-age')), '61');
+    await tester.ensureVisible(find.byKey(const ValueKey('save-member')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('save-member')));
+    await settle(tester);
+    await settle(tester); // read members, save, reload: more I/O rounds
+    expect(find.text('Ravi Kumar'), findsWidgets);
+    expect(find.text('Ravi Kumar added to your family.'), findsOneWidget);
   });
 }

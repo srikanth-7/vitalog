@@ -16,17 +16,28 @@ enum HealthNoticeKind {
   reportNeedsReview,
   reportFailed,
   reportUnsupported,
+  reportTimedOut,
+  reportOtherPerson,
+  reportCancelled,
+  memberAdded,
   synced,
   nothingToSync,
   syncFailed,
   resultEdited,
+  resultChecked,
+  reportDuplicate,
   signInRequired,
   backendNotConfigured,
 }
 
 /// A one-off message for the UI (snackbar). [serial] makes repeats distinct.
 class HealthNotice {
-  HealthNotice(this.kind, {this.count = 0, this.unfiled = 0, this.reportId})
+  HealthNotice(this.kind,
+      {this.count = 0,
+      this.unfiled = 0,
+      this.attention = 0,
+      this.reportId,
+      this.name})
       : serial = _next++;
   final HealthNoticeKind kind;
   final int count;
@@ -34,8 +45,14 @@ class HealthNotice {
   /// Results in the report the app couldn't file under a category.
   final int unfiled;
 
+  /// Results outside their range (printed or usual) in the report.
+  final int attention;
+
   /// The report a "finished reading" notice is about, so it can be opened.
   final String? reportId;
+
+  /// The patient name printed on the report, or the member just added.
+  final String? name;
   final int serial;
   static int _next = 0;
 }

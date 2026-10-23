@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:path_provider/path_provider.dart';
 
 import '../theme/app_theme.dart';
@@ -20,12 +20,26 @@ enum HomeSection {
   rangeNote
 }
 
+/// App language preference. [system] follows the device when supported.
+enum AppLanguage { system, english, telugu }
+
+extension AppLanguageLocale on AppLanguage {
+  Locale? get locale => switch (this) {
+    AppLanguage.system => null,
+    AppLanguage.english => const Locale('en'),
+    AppLanguage.telugu => const Locale('te'),
+  };
+}
+
 class AppSettings {
   const AppSettings(
       {this.simpleMode = false,
       this.hidden = const {},
       this.themeMode = ThemeMode.system,
-      this.accent = ThemeAccent.vitalog});
+      this.language = AppLanguage.system,
+      this.accent = ThemeAccent.vitalog,
+      this.onboarded = false,
+      this.loaded = false});
 
   /// Larger text and buttons, fewer things on screen, plain-language
   /// statuses. Meant for older family members.
@@ -34,7 +48,14 @@ class AppSettings {
 
   /// System follows the phone's light/dark setting.
   final ThemeMode themeMode;
+  final AppLanguage language;
   final ThemeAccent accent;
+
+  /// The welcome screens (and first sign-in offer) have been seen.
+  final bool onboarded;
+
+  /// settings.json has been read (or found missing). Not saved.
+  final bool loaded;
 
   bool shows(HomeSection section) => !hidden.contains(section);
 
@@ -42,18 +63,26 @@ class AppSettings {
           {bool? simpleMode,
           Set<HomeSection>? hidden,
           ThemeMode? themeMode,
-          ThemeAccent? accent}) =>
+          AppLanguage? language,
+          ThemeAccent? accent,
+          bool? onboarded,
+          bool? loaded}) =>
       AppSettings(
           simpleMode: simpleMode ?? this.simpleMode,
           hidden: hidden ?? this.hidden,
           themeMode: themeMode ?? this.themeMode,
-          accent: accent ?? this.accent);
+          language: language ?? this.language,
+          accent: accent ?? this.accent,
+          onboarded: onboarded ?? this.onboarded,
+          loaded: loaded ?? this.loaded);
 
   Map<String, dynamic> toJson() => {
         'simpleMode': simpleMode,
         'hidden': [for (final s in hidden) s.name],
         'themeMode': themeMode.name,
+        'language': language.name,
         'accent': accent.name,
+        'onboarded': onboarded,
       };
 
   static AppSettings fromJson(Map<String, dynamic> j) => AppSettings(
@@ -66,6 +95,10 @@ class AppSettings {
                 .where((m) => m.name == j['themeMode'])
                 .firstOrNull ??
             ThemeMode.system,
+        language: AppLanguage.values
+                .where((language) => language.name == j['language'])
+                .firstOrNull ??
+            AppLanguage.system,
         // 'fammo' is the accent's name before the app became Vitalog.
         accent: ThemeAccent.values
                 .where((a) =>
@@ -73,15 +106,19 @@ class AppSettings {
                     (j['accent'] == 'fammo' ? 'vitalog' : j['accent']))
                 .firstOrNull ??
             ThemeAccent.vitalog,
+        // ponytail: for now every launch starts at onboarding (owner's
+        // request, 2026-10-23). To remember it again:
+        // onboarded: j['onboarded'] == true,
+        onboarded: false,
       );
 }
 
 /// Display preferences, kept on this phone in settings.json. Not health
 /// data, so not encrypted.
 class SettingsCubit extends Cubit<AppSettings> {
-  SettingsCubit({Future<Directory> Function()? directory})
+  SettingsCubit({Future<Directory> Function()? directory, AppSettings? initial})
       : _directory = directory ?? getApplicationDocumentsDirectory,
-        super(const AppSettings()) {
+        super(initial ?? const AppSettings()) {
     _load();
   }
 
@@ -94,16 +131,23 @@ class SettingsCubit extends Cubit<AppSettings> {
     try {
       final file = await _file;
       if (await file.exists()) {
-        emit(AppSettings.fromJson(jsonDecode(await file.readAsString())));
+        emit(AppSettings.fromJson(jsonDecode(await file.readAsString()))
+            .copyWith(loaded: true));
       }
     } catch (_) {
       // Unreadable or unavailable (e.g. tests): keep the defaults.
     }
+    if (!state.loaded) emit(state.copyWith(loaded: true));
   }
+
+  void completeOnboarding() => _update(state.copyWith(onboarded: true));
 
   void setSimpleMode(bool on) => _update(state.copyWith(simpleMode: on));
 
   void setThemeMode(ThemeMode mode) => _update(state.copyWith(themeMode: mode));
+
+  void setLanguage(AppLanguage language) =>
+      _update(state.copyWith(language: language));
 
   void setAccent(ThemeAccent accent) => _update(state.copyWith(accent: accent));
 

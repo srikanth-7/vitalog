@@ -16,6 +16,65 @@ String sectionLabel(AppLocalizations l10n, HomeSection s) => switch (s) {
       HomeSection.rangeNote => l10n.sectionRangeNote,
     };
 
+String languageLabel(AppLocalizations l10n, AppLanguage language) =>
+    switch (language) {
+      AppLanguage.system => l10n.languageSystem,
+      AppLanguage.english => l10n.languageEnglish,
+      AppLanguage.telugu => l10n.languageTelugu,
+    };
+
+/// Let the user choose the language used throughout the app.
+Future<void> showLanguageSheet(BuildContext context) {
+  final cubit = context.read<SettingsCubit>();
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => BlocProvider.value(
+      value: cubit,
+      child: BlocBuilder<SettingsCubit, AppSettings>(
+        builder: (context, settings) {
+          final l10n = context.l10n;
+          final languages = AppLanguage.values;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      l10n.languageTitle,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  for (final language in languages)
+                    RadioListTile<AppLanguage>(
+                      key: ValueKey('language-${language.name}'),
+                      value: language,
+                      groupValue: settings.language,
+                      title: Text(languageLabel(l10n, language)),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        HapticFeedback.selectionClick();
+                        cubit.setLanguage(value);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
+
 /// Show / hide switches for each Home section.
 Future<void> showCustomizeHomeSheet(BuildContext context) {
   final cubit = context.read<SettingsCubit>();
@@ -84,13 +143,16 @@ class DisplaySettingsCard extends StatelessWidget {
     final l10n = context.l10n;
     final c = context.colors;
     final simple = context.select((SettingsCubit s) => s.state.simpleMode);
+    final language = context.select((SettingsCubit s) => s.state.language);
     return Container(
       clipBehavior: Clip.antiAlias, // keep list-tile ink inside the corners
       decoration: AppShape.decoration(
           radius: AppRadius.lg,
           color: c.surface,
           side: BorderSide(color: c.border)),
-      child: Column(children: [
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: [
         SwitchListTile(
           key: const ValueKey('simple-mode'),
           secondary: Icon(Icons.text_increase, color: c.brand),
@@ -113,12 +175,23 @@ class DisplaySettingsCard extends StatelessWidget {
         ),
         Divider(height: 1, color: c.border),
         ListTile(
+          key: const ValueKey('language-settings'),
+          leading: Icon(Icons.language_outlined, color: c.brand),
+          title: Text(l10n.languageTitle),
+          subtitle: Text(languageLabel(l10n, language)),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => showLanguageSheet(context),
+        ),
+        Divider(height: 1, color: c.border),
+        ListTile(
+          key: const ValueKey('customize-home'),
           leading: Icon(Icons.dashboard_customize_outlined, color: c.brand),
           title: Text(l10n.customizeHome),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => showCustomizeHomeSheet(context),
         ),
-      ]),
+        ]),
+      ),
     );
   }
 }

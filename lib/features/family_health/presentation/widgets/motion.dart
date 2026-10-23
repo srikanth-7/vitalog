@@ -1,3 +1,5 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/settings/settings_cubit.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -66,7 +68,12 @@ class CountUpText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final target = double.tryParse(value);
-    if (target == null || _still(context)) return Text(value, style: style);
+    // Simple mode: the real number straight away, never a moving one.
+    if (target == null ||
+        _still(context) ||
+        context.select((SettingsCubit s) => s.state.simpleMode)) {
+      return Text(value, style: style);
+    }
     final decimals = value.contains('.') ? value.split('.').last.length : 0;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: target),

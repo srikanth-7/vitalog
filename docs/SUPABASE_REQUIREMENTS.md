@@ -1,3 +1,5 @@
+> **Superseded for reports and profiles:** sharing is end-to-end encrypted — use the sealed schema in `docs/SHARING.md`. The plaintext `reports` / `lab_results` tables below are the old Sync and must not receive real data.
+
 # Supabase requirements — Vitalog
 
 What the Flutter app expects from Supabase. The app is **offline-first**: all

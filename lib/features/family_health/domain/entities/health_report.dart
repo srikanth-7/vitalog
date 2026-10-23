@@ -14,6 +14,9 @@ class HealthReport {
     this.filePath,
     this.synced = false,
     this.unsupported = false,
+    this.timedOut = false,
+    this.patientName,
+    this.fileHash,
   });
 
   final String id;
@@ -36,7 +39,21 @@ class HealthReport {
   /// old .doc…). Kept on the phone only; the server just sees "failed".
   final bool unsupported;
 
+  /// Failed because reading took longer than the repository's time limit.
+  final bool timedOut;
+
+  /// The patient name printed on the report, used only to warn when it was
+  /// filed under someone else. Phone-only; never synced. Cleared once the
+  /// user confirms who the report belongs to.
+  final String? patientName;
+
+  /// SHA-256 of the original file, to spot the same file added twice.
+  /// Phone-only: on a server it would let anyone holding a report file
+  /// confirm it's stored there.
+  final String? fileHash;
+
   HealthReport copyWith({
+    String? profileId,
     String? lab,
     DateTime? reportDate,
     DateTime? collectionDate,
@@ -44,10 +61,13 @@ class HealthReport {
     int? resultCount,
     bool? synced,
     bool? unsupported,
+    bool? timedOut,
+    String? patientName,
+    bool clearPatientName = false,
   }) =>
       HealthReport(
         id: id,
-        profileId: profileId,
+        profileId: profileId ?? this.profileId,
         fileName: fileName,
         lab: lab ?? this.lab,
         reportDate: reportDate ?? this.reportDate,
@@ -58,5 +78,9 @@ class HealthReport {
         filePath: filePath,
         synced: synced ?? this.synced,
         unsupported: unsupported ?? this.unsupported,
+        timedOut: timedOut ?? this.timedOut,
+        patientName:
+            clearPatientName ? null : (patientName ?? this.patientName),
+        fileHash: fileHash,
       );
 }

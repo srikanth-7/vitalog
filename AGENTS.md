@@ -63,8 +63,9 @@ flutter run --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
 Without the two `--dart-define`s the app runs fully offline; Sync and Sign-in
 show "Cloud sync isn't set up in this build yet."
 
-Running on a **physical iPhone** needs an Apple ID team in Xcode signing and
-the bundle id `com.vitalog.app` (must be unique to your Apple team).
+Running on a **physical iPhone** needs an Apple ID team in Xcode signing.
+Bundle id / Android applicationId: `com.app.vitalog.dev` (matches the Google
+config files). The auth deep-link scheme stays `com.vitalog.app://login-callback`.
 
 ## Layout
 
@@ -185,6 +186,16 @@ left to review. Decrypted originals never touch disk: OCR and the
   damped `SpringCurve`) for item actions; `showDestructiveSheet` (action-sheet
   style, explains exactly what is removed, separate Cancel) before anything
   irreversible. No Material `PopupMenuButton` / `AlertDialog` for these.
+- **Reference ranges** (`domain/reference/`): built-in usual ranges (WHO,
+  Indian, ADA/RSSDI, ATP III, KDIGO) compiled as `const` — the sole source
+  is docs/REFERENCE_RANGES.md. Rules: the printed range always wins;
+  `FamilyHealthRepositoryImpl._judgeByUsualRange` applies a usual range only
+  when none is printed and records `usualRange`/`usualSource` on the result
+  (phone-only, never synced); never guess sex, age band or unit. Future API
+  tables must pass `verifyRangeTable` (Ed25519 + no downgrade). Labels: use
+  `statusLabel(..., usual:)` — never say "per report" for usual-range calls.
+  The "Needs attention" list and upload notice count high/low results; no
+  confetti when anything needs attention.
 - **Dashboard charts** (`presentation/widgets/health_charts.dart`, Home
   sections `overview` and `trends`): an "At a glance" card (hero count of
   latest results within range + status stacked bar + icon/label/count legend)
@@ -202,7 +213,9 @@ left to review. Decrypted originals never touch disk: OCR and the
 - **Display settings:** `lib/core/settings/settings_cubit.dart` (plain
   `settings.json`, not health data). Simple mode = text ≥1.3× (linear scaler;
   a clamped one asserts inside NavigationBar), big "Add a report" button,
-  categories grid hidden. `HomeSection` toggles hide Home sections; hidden
+  categories grid hidden, bold text, darker greys (`AppColors.legible`), 56 px
+  buttons / bigger icons (`AppTheme.simple`), plain status words
+  (`statusLabel(plain:)`), numbers shown without count-up, notices up 10 s. `HomeSection` toggles hide Home sections; hidden
   sections are not built, so their work is skipped. Only the family Home obeys
   them; a single report's dashboard always shows everything.
 - **Categories are predefined** in `domain/health_categories.dart` (with each
@@ -242,6 +255,12 @@ left to review. Decrypted originals never touch disk: OCR and the
 - **Decided (2026-10-22):** after sync, everything stays on the phone (Sync
   is a backup; originals never upload). Family member names stay on the
   phone; the server only sees opaque `profile_id`s.
+- **Decided (2026-10-23): sharing is end-to-end encrypted** — see
+  `docs/SHARING.md`. No ownership (equal access); "You" is per account; the
+  server stores only sealed data; no email matching; invites are links with
+  the secret in the `#fragment`. Crypto core: `data/sharing/sharing_crypto.dart`
+  (+ `test/privacy/sharing_crypto_test.dart`). Today's plaintext Sync is to be
+  replaced by sealed Sync v2 before real data is synced.
 
 ## Any file type, Android
 
@@ -258,3 +277,48 @@ left to review. Decrypted originals never touch disk: OCR and the
   `memfd` (Android 11+) or an immediately-unlinked cache file, rows grouped
   like `ReportOcrPlugin.rows()` on iOS. The old root-level
   build.gradle/settings.gradle/app/ is unused; delete it when convenient.
+
+## Onboarding, sign-in, members, scan control
+
+- **First launch** (`features/onboarding/onboarding_screen.dart`): 3 welcome
+  pages whose illustrations assemble with the swipe and idle-loop (active page
+  only), then `SignInScreen(onDone:)` with "Continue without an account".
+  `AppSettings.onboarded` (settings.json) gates it; tests pass
+  `initialSettings: AppSettings(onboarded: true)`.
+- **Google sign-in is native** (`google_sign_in` → `signInWithIdToken`).
+  iOS client id = `GIDClientID` in Info.plist; web client id =
+  `Backend.googleWebClientId`. Supabase Google provider must list both client
+  ids and have "Skip nonce check" on. Android needs the app's SHA-1 added in
+  Firebase (google-services.json has no Android OAuth client yet). The config
+  files are git-ignored.
+- **Members** added on the Family tab are saved encrypted in `members.json`
+  (birth year, so age stays current); sample members still come first.
+  `FamilyHealthRepositoryImpl.addMember` is where the members API call goes.
+- **Wrong person?** The parser reads the printed patient name (phone-only
+  `HealthReport.patientName`); `FamilyMember.matchesPrintedName` needs the
+  first name (a shared surname isn't enough). The timeline offers Keep here /
+  Move to…, both via `assignReport`, which also re-judges usual ranges.
+- **Scan control:** reading times out after 90 s (`timedOut`, Try again);
+  Cancel deletes the report, and `processReport` returns null and saves
+  nothing if the report vanished while reading.
+- **Categories** show one tile per test (latest value + "N readings"); the
+  test page lists every dated value, charting only same-unit ones.
+
+## Thumb-zone layout (big phones)
+
+- **Bottom tray:** one floating, inset container (AppRadius.xl) holding the
+  dock row and the tabs. Everything inside is concentric: radius
+  AppRadius.lg at a 6 px inset (`_trayInset`); the selected tab is an lg
+  highlight. Nested shapes elsewhere follow the same rule: inner = outer − gap.
+- **Read at the top, act at the bottom.** Primary actions live in the bottom
+  dock (`_ActionDock` in `dash_board_screen.dart`): member switcher (always
+  shows who you're viewing; tap → sheet, incl. "Add family member"), Sync
+  chip on Reports, Add report. Hidden on the Family tab.
+- Item actions: long-press → bottom sheet (`_showEntryActions`); the ⋯ menu
+  stays for discoverability. Test detail's Edit is a bottom bar.
+- Switching member from the dock keeps the tab; from the Family list → Home.
+- Home order: greeting → At a glance / Needs attention → trends → latest
+  report → categories → recent. Page titles have no eyebrow (name is in the
+  dock), subtitles max 2 lines.
+- Reports timeline: pull to refresh (`RefreshHealthData`, no loading flash);
+  status pill pops (easeOutBack) when reading finishes.

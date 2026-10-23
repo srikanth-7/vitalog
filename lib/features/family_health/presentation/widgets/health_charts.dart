@@ -33,6 +33,9 @@ class StatusTally {
       switch (r.status) {
         case ResultStatus.withinRange:
           good++;
+        // Checked by the user but no range: nothing to judge or review.
+        case ResultStatus.needsReview when r.reviewed:
+          continue;
         case ResultStatus.needsReview:
           review++;
         case ResultStatus.high || ResultStatus.low:
@@ -70,7 +73,10 @@ List<TestTrend> trendsFor(List<LabResult> results, {int max = 6}) {
     if (group.length < 2) continue;
     group.sort((a, b) => a.reportDate.compareTo(b.reportDate));
     final latest = group.last;
-    final (low, high) = parseRange(latest.referenceRange);
+    // The printed range, or the usual range that judged it.
+    final (low, high) = parseRange(latest.referenceRange.isNotEmpty
+        ? latest.referenceRange
+        : (latest.usualRange ?? ''));
     trends.add(TestTrend(
       points: [for (final r in group) (r.reportDate, double.parse(r.value))],
       latest: latest,
@@ -507,4 +513,100 @@ class _SparklinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_SparklinePainter old) =>
       old.t != t || old.trend != trend || old.dot != dot || old.line != line;
+}
+
+// ---- needs attention ---------------------------------------------------------
+
+/// Latest results outside their range, one plain sentence each, e.g.
+/// "7 ng/mL is below the range (30–100 ng/mL · usual range)". Tap → history.
+class AttentionList extends StatelessWidget {
+  const AttentionList({super.key, required this.results, required this.onTap});
+
+  /// Latest value per test; only high/low ones are shown.
+  final List<LabResult> results;
+  final ValueChanged<LabResult> onTap;
+
+  static List<LabResult> pick(List<LabResult> latest) => [
+        for (final r in latest)
+          if (r.status == ResultStatus.high || r.status == ResultStatus.low) r
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    return TapCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.error_outline_rounded, size: 18, color: c.chartOut),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(l10n.attentionTitle,
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                    fontSize: 15)),
+          ),
+        ]),
+        const SizedBox(height: 4),
+        Text(l10n.attentionSubtitle,
+            style: TextStyle(color: c.textMuted, fontSize: 11.5, height: 1.35)),
+        const SizedBox(height: 6),
+        for (final (i, r) in results.indexed) ...[
+          if (i > 0) Divider(height: 1, color: c.border),
+          _AttentionRow(result: r, onTap: () => onTap(r)),
+        ],
+      ]),
+    );
+  }
+}
+
+class _AttentionRow extends StatelessWidget {
+  const _AttentionRow({required this.result, required this.onTap});
+  final LabResult result;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    final value = '${result.value} ${result.unit}'.trim();
+    final range = result.referenceRange.isNotEmpty
+        ? result.referenceRange
+        : '${result.usualRange ?? ''} · ${l10n.attentionUsualTag}';
+    final sentence = result.status == ResultStatus.low
+        ? l10n.attentionBelow(value, range)
+        : l10n.attentionAbove(value, range);
+    return Semantics(
+      button: true,
+      label: '${result.name}. $sentence',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(children: [
+            Icon(statusIcon(result.status), size: 18, color: c.chartOut),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(result.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: c.textPrimary,
+                            fontSize: 13.5)),
+                    const SizedBox(height: 2),
+                    Text(sentence,
+                        style: TextStyle(
+                            color: c.textSecondary, fontSize: 12, height: 1.3)),
+                  ]),
+            ),
+            Icon(Icons.chevron_right, color: c.textMuted, size: 18),
+          ]),
+        ),
+      ),
+    );
+  }
 }

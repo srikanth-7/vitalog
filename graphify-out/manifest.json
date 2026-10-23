@@ -42,21 +42,21 @@
     "semantic_hash": ""
   },
   "lib/core/backend/backend.dart": {
-    "mtime": 1792657873.0844378,
-    "seen": 1792658217.94927,
-    "ast_hash": "65adb8a2c4d9c250cf7bd77432a95a87",
+    "mtime": 1792725597.8446965,
+    "seen": 1792726257.2169468,
+    "ast_hash": "3d1b52391deb3419d084749d106bb0c6",
     "semantic_hash": ""
   },
   "lib/core/theme/app_theme.dart": {
-    "mtime": 1792662017.4246967,
-    "seen": 1792662346.437356,
-    "ast_hash": "2bb50acd141e221d05c6e1fa7804c880",
+    "mtime": 1792726164.395121,
+    "seen": 1792726257.2170281,
+    "ast_hash": "0d8ba66c560267f015517d7d5a4c409e",
     "semantic_hash": ""
   },
   "lib/features/auth/sign_in_screen.dart": {
-    "mtime": 1792662017.4528692,
-    "seen": 1792662346.437357,
-    "ast_hash": "b4e90743af2390cede24eeb2f7b56af4",
+    "mtime": 1792725764.8716443,
+    "seen": 1792726257.217029,
+    "ast_hash": "9285d86b78146a3ff28fcf1e31b7cade",
     "semantic_hash": ""
   },
   "lib/features/family_health/data/datasources/family_health_data_source.dart": {
@@ -66,9 +66,9 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/data/extraction/lab_report_parser.dart": {
-    "mtime": 1792656755.0864856,
-    "seen": 1792657069.955774,
-    "ast_hash": "aa15926830b4ee4ae956e24e44a44957",
+    "mtime": 1792725333.4184659,
+    "seen": 1792726257.2171252,
+    "ast_hash": "e5f69b311ab6613133dc507125c3a01b",
     "semantic_hash": ""
   },
   "lib/features/family_health/data/extraction/lab_test_catalog.dart": {
@@ -84,15 +84,15 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/data/local/local_report_store.dart": {
-    "mtime": 1792657621.0033667,
-    "seen": 1792657819.701688,
-    "ast_hash": "6185cede8c29d2723848e20309b2be16",
+    "mtime": 1792725375.222299,
+    "seen": 1792726257.217186,
+    "ast_hash": "8520dca929b0f9331f95fc67bd359787",
     "semantic_hash": ""
   },
   "lib/features/family_health/data/mock/mock_family_health_data.dart": {
-    "mtime": 1792655231.8318398,
-    "seen": 1792655306.6470761,
-    "ast_hash": "f4fd56ffe5c385e5421ccc66258ee892",
+    "mtime": 1792669576.3095136,
+    "seen": 1792726257.2172182,
+    "ast_hash": "daf4bbdc41cbd11bebc3d6815eec041f",
     "semantic_hash": ""
   },
   "lib/features/family_health/data/mock/mock_family_health_data_source.dart": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/data/repositories/family_health_repository_impl.dart": {
-    "mtime": 1792657632.4289324,
-    "seen": 1792657819.701812,
-    "ast_hash": "47aab772ba7b4788776c6ac375759b6f",
+    "mtime": 1792725375.2476816,
+    "seen": 1792726257.217311,
+    "ast_hash": "e091f06063fba8864e9908e3d92e9975",
     "semantic_hash": ""
   },
   "lib/features/family_health/data/sync/report_sync_service.dart": {
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/entities/family_member.dart": {
-    "mtime": 1792642892.0,
-    "seen": 1792652335.4814458,
-    "ast_hash": "85c0ad1b04088d321d1c4cce368419db",
+    "mtime": 1792725375.2615035,
+    "seen": 1792726257.2173738,
+    "ast_hash": "99acc560869a94a67a3f6fd2a53e533e",
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/entities/health_category.dart": {
@@ -132,21 +132,21 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/entities/health_report.dart": {
-    "mtime": 1792657621.0019395,
-    "seen": 1792657819.7019362,
-    "ast_hash": "0e4d4ae646420b09d9196ee4165651fb",
+    "mtime": 1792725301.7837806,
+    "seen": 1792726257.217404,
+    "ast_hash": "2a22ce3910f9571ce6ae7f303c255402",
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/entities/lab_result.dart": {
-    "mtime": 1792656482.6464694,
-    "seen": 1792657069.9559412,
-    "ast_hash": "5a0f82f9eed4225947b1206ca3fd4ba1",
+    "mtime": 1792725301.7846029,
+    "seen": 1792726257.2174048,
+    "ast_hash": "a8125d202ec3fe27bd37f5a828d29dea",
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/repositories/family_health_repository.dart": {
-    "mtime": 1792652503.263948,
-    "seen": 1792652529.2389839,
-    "ast_hash": "ac9c1c9d614a6864ed6a450e9ceb350a",
+    "mtime": 1792725354.5250893,
+    "seen": 1792726257.2174358,
+    "ast_hash": "93862bdbd06bb0fa32814bdfc7554fa6",
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/usecases/load_family_health.dart": {
@@ -162,45 +162,45 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/bloc/health_bloc.dart": {
-    "mtime": 1792657652.8426614,
-    "seen": 1792657819.702188,
-    "ast_hash": "a741cade060ac5a60bbfcbddf3b53ea4",
+    "mtime": 1792725375.2994256,
+    "seen": 1792726257.217493,
+    "ast_hash": "9fb84cf887b6593cad1c57a8545fc50c",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/bloc/health_event.dart": {
-    "mtime": 1792652716.680011,
-    "seen": 1792652916.840228,
-    "ast_hash": "a02b0503306a8aefd09fb4f3a1c71153",
+    "mtime": 1792725375.3004131,
+    "seen": 1792726257.217494,
+    "ast_hash": "69151992b37b18a3aae33e57c2c1f0d2",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/bloc/health_state.dart": {
-    "mtime": 1792657652.8401036,
-    "seen": 1792657819.702225,
-    "ast_hash": "62445404b4d136eeeaeea703d08b3466",
+    "mtime": 1792725374.951552,
+    "seen": 1792726257.217495,
+    "ast_hash": "f0f601c4cd2bbb9be545cbfe20e368ec",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/health_presentation.dart": {
-    "mtime": 1792655686.527341,
-    "seen": 1792655841.865772,
-    "ast_hash": "546c5a60dad4eedae1b9798725257b05",
+    "mtime": 1792726164.3970773,
+    "seen": 1792726257.2174962,
+    "ast_hash": "4cc3d2550ec5c03916daf9bae70d9679",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/dash_board_screen.dart": {
-    "mtime": 1792657872.9872417,
-    "seen": 1792658217.950258,
-    "ast_hash": "10ad42abe15d4bb91428097d3a588ea6",
+    "mtime": 1792726164.3995464,
+    "seen": 1792726257.217497,
+    "ast_hash": "b9faaf4712f7d44552f80106af3be872",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/health_subscreens.dart": {
-    "mtime": 1792662017.430695,
-    "seen": 1792662346.4383519,
-    "ast_hash": "5b09b5d7eb53a67c94f8cad233f7a46c",
+    "mtime": 1792725466.9422584,
+    "seen": 1792726257.217498,
+    "ast_hash": "cee2a298dccdf777522c3c85bca0fe44",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/home_screen.dart": {
-    "mtime": 1792662017.4335096,
-    "seen": 1792662346.4383528,
-    "ast_hash": "2dda140da24999ac3c257076ae1ff580",
+    "mtime": 1792725375.3261626,
+    "seen": 1792726257.2174988,
+    "ast_hash": "410bed3cb181bb934c05701b9d72aad3",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/navigation.dart": {
@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/profile_screen.dart": {
-    "mtime": 1792662017.446766,
-    "seen": 1792662346.438387,
-    "ast_hash": "0f9371b6016934ef403d6a206992f3cf",
+    "mtime": 1792725487.6256044,
+    "seen": 1792726257.217531,
+    "ast_hash": "f77dd4039dac03d8dd374e5856ac4d81",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/report_dashboard_screen.dart": {
@@ -222,15 +222,15 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/pages/reports_screen.dart": {
-    "mtime": 1792662017.9064937,
-    "seen": 1792662346.438389,
-    "ast_hash": "0fb10ab154755b16d331a257fd8d1a0d",
+    "mtime": 1792725765.0709567,
+    "seen": 1792726257.217561,
+    "ast_hash": "0204d41b4fb5e380225859a430e61f63",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/widgets/health_widgets.dart": {
-    "mtime": 1792662017.9277143,
-    "seen": 1792662346.4385438,
-    "ast_hash": "7abc95776d3228413ec7373a631e8200",
+    "mtime": 1792726164.578134,
+    "seen": 1792726257.217654,
+    "ast_hash": "86359073a6d9e14d6c04fc3c49adc054",
     "semantic_hash": ""
   },
   "lib/health_data.dart": {
@@ -240,21 +240,21 @@
     "semantic_hash": ""
   },
   "lib/l10n/app_localizations.dart": {
-    "mtime": 1792662237.0364046,
-    "seen": 1792662346.438684,
-    "ast_hash": "1174661855dccc1ff0f54d334379e35f",
+    "mtime": 1792726165.4906418,
+    "seen": 1792726257.217707,
+    "ast_hash": "2bccbc58fc367db19b557ebc71be5c46",
     "semantic_hash": ""
   },
   "lib/l10n/app_localizations_en.dart": {
-    "mtime": 1792662237.0321853,
-    "seen": 1792662346.438685,
-    "ast_hash": "aeec8a698b5f9366328d44276a89b842",
+    "mtime": 1792726165.48525,
+    "seen": 1792726257.217708,
+    "ast_hash": "d1225bbd6877b28c00ffeb5ff19da720",
     "semantic_hash": ""
   },
   "lib/main.dart": {
-    "mtime": 1792657872.9482265,
-    "seen": 1792658217.950582,
-    "ast_hash": "5e2aa20d8643252124c991975646f4b9",
+    "mtime": 1792726164.3959093,
+    "seen": 1792726257.217709,
+    "ast_hash": "d6062c47c05dc2b861b62dbece104dc2",
     "semantic_hash": ""
   },
   "linux/flutter/generated_plugin_registrant.cc": {
@@ -324,15 +324,15 @@
     "semantic_hash": ""
   },
   "test/health_bloc_test.dart": {
-    "mtime": 1792657873.1541955,
-    "seen": 1792658217.9508328,
-    "ast_hash": "9200db024607209fe800b414c3a80642",
+    "mtime": 1792725765.1540067,
+    "seen": 1792726257.217988,
+    "ast_hash": "546ef7dd9198e1daa666051b3d13bd3f",
     "semantic_hash": ""
   },
   "test/widget_test.dart": {
-    "mtime": 1792659778.4654007,
-    "seen": 1792660411.815228,
-    "ast_hash": "892019e2c349401faece2c8f0cc43a85",
+    "mtime": 1792726220.1961884,
+    "seen": 1792726257.2180538,
+    "ast_hash": "34aba51ee58c68a5f0b10f72f08759bd",
     "semantic_hash": ""
   },
   "web/manifest.json": {
@@ -438,9 +438,9 @@
     "semantic_hash": ""
   },
   "pubspec.yaml": {
-    "mtime": 1792657872.9459507,
-    "seen": 1792658217.951222,
-    "ast_hash": "5883de0ba75906563553338e142bd0a8",
+    "mtime": 1792725541.8309045,
+    "seen": 1792726257.218596,
+    "ast_hash": "1a1bc876b35447a89cd714ae68110158",
     "semantic_hash": ""
   },
   "web/index.html": {
@@ -684,9 +684,9 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1792662343.261707,
-    "seen": 1792662346.4396129,
-    "ast_hash": "d2de2eaebb9936b95cd76012058a4435",
+    "mtime": 1792726253.8750095,
+    "seen": 1792726257.2183812,
+    "ast_hash": "2237119fa10bf512a6090c9ebb7c92a8",
     "semantic_hash": ""
   },
   "CLAUDE.md": {
@@ -696,9 +696,9 @@
     "semantic_hash": ""
   },
   "docs/PENDING_TASKS.md": {
-    "mtime": 1792657873.2341475,
-    "seen": 1792658217.951137,
-    "ast_hash": "656778761f6803b0b8c15f9cba30d697",
+    "mtime": 1792726090.955363,
+    "seen": 1792726257.218462,
+    "ast_hash": "d7b7ce73e7b1293342c587fdedd00517",
     "semantic_hash": ""
   },
   "docs/SUPABASE_REQUIREMENTS.md": {
@@ -714,9 +714,9 @@
     "semantic_hash": ""
   },
   "test/report_store_test.dart": {
-    "mtime": 1792657873.225758,
-    "seen": 1792658217.950837,
-    "ast_hash": "cd8ea5606e00afd20f9e9a0cbdf65f6c",
+    "mtime": 1792725765.166148,
+    "seen": 1792726257.2180521,
+    "ast_hash": "5284d353874d49ef21fd1ba782c039d4",
     "semantic_hash": ""
   },
   "docs/HEALTH_APPS_SYNC_PLAN.md": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "lib/core/settings/settings_cubit.dart": {
-    "mtime": 1792658864.0361192,
-    "seen": 1792660411.813526,
-    "ast_hash": "76e24aea9dbaa6b17e2c0a1c7e4d8b91",
+    "mtime": 1792725764.8454516,
+    "seen": 1792726257.217001,
+    "ast_hash": "66c5ecce9accfc585ea0df72633d864f",
     "semantic_hash": ""
   },
   "lib/features/family_health/domain/health_categories.dart": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/widgets/motion.dart": {
-    "mtime": 1792657872.9493124,
-    "seen": 1792658217.950551,
-    "ast_hash": "852e90b74c968a8cc6c00ca2815918bd",
+    "mtime": 1792726164.735658,
+    "seen": 1792726257.217655,
+    "ast_hash": "ed8fcf5769b20709ec176937fd60efe0",
     "semantic_hash": ""
   },
   "tool/generate_app_icons_test.dart": {
@@ -792,9 +792,9 @@
     "semantic_hash": ""
   },
   "android/app/build.gradle.kts": {
-    "mtime": 1792657592.5820677,
-    "seen": 1792657819.701165,
-    "ast_hash": "2d6b47378cbf430046e7de86455a0e46",
+    "mtime": 1792725578.8513513,
+    "seen": 1792726257.216645,
+    "ast_hash": "d9a2852d626d8ddff91e172c7b70808e",
     "semantic_hash": ""
   },
   "android/app/src/main/kotlin/com/vitalog/app/MainActivity.kt": {
@@ -876,21 +876,21 @@
     "semantic_hash": ""
   },
   "test/settings_accent_test.dart": {
-    "mtime": 1792657985.4306023,
-    "seen": 1792658217.950838,
-    "ast_hash": "ea19a783c42a822030906c2c5d7288cd",
+    "mtime": 1792725765.1672087,
+    "seen": 1792726257.218053,
+    "ast_hash": "aa62ec5c907e417083c004754c3b8cc1",
     "semantic_hash": ""
   },
   "lib/features/family_health/presentation/widgets/health_charts.dart": {
-    "mtime": 1792660121.3708656,
-    "seen": 1792660411.8146088,
-    "ast_hash": "bd6d4d81a049d2885495fc30fdc8485b",
+    "mtime": 1792725375.3582454,
+    "seen": 1792726257.217653,
+    "ast_hash": "18247239f1c071e63ec421dc7f4c0a6e",
     "semantic_hash": ""
   },
   "test/health_charts_test.dart": {
-    "mtime": 1792659685.0265713,
-    "seen": 1792660411.815129,
-    "ast_hash": "df2d4d44a59c49d8d77c40f3dd2254c0",
+    "mtime": 1792725765.1558845,
+    "seen": 1792726257.2179892,
+    "ast_hash": "23f93bf90090f1121d5d31a6b91694d6",
     "semantic_hash": ""
   },
   "lib/core/theme/app_shape.dart": {
@@ -903,6 +903,336 @@
     "mtime": 1792662147.2047749,
     "seen": 1792662346.43839,
     "ast_hash": "c7ea5a3a02e7bcc54bbc337f23104e9b",
+    "semantic_hash": ""
+  },
+  "lib/features/family_health/data/reference/signed_range_table.dart": {
+    "mtime": 1792668483.4642847,
+    "seen": 1792668851.611277,
+    "ast_hash": "e20cb16ede4b93a759dc741e5b67a2ab",
+    "semantic_hash": ""
+  },
+  "lib/features/family_health/domain/reference/reference_range.dart": {
+    "mtime": 1792725375.273808,
+    "seen": 1792726257.2174342,
+    "ast_hash": "e8686fd130677cbab17fdfa572955394",
+    "semantic_hash": ""
+  },
+  "lib/features/family_health/domain/reference/reference_table.dart": {
+    "mtime": 1792725375.2820156,
+    "seen": 1792726257.217435,
+    "ast_hash": "7270b29395b50bc1ae71cb2bc7244206",
+    "semantic_hash": ""
+  },
+  "test/reference_ranges_test.dart": {
+    "mtime": 1792725765.1640756,
+    "seen": 1792726257.218049,
+    "ast_hash": "a9bc01459959098ef3a0ec52171fd2d1",
+    "semantic_hash": ""
+  },
+  "tool/qa_sweep_test.dart": {
+    "mtime": 1792668666.2535827,
+    "seen": 1792668851.6122801,
+    "ast_hash": "75d1e81c3016a3a84716b72116784ee2",
+    "semantic_hash": ""
+  },
+  "docs/REFERENCE_RANGES.md": {
+    "mtime": 1792668848.7116275,
+    "seen": 1792668851.612604,
+    "ast_hash": "3e4f0b6a6281a77dabbb93777e291470",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/issues.txt": {
+    "mtime": 1792664797.3624644,
+    "seen": 1792668851.612731,
+    "ast_hash": "2f9bf13625065f8365fed7877f973ee7",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/01_home_top.png": {
+    "mtime": 1792664756.6752305,
+    "seen": 1792668851.6142871,
+    "ast_hash": "40797e60d90acf25ca49d2bc00ba78b1",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/02_home_mid.png": {
+    "mtime": 1792664757.0078223,
+    "seen": 1792668851.6142879,
+    "ast_hash": "d2219ef7d5c625f657b2780abfea36d2",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/03_home_bottom.png": {
+    "mtime": 1792664757.3500593,
+    "seen": 1792668851.6142888,
+    "ast_hash": "997757412fe1da2b2b278e0b343de52d",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/04_category_results.png": {
+    "mtime": 1792664757.6944084,
+    "seen": 1792668851.61429,
+    "ast_hash": "40797e60d90acf25ca49d2bc00ba78b1",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/05_test_detail.png": {
+    "mtime": 1792664757.730263,
+    "seen": 1792668851.614291,
+    "ast_hash": "40797e60d90acf25ca49d2bc00ba78b1",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/06_categories.png": {
+    "mtime": 1792664758.5838082,
+    "seen": 1792668851.614291,
+    "ast_hash": "de1457d3c8959d8f8bdf08a10c810fcd",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/07_reports.png": {
+    "mtime": 1792664758.9289777,
+    "seen": 1792668851.614292,
+    "ast_hash": "ae6ecb9ee1f5701c2f4601fa3668713a",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/08_report_menu.png": {
+    "mtime": 1792664759.2765567,
+    "seen": 1792668851.614293,
+    "ast_hash": "8a382814765e28dc29ab5ea8773497cf",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/09_delete_sheet.png": {
+    "mtime": 1792664759.6263483,
+    "seen": 1792668851.614294,
+    "ast_hash": "8d896741ae043b7c8747760e94520a36",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/10_report_dashboard.png": {
+    "mtime": 1792664759.9576068,
+    "seen": 1792668851.614294,
+    "ast_hash": "510c99d1d7a545f2130ad577df55bc41",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/11_add_report_sheet.png": {
+    "mtime": 1792664760.5682328,
+    "seen": 1792668851.614295,
+    "ast_hash": "3cb49a0849fd75bf14ce2b37dcfe47a9",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/12_family.png": {
+    "mtime": 1792664761.2129867,
+    "seen": 1792668851.614296,
+    "ast_hash": "a6de69a7c463bb596243cdaa846a8f2d",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/13_family_bottom.png": {
+    "mtime": 1792664761.533757,
+    "seen": 1792668851.6142972,
+    "ast_hash": "f8030022c027aa25bcf90c10a60f9058",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/14_sign_in.png": {
+    "mtime": 1792664761.8394694,
+    "seen": 1792668851.6143029,
+    "ast_hash": "fb7d59a68cd497b66e6a044c22f10e1c",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-dark-1x/15_customize_home.png": {
+    "mtime": 1792664762.7812018,
+    "seen": 1792668851.614304,
+    "ast_hash": "ddc6d82258bcd57bd4d171589a0191bc",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/01_home_top.png": {
+    "mtime": 1792664748.916327,
+    "seen": 1792668851.614305,
+    "ast_hash": "9fbbcbb7b3728446e4ce048eafab549e",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/02_home_mid.png": {
+    "mtime": 1792664749.3002455,
+    "seen": 1792668851.614305,
+    "ast_hash": "86a18a69818723460aaa0629c7a15b52",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/03_home_bottom.png": {
+    "mtime": 1792664749.6504688,
+    "seen": 1792668851.614306,
+    "ast_hash": "26d46058ef1c9039676e2d211a038695",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/04_category_results.png": {
+    "mtime": 1792664750.0217357,
+    "seen": 1792668851.6143072,
+    "ast_hash": "9fbbcbb7b3728446e4ce048eafab549e",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/05_test_detail.png": {
+    "mtime": 1792664750.0548048,
+    "seen": 1792668851.6143072,
+    "ast_hash": "9fbbcbb7b3728446e4ce048eafab549e",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/06_categories.png": {
+    "mtime": 1792664750.962624,
+    "seen": 1792668851.614308,
+    "ast_hash": "48d7ca7eef426ab3beb94dad95db97dd",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/07_reports.png": {
+    "mtime": 1792664751.3044834,
+    "seen": 1792668851.614309,
+    "ast_hash": "41849294854478bf61f96ed20312430e",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/08_report_menu.png": {
+    "mtime": 1792664751.6634417,
+    "seen": 1792668851.6143098,
+    "ast_hash": "01a2d22de3bb9e1ecdb3d24a5e62e182",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/09_delete_sheet.png": {
+    "mtime": 1792664752.0935707,
+    "seen": 1792668851.6143098,
+    "ast_hash": "d823ce104260716bbf825d42b009a6ed",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/10_report_dashboard.png": {
+    "mtime": 1792664752.4209733,
+    "seen": 1792668851.614311,
+    "ast_hash": "3f8521e0417d8ed3657acb574dddfc06",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/11_add_report_sheet.png": {
+    "mtime": 1792664753.0594068,
+    "seen": 1792668851.614312,
+    "ast_hash": "5d1428bdc37c6c6dcc1a35149cd7d443",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/12_family.png": {
+    "mtime": 1792664753.720181,
+    "seen": 1792668851.614313,
+    "ast_hash": "4772929f8d37f047564796a2828bb949",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/13_family_bottom.png": {
+    "mtime": 1792664754.0494623,
+    "seen": 1792668851.614314,
+    "ast_hash": "a36a1c80744aef9154cb7561e304d210",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/14_sign_in.png": {
+    "mtime": 1792664754.3915467,
+    "seen": 1792668851.614314,
+    "ast_hash": "46ce69a77a42aa0654e357ddd16f04b9",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-1x/15_customize_home.png": {
+    "mtime": 1792664755.348842,
+    "seen": 1792668851.614315,
+    "ast_hash": "f6fdfa2a6cd11d6bebb88543592d2eab",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/01_home_top.png": {
+    "mtime": 1792664763.9927008,
+    "seen": 1792668851.614316,
+    "ast_hash": "fe7861b0d97945a964bb43994eab6d48",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/02_home_mid.png": {
+    "mtime": 1792664764.3218756,
+    "seen": 1792668851.614316,
+    "ast_hash": "5a8aa294c3b5c7950f1ee7e11b7e5f4a",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/03_home_bottom.png": {
+    "mtime": 1792664764.6783876,
+    "seen": 1792668851.614317,
+    "ast_hash": "ef0cdc36728188c02cf3110b6b4a9b2b",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/04_category_results.png": {
+    "mtime": 1792664765.014614,
+    "seen": 1792668851.6143181,
+    "ast_hash": "fe7861b0d97945a964bb43994eab6d48",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/05_test_detail.png": {
+    "mtime": 1792664765.0514357,
+    "seen": 1792668851.614319,
+    "ast_hash": "fe7861b0d97945a964bb43994eab6d48",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/06_categories.png": {
+    "mtime": 1792664765.9329412,
+    "seen": 1792668851.614319,
+    "ast_hash": "6ec2e6c995ba041882a9359574327af0",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/07_reports.png": {
+    "mtime": 1792664766.2704685,
+    "seen": 1792668851.61432,
+    "ast_hash": "4631a4c6c9280d6e9b291ced701ca06b",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/08_report_menu.png": {
+    "mtime": 1792664766.306453,
+    "seen": 1792668851.614321,
+    "ast_hash": "4631a4c6c9280d6e9b291ced701ca06b",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/09_delete_sheet.png": {
+    "mtime": 1792664766.3387852,
+    "seen": 1792668851.614321,
+    "ast_hash": "4631a4c6c9280d6e9b291ced701ca06b",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/10_report_dashboard.png": {
+    "mtime": 1792664766.3713968,
+    "seen": 1792668851.614322,
+    "ast_hash": "4631a4c6c9280d6e9b291ced701ca06b",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/11_add_report_sheet.png": {
+    "mtime": 1792664766.96034,
+    "seen": 1792668851.614323,
+    "ast_hash": "c005370bd83e7a6a90df50819ef12f4d",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/12_family.png": {
+    "mtime": 1792664767.561716,
+    "seen": 1792668851.6143239,
+    "ast_hash": "e3023162b6e78627b6d3dde091e126db",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/13_family_bottom.png": {
+    "mtime": 1792664767.875375,
+    "seen": 1792668851.6143239,
+    "ast_hash": "0af376983e7cce61d251453b24715bfe",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/14_sign_in.png": {
+    "mtime": 1792664767.909482,
+    "seen": 1792668851.614325,
+    "ast_hash": "0af376983e7cce61d251453b24715bfe",
+    "semantic_hash": ""
+  },
+  "tool/qa_out/se-light-2x/15_customize_home.png": {
+    "mtime": 1792664769.1525803,
+    "seen": 1792668851.614326,
+    "ast_hash": "7656ba073112f92e84cd8c9b919a139b",
+    "semantic_hash": ""
+  },
+  "lib/features/family_health/presentation/widgets/add_member_sheet.dart": {
+    "mtime": 1792725765.081873,
+    "seen": 1792726257.2175622,
+    "ast_hash": "884b1880e73b8b36c2050e2df0376f9f",
+    "semantic_hash": ""
+  },
+  "lib/features/onboarding/onboarding_screen.dart": {
+    "mtime": 1792725765.1231022,
+    "seen": 1792726257.217685,
+    "ast_hash": "260a67a976e75ff2e50941bda94141e1",
+    "semantic_hash": ""
+  },
+  "test/report_flow_test.dart": {
+    "mtime": 1792725823.8957276,
+    "seen": 1792726257.21805,
+    "ast_hash": "4bc3b81b6d73a335d15904392ccd6bbe",
     "semantic_hash": ""
   }
 }

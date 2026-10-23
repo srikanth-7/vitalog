@@ -14,6 +14,11 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>te</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>Vitalog</string>
 	<key>CFBundlePackageType</key>
@@ -22,14 +27,6 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Take a photo of a lab report so its results can be read on this phone.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo of a lab report so its results can be read on this phone.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -40,7 +37,29 @@
 				<string>com.vitalog.app</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.773366904535-cu4ib29p24onc82efi9gu9f8hiacem6o</string>
+			</array>
+		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>773366904535-cu4ib29p24onc82efi9gu9f8hiacem6o.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>773366904535-i0d13bjm4e39o3sj4kohg4jel5g1s7ip.apps.googleusercontent.com</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo of a lab report so its results can be read on this phone.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Vitalog uses Face ID to unlock your original report documents, which can contain your name, phone number and address.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo of a lab report so its results can be read on this phone.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -52,10 +71,10 @@
 				<dict>
 					<key>UISceneClassName</key>
 					<string>UIWindowScene</string>
-					<key>UISceneDelegateClassName</key>
-					<string>FlutterSceneDelegate</string>
 					<key>UISceneConfigurationName</key>
 					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>FlutterSceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
 				</dict>
@@ -83,7 +102,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Vitalog uses Face ID to unlock your original report documents, which can contain your name, phone number and address.</string>
 </dict>
 </plist>

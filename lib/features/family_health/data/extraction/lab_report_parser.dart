@@ -26,11 +26,16 @@ class ParsedReport {
     this.reportDate,
     this.collectionDate,
     this.lab,
+    this.patientName,
   });
   final List<ParsedTest> tests;
   final DateTime? reportDate;
   final DateTime? collectionDate;
   final String? lab;
+
+  /// As printed ("Mr. Arjun Sharma"), to check the report was filed under
+  /// the right family member. Stays on the phone.
+  final String? patientName;
 }
 
 /// Turns OCR'd report lines (one printed row per line) into structured tests.
@@ -45,20 +50,41 @@ class LabReportParser {
     final tests = <ParsedTest>[];
     final seen = <String>{};
     String? section;
-    for (final line in cleaned) {
+    // The test on the row just above, while it still has no range: some labs
+    // print the range on the next line ("(12.0 - 15.5)").
+    int? rangeless;
+    for (final raw in lines) {
+      final line = _normalize(raw);
+      if (line.isEmpty) continue;
       final lower = line.toLowerCase();
       if (!_hasDigit.hasMatch(line) && !_qualitative.hasMatch(lower)) {
         section = _sectionOf(lower) ?? section;
+        rangeless = null;
         continue;
       }
-      final test = _parseRow(line, lower, section);
-      if (test != null && seen.add(test.name.toLowerCase())) tests.add(test);
+      final below = rangeless == null ? null : _rangeOnly(line);
+      if (below != null) {
+        tests[rangeless!] = _withRange(tests[rangeless], below);
+        rangeless = null;
+        continue;
+      }
+      rangeless = null;
+      // Two tests printed side by side share one row.
+      for (final part in _sideBySide(raw)) {
+        final row = _normalize(part);
+        final test = _parseRow(row, row.toLowerCase(), section);
+        if (test != null && seen.add(test.name.toLowerCase())) {
+          tests.add(test);
+          rangeless = test.referenceRange.isEmpty ? tests.length - 1 : null;
+        }
+      }
     }
     return ParsedReport(
       tests: tests,
       reportDate: _labelledDate(cleaned, _reportLabels) ?? _latestDate(cleaned),
       collectionDate: _labelledDate(cleaned, _collectionLabels),
       lab: _labName(cleaned),
+      patientName: _patientName(lines),
     );
   }
 
@@ -87,15 +113,52 @@ class LabReportParser {
       rest = line.substring(value.start);
     }
 
+    // Counts are printed as a span ("Pus cells  2-3  /hpf  0 - 5"): a span
+    // right after the name is the value when a range or a per-field unit
+    // follows it.
+    final count = match == null ? null : _count.firstMatch(rest);
+    if (count != null) {
+      final after = rest.substring(count.end);
+      if (_parseRange(after) != null || _perField.hasMatch(after)) {
+        return _countRow(name, categoryId, count.group(1)!, after);
+      }
+    }
+
+    // Separate ranges per sex ("M: 13.0-17.0  F: 12.0-15.5"): keep them all;
+    // which one applies isn't known here, so it needs review.
+    final bands = _sexBand.firstMatch(rest);
+    if (bands != null && _sexBand.allMatches(rest).length > 1) {
+      final before = rest.substring(0, bands.start);
+      final unit = _unit.firstMatch(before)?.group(1) ?? '';
+      final value = _value.firstMatch(before)?.group(1);
+      if (value == null) return null;
+      final flag = _flag.firstMatch(before)?.group(1);
+      return ParsedTest(
+          name: name,
+          categoryId: categoryId,
+          value: value.replaceAll(',', ''),
+          unit: unit,
+          referenceRange: rest.substring(bands.start).trim(),
+          status: flag == null
+              ? ResultStatus.needsReview
+              : _status(value, null, flag));
+    }
+
     final range = _parseRange(rest);
     final withoutRange =
         range == null ? rest : rest.replaceRange(range.start, range.end, ' ');
-    var unit = _unit.firstMatch(withoutRange)?.group(1) ?? '';
+    final unitMatch = _unit.firstMatch(withoutRange);
+    var unit = unitMatch?.group(1) ?? '';
     if (unit.isEmpty && match != null && _garbled.hasMatch(withoutRange)) {
       unit = typicalUnits[name] ?? '';
     }
     final valueMatch = _value.firstMatch(withoutRange);
-    final flag = _flag.firstMatch(withoutRange)?.group(1);
+    // Look for H/L outside the unit, so the "L" of "10^3/µL" isn't a flag.
+    final flag = _flag
+        .firstMatch(unitMatch == null
+            ? withoutRange
+            : withoutRange.replaceRange(unitMatch.start, unitMatch.end, ' '))
+        ?.group(1);
 
     if (valueMatch == null) {
       final word = _qualitative.firstMatch(rest.toLowerCase())?.group(0);
@@ -163,6 +226,9 @@ class LabReportParser {
   ResultStatus statusFor(String value, String referenceRange) {
     final word = value.trim().toLowerCase();
     if (_normalWords.contains(word)) return ResultStatus.withinRange;
+    if (_sexBand.allMatches(referenceRange).length > 1) {
+      return ResultStatus.needsReview;
+    }
     return _status(value.trim(), _parseRange(referenceRange), null);
   }
 
@@ -172,10 +238,17 @@ class LabReportParser {
           ? ResultStatus.high
           : ResultStatus.low;
     }
-    final number = double.tryParse(value.replaceAll(RegExp('[<>]'), ''));
-    if (range == null || number == null) return ResultStatus.needsReview;
-    if (range.low != null && number < range.low!) return ResultStatus.low;
-    if (range.high != null && number > range.high!) return ResultStatus.high;
+    // A count span ("2-3") is judged by its ends.
+    final span = _count.firstMatch(value);
+    final low = span != null
+        ? double.parse(span.group(2)!)
+        : double.tryParse(value.replaceAll(RegExp('[<>,]'), ''));
+    final high = span != null ? double.parse(span.group(3)!) : low;
+    if (range == null || low == null || high == null) {
+      return ResultStatus.needsReview;
+    }
+    if (range.high != null && high > range.high!) return ResultStatus.high;
+    if (range.low != null && low < range.low!) return ResultStatus.low;
     return ResultStatus.withinRange;
   }
 
@@ -183,19 +256,86 @@ class LabReportParser {
     final between = _between.firstMatch(text);
     if (between != null) {
       return _Range(between.start, between.end, between.group(0)!.trim(),
-          double.parse(between.group(1)!), double.parse(between.group(2)!));
+          _number(between.group(1)!), _number(between.group(2)!));
     }
     final below = _below.firstMatch(text);
     if (below != null) {
       return _Range(below.start, below.end, below.group(0)!.trim(), null,
-          double.parse(below.group(1)!));
+          _number(below.group(1)!));
     }
     final above = _above.firstMatch(text);
     if (above != null) {
       return _Range(above.start, above.end, above.group(0)!.trim(),
-          double.parse(above.group(1)!), null);
+          _number(above.group(1)!), null);
     }
     return null;
+  }
+
+  ParsedTest _countRow(
+      String name, String categoryId, String value, String after) {
+    final range = _parseRange(after);
+    final rest =
+        range == null ? after : after.replaceRange(range.start, range.end, ' ');
+    final unitMatch = _unit.firstMatch(rest);
+    final unit = unitMatch?.group(1) ?? '';
+    final flag = _flag
+        .firstMatch(unitMatch == null
+            ? rest
+            : rest.replaceRange(unitMatch.start, unitMatch.end, ' '))
+        ?.group(1);
+    final span = value.replaceAll(' ', '');
+    return ParsedTest(
+        name: name,
+        categoryId: categoryId,
+        value: span,
+        unit: unit,
+        referenceRange: range == null
+            ? ''
+            : (unit.isEmpty ? range.text : '${range.text} $unit'),
+        status: _status(span, range, flag));
+  }
+
+  /// A line that is only a reference range, e.g. "(12.0 - 15.5)" or
+  /// "Ref. range: 0.4 - 4.0 mIU/L".
+  _Range? _rangeOnly(String line) {
+    final text = line.replaceFirst(_rangeLabel, '');
+    final range = _parseRange(text);
+    if (range == null || text.substring(0, range.start).trim().isNotEmpty) {
+      return null;
+    }
+    final tail = text.substring(range.end).replaceAll(_unit, '');
+    return RegExp(r'^[\s)\]]*$').hasMatch(tail) ? range : null;
+  }
+
+  ParsedTest _withRange(ParsedTest t, _Range range) => ParsedTest(
+      name: t.name,
+      categoryId: t.categoryId,
+      value: t.value,
+      unit: t.unit,
+      referenceRange: t.unit.isEmpty ? range.text : '${range.text} ${t.unit}',
+      // A printed H/L flag already decided it; otherwise judge it now.
+      status: t.status == ResultStatus.needsReview &&
+              t.categoryId != otherCategoryId
+          ? _status(t.value, range, null)
+          : t.status);
+
+  /// Splits a row holding two tests side by side ("Hemoglobin  12.8  g/dL
+  /// 12-15.5  Creatinine  0.9  mg/dL  0.6-1.1") at the column where the
+  /// second test's name starts. Columns are 2+ spaces apart in the raw row.
+  List<String> _sideBySide(String raw) {
+    final cols = raw.trim().split(RegExp(r'\s{2,}|\t'));
+    for (var i = 2; i < cols.length - 1; i++) {
+      final hit = _aliases.longestMatch(cols[i].toLowerCase(), maxPrefix: 0);
+      if (hit == null || !_hasDigit.hasMatch(cols.sublist(1, i).join(' '))) {
+        continue;
+      }
+      if (!_hasDigit.hasMatch(cols.sublist(i).join(' '))) continue;
+      return [
+        cols.sublist(0, i).join('  '),
+        ..._sideBySide(cols.sublist(i).join('  '))
+      ];
+    }
+    return [raw];
   }
 
   String? _sectionOf(String lower) {
@@ -291,6 +431,27 @@ class LabReportParser {
     return null;
   }
 
+  /// "Patient Name : Mr. ARJUN SHARMA  Age/Sex : 36 Y/M" → "Mr. ARJUN SHARMA".
+  /// Uses the raw rows: two spaces still separate the printed columns there.
+  String? _patientName(List<String> lines) {
+    for (final line in lines.take(30)) {
+      final m = _nameLabel.firstMatch(line.trim());
+      if (m == null) continue;
+      final name = line
+          .trim()
+          .substring(m.end)
+          .split(RegExp(r'\s{2,}|\t|\|'))
+          .first
+          .split(_afterName)
+          .first
+          .replaceAll(RegExp(r'[^\p{L}. ]', unicode: true), '')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (RegExp(r'\p{L}{2}', unicode: true).hasMatch(name)) return name;
+    }
+    return null;
+  }
+
   static String _normalize(String line) => line
       .replaceAll(RegExp('[–—−]'), '-')
       .replaceAll('μ', 'µ')
@@ -310,7 +471,10 @@ class _Range {
   final double? high;
 }
 
-const _num = r'\d+(?:\.\d+)?';
+// Indian/Western digit grouping ("1,50,000") first, so a range isn't read
+// from the middle of a grouped number.
+const _num = r'(?<![\d,.])(?:\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)';
+double _number(String text) => double.parse(text.replaceAll(',', ''));
 final _hasDigit = RegExp(r'\d');
 // Letters outside Latin script: OCR misread a unit cell.
 final _garbled = RegExp(r'[\u0370-\u03FF\u0400-\u04FF]');
@@ -323,8 +487,18 @@ final _below =
 final _above =
     RegExp('(?:>=?|≥|more than|greater than)\\s*($_num)', caseSensitive: false);
 final _flag = RegExp(r'(?<![\w/])(HIGH|LOW|High|Low|H|L)(?![\w/])');
+// A count span value, e.g. "2-3" or "8 - 10" cells per field.
+final _count = RegExp(r'^\s*((\d+)\s*-\s*(\d+))(?=\s|$)');
+final _perField = RegExp(r'^\s*/[hl]pf\b', caseSensitive: false);
+// "M: 13-17", "Female 12.0-15.5", "Men - 0.7-1.3".
+final _sexBand = RegExp(
+    r'(?<![a-z])(?:m|f|male|female|men|women)\s*[:\-]?\s*(?=[<>≤≥]?\s*\d)',
+    caseSensitive: false);
+final _rangeLabel = RegExp(
+    r'^[(\[]?\s*(?:bio\.?\s*)?(?:ref(?:erence)?\.?\s*)?(?:range|interval|normal(?: range)?)?\s*[:\-]?\s*',
+    caseSensitive: false);
 final _unit = RegExp(
-    r'(?<![\w/])(x?10\^?[36]\s*/\s*[uµ]l|10\^?[36]/cumm|lakhs?/cumm|million/cumm|mill/cumm|cells/cumm|thou/mm3|/cumm|/hpf|/[uµ]l|mm/1st hr|mm/hr|ml/min/1\.73\s?m2|mmol/mol|[uµ]iu/ml|miu/l|miu/ml|iu/ml|iu/l|u/ml|u/l|ng/ml|ng/dl|pg/ml|[uµ]g/dl|mcg/dl|mg/dl|mg/l|g/dl|g/l|mmol/l|[uµ]mol/l|nmol/l|pmol/l|meq/l|fl|pg|%)(?![\w/])',
+    r'(?<![\w/])(x?10\^?[36]\s*/\s*[uµ]l|10\^?[36]/cumm|lakhs?/cumm|million/cumm|mill/cumm|cells/cumm|thou/mm3|/cumm|/hpf|/lpf|/[uµ]l|mm/1st hr|mm/hr|ml/min/1\.73\s?m2|mmol/mol|[uµ]iu/ml|miu/l|miu/ml|iu/ml|iu/l|u/ml|u/l|ng/ml|ng/dl|pg/ml|[uµ]g/dl|mcg/dl|mg/dl|mg/l|g/dl|g/l|mmol/l|[uµ]mol/l|nmol/l|pmol/l|meq/l|fl|pg|%)(?![\w/])',
     caseSensitive: false);
 final _qualitative = RegExp(
     r'\b(non[ -]reactive|reactive|not detected|negative|nil|absent|normal|clear|pale yellow|yellow|positive|present|trace|turbid)\b');
@@ -386,3 +560,11 @@ const _months = {
 final _labWords = RegExp(
     r'\b(lab|labs|laboratory|laboratories|diagnostic|diagnostics|pathology|healthcare|hospital|clinic|medical|imaging)\b');
 final _notLab = RegExp(r'\b(patient|name|ref\.?|referred|doctor|dr\.)\b');
+// "Name:" only at the start of a row, so "Lab Name" / "Doctor Name" don't count.
+final _nameLabel = RegExp(
+    r"^(?:patient'?s?\s*name|name\s*of\s*(?:the\s*)?patient|pt\.?\s*name|patient|name)\s*(?:[:\-]\s*|\s{2,})",
+    caseSensitive: false);
+// Labels that often follow the name on the same printed row.
+final _afterName = RegExp(
+    r'\s(?:age|sex|gender|dob|d\.o\.b|uhid|mrn|id|ref|referred|sample|lab\s*no|reg|bill|visit|date)\b',
+    caseSensitive: false);

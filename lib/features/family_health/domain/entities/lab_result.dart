@@ -16,6 +16,9 @@ class LabResult {
     this.previousValue,
     this.reportId,
     this.edited = false,
+    this.reviewed = false,
+    this.usualRange,
+    this.usualSource,
   }) : categoryIds = List.unmodifiable(categoryIds);
 
   final String id;
@@ -37,7 +40,24 @@ class LabResult {
   /// True once the user has corrected what was read from the report.
   final bool edited;
 
+  /// True once the user has checked the value against the report (edited it,
+  /// or tapped "Looks right"). A result that still can't be judged (no range)
+  /// then stops asking for review. Phone-only; never synced.
+  final bool reviewed;
+
+  /// Waiting on the user: can't be judged and nobody has checked it yet.
+  bool get awaitingReview => status == ResultStatus.needsReview && !reviewed;
+
+  /// Set when the report printed no range and the status was judged against
+  /// the app's built-in usual range instead (e.g. "30–100 ng/mL"), with its
+  /// source (e.g. "Indian lab convention"). Phone-only; never synced.
+  final String? usualRange;
+  final String? usualSource;
+
+  bool get judgedByUsualRange => usualRange != null;
+
   LabResult copyWith({
+    String? profileId,
     String? name,
     List<String>? categoryIds,
     String? value,
@@ -45,10 +65,14 @@ class LabResult {
     String? referenceRange,
     ResultStatus? status,
     bool? edited,
+    bool? reviewed,
+    String? usualRange,
+    String? usualSource,
+    bool clearUsual = false,
   }) =>
       LabResult(
         id: id,
-        profileId: profileId,
+        profileId: profileId ?? this.profileId,
         name: name ?? this.name,
         categoryIds: categoryIds ?? this.categoryIds,
         value: value ?? this.value,
@@ -61,5 +85,8 @@ class LabResult {
         previousValue: previousValue,
         reportId: reportId,
         edited: edited ?? this.edited,
+        reviewed: reviewed ?? this.reviewed,
+        usualRange: clearUsual ? null : (usualRange ?? this.usualRange),
+        usualSource: clearUsual ? null : (usualSource ?? this.usualSource),
       );
 }

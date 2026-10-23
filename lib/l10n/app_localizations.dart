@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_te.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
   ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('te')
+  ];
 
   /// No description provided for @appTitle.
   ///
@@ -127,8 +131,8 @@ abstract class AppLocalizations {
   /// No description provided for @loadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not load family health: {message}'**
-  String loadFailed(String message);
+  /// **'Could not load family health. Please try again.'**
+  String get loadFailed;
 
   /// No description provided for @tryAgain.
   ///
@@ -547,7 +551,7 @@ abstract class AppLocalizations {
   /// No description provided for @takePhoto.
   ///
   /// In en, this message translates to:
-  /// **'Take a photo'**
+  /// **'Scan with camera'**
   String get takePhoto;
 
   /// No description provided for @choosePhoto.
@@ -652,16 +656,10 @@ abstract class AppLocalizations {
   /// **'Add family member'**
   String get addFamilyMember;
 
-  /// No description provided for @addFamilyMemberSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding family members will be available soon.'**
-  String get addFamilyMemberSoon;
-
   /// No description provided for @sampleDataNote.
   ///
   /// In en, this message translates to:
-  /// **'Family profiles are sample data in this prototype. Uploaded reports are stored on this phone.'**
+  /// **'The first four profiles are sample data. Members you add and reports you upload stay on this phone.'**
   String get sampleDataNote;
 
   /// No description provided for @accountTitle.
@@ -793,8 +791,8 @@ abstract class AppLocalizations {
   /// No description provided for @authFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t sign in: {message}'**
-  String authFailed(String message);
+  /// **'Could not sign in. Check your details and try again.'**
+  String get authFailed;
 
   /// No description provided for @categoryName.
   ///
@@ -844,6 +842,12 @@ abstract class AppLocalizations {
   /// **'Reference range'**
   String get fieldRange;
 
+  /// No description provided for @fieldRangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, 0.4 - 4.0'**
+  String get fieldRangeHint;
+
   /// No description provided for @fieldRequired.
   ///
   /// In en, this message translates to:
@@ -880,11 +884,35 @@ abstract class AppLocalizations {
   /// **'Check & fix'**
   String get checkAndFix;
 
+  /// No description provided for @looksRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks right'**
+  String get looksRight;
+
+  /// No description provided for @statusCheckedNoRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked · no range'**
+  String get statusCheckedNoRange;
+
   /// No description provided for @noticeResultEdited.
   ///
   /// In en, this message translates to:
   /// **'Saved. Status updated from the printed range.'**
   String get noticeResultEdited;
+
+  /// No description provided for @noticeResultChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as checked.'**
+  String get noticeResultChecked;
+
+  /// No description provided for @noticeReportDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve already added this report.'**
+  String get noticeReportDuplicate;
 
   /// No description provided for @viewReport.
   ///
@@ -895,7 +923,7 @@ abstract class AppLocalizations {
   /// No description provided for @readingSecurely.
   ///
   /// In en, this message translates to:
-  /// **'Reading on this phone · encrypted'**
+  /// **'Reading on this phone'**
   String get readingSecurely;
 
   /// No description provided for @splashTagline.
@@ -955,7 +983,7 @@ abstract class AppLocalizations {
   /// No description provided for @simpleModeHint.
   ///
   /// In en, this message translates to:
-  /// **'Bigger text and buttons, fewer things on screen.'**
+  /// **'Bigger, bolder text and buttons, plain words, fewer things on screen.'**
   String get simpleModeHint;
 
   /// No description provided for @testedHeading.
@@ -1042,6 +1070,30 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @languageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageTitle;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Device language'**
+  String get languageSystem;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageTelugu.
+  ///
+  /// In en, this message translates to:
+  /// **'తెలుగు'**
+  String get languageTelugu;
+
   /// No description provided for @accentTitle.
   ///
   /// In en, this message translates to:
@@ -1117,7 +1169,7 @@ abstract class AppLocalizations {
   /// No description provided for @overviewOfTotal.
   ///
   /// In en, this message translates to:
-  /// **'{total, plural, =1{of 1 latest result within lab range} other{of {total} latest results within lab range}}'**
+  /// **'{total, plural, =1{of 1 latest result within range} other{of {total} latest results within range}}'**
   String overviewOfTotal(int total);
 
   /// No description provided for @overviewNote.
@@ -1222,6 +1274,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete Report'**
   String get deleteReportConfirm;
+
+  /// No description provided for @statusWithinUsual.
+  ///
+  /// In en, this message translates to:
+  /// **'Within usual range'**
+  String get statusWithinUsual;
+
+  /// No description provided for @statusHighUsual.
+  ///
+  /// In en, this message translates to:
+  /// **'High · usual range'**
+  String get statusHighUsual;
+
+  /// No description provided for @statusLowUsual.
+  ///
+  /// In en, this message translates to:
+  /// **'Low · usual range'**
+  String get statusLowUsual;
+
+  /// No description provided for @usualRangeUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'No range was printed, so the usual range was used: {range} ({source}).'**
+  String usualRangeUsed(String range, String source);
+
+  /// No description provided for @usualRangeDiffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Your lab\'s range differs from the usual range ({range}). Your lab\'s range is used.'**
+  String usualRangeDiffers(String range);
+
+  /// No description provided for @attentionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get attentionTitle;
+
+  /// No description provided for @attentionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside the lab\'s range or the usual range. Not a diagnosis — talk to your doctor.'**
+  String get attentionSubtitle;
+
+  /// No description provided for @attentionBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} is below the range ({range})'**
+  String attentionBelow(String value, String range);
+
+  /// No description provided for @attentionAbove.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} is above the range ({range})'**
+  String attentionAbove(String value, String range);
+
+  /// No description provided for @attentionUsualTag.
+  ///
+  /// In en, this message translates to:
+  /// **'usual range'**
+  String get attentionUsualTag;
+
+  /// No description provided for @noticeReportAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 test added} other{{count} tests added}} · {attention, plural, =1{1 needs attention} other{{attention} need attention}}'**
+  String noticeReportAttention(int count, int attention);
+
+  /// No description provided for @noticeReportTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'That report took too long to read. Try a clearer photo or fewer pages.'**
+  String get noticeReportTimedOut;
+
+  /// No description provided for @noticeReportOtherPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'This report says {name}. Check who it\'s filed under.'**
+  String noticeReportOtherPerson(String name);
+
+  /// No description provided for @noticeReportCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading cancelled. Nothing was kept.'**
+  String get noticeReportCancelled;
+
+  /// No description provided for @noticeMemberAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added to your family.'**
+  String noticeMemberAdded(String name);
+
+  /// No description provided for @reviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewAction;
+
+  /// No description provided for @cancelReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reading'**
+  String get cancelReading;
+
+  /// No description provided for @timedOutLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Took too long to read. Try a clearer photo or fewer pages.'**
+  String get timedOutLine;
+
+  /// No description provided for @nameMismatchLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Name on this report: {name}. It\'s filed under {member}.'**
+  String nameMismatchLine(String name, String member);
+
+  /// No description provided for @keepHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep here'**
+  String get keepHere;
+
+  /// No description provided for @moveToMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to {name}'**
+  String moveToMember(String name);
+
+  /// No description provided for @moveReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get moveReport;
+
+  /// No description provided for @moveReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose report is this?'**
+  String get moveReportTitle;
+
+  /// No description provided for @nameMatchesBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Name matches'**
+  String get nameMatchesBadge;
+
+  /// No description provided for @readingsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reading} other{{count} readings}}'**
+  String readingsCount(int count);
+
+  /// No description provided for @addMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add family member'**
+  String get addMemberTitle;
+
+  /// No description provided for @memberNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name, as on lab reports'**
+  String get memberNameLabel;
+
+  /// No description provided for @memberNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get memberNameRequired;
+
+  /// No description provided for @relationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Relation'**
+  String get relationLabel;
+
+  /// No description provided for @relationSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get relationSelf;
+
+  /// No description provided for @relationPartner.
+  ///
+  /// In en, this message translates to:
+  /// **'Partner'**
+  String get relationPartner;
+
+  /// No description provided for @relationChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Child'**
+  String get relationChild;
+
+  /// No description provided for @relationParent.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get relationParent;
+
+  /// No description provided for @relationSibling.
+  ///
+  /// In en, this message translates to:
+  /// **'Sibling'**
+  String get relationSibling;
+
+  /// No description provided for @relationGrandparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Grandparent'**
+  String get relationGrandparent;
+
+  /// No description provided for @relationOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get relationOther;
+
+  /// No description provided for @ageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Age (years)'**
+  String get ageLabel;
+
+  /// No description provided for @ageInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an age from 0 to 120'**
+  String get ageInvalid;
+
+  /// No description provided for @sexLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sex'**
+  String get sexLabel;
+
+  /// No description provided for @sexFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'Female'**
+  String get sexFemale;
+
+  /// No description provided for @sexMale.
+  ///
+  /// In en, this message translates to:
+  /// **'Male'**
+  String get sexMale;
+
+  /// No description provided for @sexUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get sexUnset;
+
+  /// No description provided for @sexHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Some usual ranges differ by sex. If it\'s not set, those ranges aren\'t used.'**
+  String get sexHelp;
+
+  /// No description provided for @saveMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get saveMember;
+
+  /// No description provided for @memberPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this phone only.'**
+  String get memberPrivacy;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// No description provided for @onboardingNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// No description provided for @onboardingStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get onboardingStart;
+
+  /// No description provided for @onboardingTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'Every lab report, in one place'**
+  String get onboardingTitle1;
+
+  /// No description provided for @onboardingBody1.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo, pick a PDF or any file. Each test is sorted into Blood, Thyroid, Vitamins and more.'**
+  String get onboardingBody1;
+
+  /// No description provided for @onboardingTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Read right on your phone'**
+  String get onboardingTitle2;
+
+  /// No description provided for @onboardingBody2.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports are read here, on this phone. Nothing is sent anywhere unless you tap Sync.'**
+  String get onboardingBody2;
+
+  /// No description provided for @onboardingTitle3.
+  ///
+  /// In en, this message translates to:
+  /// **'Care for the whole family'**
+  String get onboardingTitle3;
+
+  /// No description provided for @onboardingBody3.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep a timeline for everyone you look after and see how each value changes over time.'**
+  String get onboardingBody3;
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Vitalog'**
+  String get welcomeTitle;
+
+  /// No description provided for @continueWithoutAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without an account'**
+  String get continueWithoutAccount;
+
+  /// No description provided for @showPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get showPassword;
+
+  /// No description provided for @hidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get hidePassword;
+
+  /// No description provided for @statusPlainWithin.
+  ///
+  /// In en, this message translates to:
+  /// **'In range'**
+  String get statusPlainWithin;
+
+  /// No description provided for @statusPlainHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher than range'**
+  String get statusPlainHigh;
+
+  /// No description provided for @statusPlainLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower than range'**
+  String get statusPlainLow;
+
+  /// No description provided for @statusPlainReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check'**
+  String get statusPlainReview;
+
+  /// No description provided for @onboardingPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {count}'**
+  String onboardingPage(int page, int count);
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @createPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get createPasswordHint;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get welcomeBack;
+
+  /// No description provided for @nameCheckNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This name is checked against the patient name printed on every report, so a report filed under the wrong person gets flagged.'**
+  String get nameCheckNote;
+
+  /// No description provided for @nameMustInclude.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports must include “{name}” to match.'**
+  String nameMustInclude(String name);
+
+  /// No description provided for @nameLooksLikeNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” looks like a nickname. Labs print the real name, so their reports won\'t match.'**
+  String nameLooksLikeNickname(String name);
 }
 
 class _AppLocalizationsDelegate
@@ -1235,7 +1701,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'te'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1246,6 +1712,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'te':
+      return AppLocalizationsTe();
   }
 
   throw FlutterError(

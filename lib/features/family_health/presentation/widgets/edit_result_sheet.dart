@@ -146,7 +146,7 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                     key: const ValueKey('edit-range'),
                     controller: _range,
                     decoration:
-                        field(l10n.fieldRange).copyWith(hintText: '0.4 - 4.0')),
+                        field(l10n.fieldRange).copyWith(hintText: l10n.fieldRangeHint)),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   key: const ValueKey('edit-category'),

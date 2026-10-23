@@ -1,4 +1,5 @@
 import '../../domain/entities/family_member.dart';
+import '../../domain/reference/reference_range.dart';
 import '../../domain/entities/health_report.dart';
 import '../../domain/entities/lab_result.dart';
 
@@ -7,6 +8,7 @@ const familyMembers = <FamilyMember>[
       id: 'maya',
       name: 'Maya Sharma',
       relation: 'You',
+      sex: Sex.female,
       initials: 'MS',
       colorValue: 0xFFD8EFE5,
       age: 34),
@@ -14,6 +16,7 @@ const familyMembers = <FamilyMember>[
       id: 'arjun',
       name: 'Arjun Sharma',
       relation: 'Partner',
+      sex: Sex.male,
       initials: 'AS',
       colorValue: 0xFFDCE9FA,
       age: 36),
@@ -21,6 +24,7 @@ const familyMembers = <FamilyMember>[
       id: 'anika',
       name: 'Anika Sharma',
       relation: 'Daughter',
+      sex: Sex.female,
       initials: 'AS',
       colorValue: 0xFFF6E3D4,
       age: 8),
@@ -28,6 +32,7 @@ const familyMembers = <FamilyMember>[
       id: 'meera',
       name: 'Meera Rao',
       relation: 'Mother',
+      sex: Sex.female,
       initials: 'MR',
       colorValue: 0xFFEAE1F6,
       age: 63),
@@ -97,6 +102,18 @@ final mockResults = <LabResult>[
       status: ResultStatus.withinRange,
       reportDate: DateTime(2026, 9, 18),
       collectionDate: DateTime(2026, 9, 17),
+      lab: 'CityCare Diagnostics'),
+  LabResult(
+      id: 'maya-creat-1',
+      profileId: 'maya',
+      name: 'Creatinine',
+      categoryIds: ['kidney'],
+      value: '0.89',
+      unit: 'mg/dL',
+      referenceRange: '0.60–1.10 mg/dL',
+      status: ResultStatus.withinRange,
+      reportDate: DateTime(2026, 9, 19),
+      collectionDate: DateTime(2026, 9, 19),
       lab: 'CityCare Diagnostics'),
   LabResult(
       id: 'maya-hb-2',

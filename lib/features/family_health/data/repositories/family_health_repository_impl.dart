@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import '../../../../core/backend/backend.dart';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
@@ -14,6 +17,9 @@ import '../extraction/lab_report_parser.dart';
 import '../extraction/lab_test_catalog.dart';
 import '../extraction/report_text_recognizer.dart';
 import '../local/local_report_store.dart';
+import '../../domain/reference/reference_table.dart';
+import '../../domain/reference/reference_range.dart';
+import '../../domain/entities/family_member.dart';
 import '../sync/report_sync_service.dart';
 
 class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
@@ -23,7 +29,9 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     required ReportTextRecognizer recognizer,
     required ReportSyncService sync,
     LabReportParser? parser,
+    Duration readTimeout = const Duration(seconds: 90),
   })  : _store = store,
+        _readTimeout = readTimeout,
         _sync = sync,
         _parser = parser ?? LabReportParser(),
         _reader = DocumentReader(recognizer);
@@ -34,12 +42,16 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
   final LabReportParser _parser;
   final DocumentReader _reader;
 
+  /// Longest a report may take to read before it's marked failed.
+  final Duration _readTimeout;
+
   @override
   Future<FamilyHealthSnapshot> loadFamilyHealth() async {
     final base = await _dataSource.fetchFamilyHealth();
     final local = await _store.load();
     return FamilyHealthSnapshot(
-      members: base.members,
+      members:
+          _withSignedInName([...base.members, ...await _store.loadMembers()]),
       // Categories are predefined in the app, whatever the source sends.
       categories: healthCategories,
       results: [...base.results, ...local.results],
@@ -57,6 +69,16 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         final local = await _store.load();
         final id = _newId();
         final now = DateTime.now();
+        final kept = await _store.keepOriginal(sourcePath, id);
+        // Same file for the same member: point at the one already there.
+        // (Another member may legitimately get the same file.)
+        final existing = local.reports
+            .where((r) => r.profileId == profileId && r.fileHash == kept.hash)
+            .firstOrNull;
+        if (existing != null) {
+          await File(kept.path).delete();
+          throw DuplicateReport(existing);
+        }
         final report = HealthReport(
           id: id,
           profileId: profileId,
@@ -66,14 +88,15 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
           uploadDate: now,
           status: ReportStatus.processing,
           resultCount: 0,
-          filePath: await _store.keepOriginal(sourcePath, id),
+          filePath: kept.path,
+          fileHash: kept.hash,
         );
         await _store.save([...local.reports, report], local.results);
         return report;
       });
 
   @override
-  Future<HealthReport> processReport(String reportId) async {
+  Future<HealthReport?> processReport(String reportId) async {
     final report =
         (await _store.load()).reports.firstWhere((r) => r.id == reportId);
     HealthReport updated;
@@ -81,32 +104,38 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     try {
       // Photos and PDFs go to on-device OCR; Word, Excel, text, HTML and
       // email are read directly.
-      final lines = await _reader.read(
-          await _store.readOriginal(report.filePath!),
-          fileName: report.fileName);
-      final parsed = await _parseOffThread(_parser, lines);
+      final parsed = await () async {
+        final lines = await _reader.read(
+            await _store.readOriginal(report.filePath!),
+            fileName: report.fileName);
+        return _parseOffThread(_parser, lines);
+      }()
+          .timeout(_readTimeout);
       final reportDate = parsed.reportDate ?? report.uploadDate;
       final lab = parsed.lab ?? '';
       // Tests the user filed before go straight to their chosen category.
       final choices = await _store.loadCategoryChoices();
+      final member = await _memberFor(report.profileId);
       results = [
         for (final (i, t) in parsed.tests.indexed)
-          _fileByChoice(
-              LabResult(
-                id: '$reportId-$i',
-                reportId: reportId,
-                profileId: report.profileId,
-                name: t.name,
-                categoryIds: [t.categoryId],
-                value: t.value,
-                unit: t.unit,
-                referenceRange: t.referenceRange,
-                status: t.status,
-                reportDate: reportDate,
-                collectionDate: parsed.collectionDate,
-                lab: lab,
-              ),
-              choices),
+          _judgeByUsualRange(
+              _fileByChoice(
+                  LabResult(
+                    id: '$reportId-$i',
+                    reportId: reportId,
+                    profileId: report.profileId,
+                    name: t.name,
+                    categoryIds: [t.categoryId],
+                    value: t.value,
+                    unit: t.unit,
+                    referenceRange: t.referenceRange,
+                    status: t.status,
+                    reportDate: reportDate,
+                    collectionDate: parsed.collectionDate,
+                    lab: lab,
+                  ),
+                  choices),
+              member),
       ];
       final uncertain = parsed.reportDate == null ||
           results.any((r) => r.status == ResultStatus.needsReview);
@@ -116,21 +145,32 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         collectionDate: parsed.collectionDate,
         resultCount: results.length,
         synced: false,
+        timedOut: false,
+        patientName: parsed.patientName,
+        clearPatientName: parsed.patientName == null,
         status: results.isEmpty
             ? ReportStatus.failed
             : (uncertain ? ReportStatus.needsReview : ReportStatus.ready),
       );
+    } on TimeoutException {
+      // ponytail: the native OCR call can't be stopped, it finishes unseen.
+      results = const [];
+      updated = report.copyWith(
+          status: ReportStatus.failed, resultCount: 0, timedOut: true);
     } on UnsupportedDocument {
       results = const [];
       updated = report.copyWith(
           status: ReportStatus.failed, resultCount: 0, unsupported: true);
     } catch (_) {
       results = const [];
-      updated = report.copyWith(status: ReportStatus.failed, resultCount: 0);
+      updated = report.copyWith(
+          status: ReportStatus.failed, resultCount: 0, timedOut: false);
     }
     // Re-read under the lock: other reports may have been saved meanwhile.
     return _locked(() async {
       final local = await _store.load();
+      // Cancelled (deleted) while it was being read: keep nothing.
+      if (!local.reports.any((r) => r.id == reportId)) return null;
       await _store.save(
         [for (final r in local.reports) r.id == reportId ? updated : r],
         [...local.results.where((r) => r.reportId != reportId), ...results],
@@ -144,11 +184,22 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         final local = await _store.load();
         final before = local.results.firstWhere((r) => r.id == edited.id);
         final unfiled = edited.categoryIds.contains(otherCategoryId);
-        final result = edited.copyWith(
-            edited: true,
-            status: unfiled
-                ? ResultStatus.needsReview
-                : _parser.statusFor(edited.value, edited.referenceRange));
+        // Saving unchanged ("Looks right") confirms the reading without
+        // marking it edited.
+        final changed = before.name != edited.name ||
+            before.value != edited.value ||
+            before.unit != edited.unit ||
+            before.referenceRange != edited.referenceRange ||
+            before.categoryIds.join() != edited.categoryIds.join();
+        final result = _judgeByUsualRange(
+            edited.copyWith(
+                edited: before.edited || changed,
+                // Unfiled tests still need a category, whatever else.
+                reviewed: !unfiled,
+                status: unfiled
+                    ? ResultStatus.needsReview
+                    : _parser.statusFor(edited.value, edited.referenceRange)),
+            await _memberFor(edited.profileId));
         // Remember a newly picked category for this test name.
         if (!unfiled &&
             before.categoryIds.join() != edited.categoryIds.join()) {
@@ -166,8 +217,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
                 ? r.copyWith(
                     synced: false,
                     status: r.status == ReportStatus.needsReview &&
-                            siblings.every(
-                                (x) => x.status != ResultStatus.needsReview)
+                            siblings.every((x) => !x.awaitingReview)
                         ? ReportStatus.ready
                         : r.status)
                 : r
@@ -195,6 +245,48 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       });
 
   @override
+  Future<void> assignReport(String reportId, String profileId) =>
+      _locked(() async {
+        final local = await _store.load();
+        final member = await _memberFor(profileId);
+        await _store.save([
+          for (final r in local.reports)
+            r.id == reportId
+                ? r.copyWith(
+                    profileId: profileId, clearPatientName: true, synced: false)
+                : r
+        ], [
+          // Usual ranges depend on the person's sex and age: judge again.
+          for (final r in local.results)
+            r.reportId == reportId
+                ? _judgeByUsualRange(r.copyWith(profileId: profileId), member)
+                : r
+        ]);
+      });
+
+  @override
+  Future<FamilyMember> addMember(
+          {required String name,
+          required String relation,
+          required int age,
+          Sex? sex}) =>
+      _locked(() async {
+        final saved = await _store.loadMembers();
+        final member = FamilyMember(
+          id: _newId(),
+          name: name.trim(),
+          relation: relation,
+          initials: FamilyMember.initialsOf(name),
+          colorValue: _avatarTints[saved.length % _avatarTints.length],
+          age: age,
+          sex: sex,
+        );
+        // ponytail: phone-only until the members API exists; call it here.
+        await _store.saveMembers([...saved, member]);
+        return member;
+      });
+
+  @override
   Future<int> syncReports() async {
     final local = await _store.load();
     final pending = local.reports
@@ -219,6 +311,63 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
 
   /// Files an unfiled result under the category the user picked for the
   /// same test before, and judges it now that it has a home.
+  /// With no printed range, judge against the built-in usual range for this
+  /// person's sex and age. The lab's printed range always wins; unfiled
+  /// ('other') results, missing units and unknown sex are never guessed.
+  LabResult _judgeByUsualRange(LabResult r, FamilyMember? member) {
+    // A printed range (or a correction that added one) takes over.
+    if (r.referenceRange.trim().isNotEmpty) {
+      return r.judgedByUsualRange ? r.copyWith(clearUsual: true) : r;
+    }
+    if (r.status != ResultStatus.needsReview && !r.judgedByUsualRange) {
+      return r; // judged by a printed H/L flag
+    }
+    if (r.categoryIds.contains(otherCategoryId)) {
+      return r.copyWith(status: ResultStatus.needsReview, clearUsual: true);
+    }
+    final check = checkUsualRange(r,
+        table: referenceTable,
+        conversions: unitConversions,
+        sex: member?.sex,
+        age: member?.age);
+    return check == null
+        ? r.copyWith(status: ResultStatus.needsReview, clearUsual: true)
+        : r.copyWith(
+            status: check.status,
+            usualRange: check.text,
+            usualSource: check.range.source);
+  }
+
+  Future<FamilyMember?> _memberFor(String profileId) async => [
+        ...(await _dataSource.fetchFamilyHealth()).members,
+        ...await _store.loadMembers()
+      ].where((m) => m.id == profileId).firstOrNull;
+
+  /// The first "You" profile takes the signed-in account's name.
+  // ponytail: temporary, to confirm Google sign-in works on a device;
+  // remove once the user's own profile comes from the members API.
+  static List<FamilyMember> _withSignedInName(List<FamilyMember> members) {
+    final name = Backend.displayName;
+    final i = members.indexWhere((m) => m.relation == 'You');
+    if (name == null || name.trim().isEmpty || i < 0) return members;
+    final m = members[i];
+    return [
+      ...members.take(i),
+      FamilyMember(
+          id: m.id,
+          name: name,
+          relation: m.relation,
+          initials: FamilyMember.initialsOf(name),
+          colorValue: m.colorValue,
+          age: m.age,
+          sex: m.sex),
+      ...members.skip(i + 1),
+    ];
+  }
+
+  /// Avatar backgrounds for added members, matching the sample profiles.
+  static const _avatarTints = [0xFFD8EFE5, 0xFFDCE9FA, 0xFFF6E3D4, 0xFFEAE1F6];
+
   LabResult _fileByChoice(LabResult r, Map<String, String> choices) {
     final choice = choices[r.name.toLowerCase()];
     if (choice == null || !r.categoryIds.contains(otherCategoryId)) return r;
