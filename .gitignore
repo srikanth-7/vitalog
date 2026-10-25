@@ -19,11 +19,13 @@ migrate_working_dir/
 .idea/
 **/xcuserdata/
 gradle-wrapper.jar
+# ... but the Android wrapper jar must be committed, or gradlew fails on a fresh clone
+!android/gradle/wrapper/gradle-wrapper.jar
 /.gradle
 /captures/
 /gradlew
 /gradlew.bat
-/local.properties
+local.properties
 GeneratedPluginRegistrant.java
 .cxx/
 
@@ -52,7 +54,8 @@ key.properties
 # Local service configuration
 ios/Runner/GoogleService-Info.plist
 android/app/google-services.json
-supabase.local.json
+supabase*.local.json
+supabase/*.local.json
 
 # Generated analysis artifacts
 graphify-out/cache/
