@@ -146,6 +146,90 @@ abstract class AppLocalizations {
   /// **'No family profiles yet.'**
   String get noProfiles;
 
+  /// No description provided for @emptyHomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the people you care for'**
+  String get emptyHomeTitle;
+
+  /// No description provided for @emptyHomeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a profile to keep each person’s reports and results together.'**
+  String get emptyHomeMessage;
+
+  /// No description provided for @emptyCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results, thoughtfully sorted'**
+  String get emptyCategoriesTitle;
+
+  /// No description provided for @emptyCategoriesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Once reports are added, results are grouped into health categories so they’re easy to find.'**
+  String get emptyCategoriesMessage;
+
+  /// No description provided for @emptyReportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A clear timeline starts here'**
+  String get emptyReportsTitle;
+
+  /// No description provided for @emptyReportsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a family profile first. Then choose a lab report photo or PDF to begin a private timeline.'**
+  String get emptyReportsMessage;
+
+  /// No description provided for @emptyFamilyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your family space'**
+  String get emptyFamilyTitle;
+
+  /// No description provided for @emptyFamilyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add profiles to keep each person’s reports and results together. Your display and account settings are ready below.'**
+  String get emptyFamilyMessage;
+
+  /// No description provided for @startWalkthrough.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a quick tour'**
+  String get startWalkthrough;
+
+  /// No description provided for @walkthroughBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get walkthroughBack;
+
+  /// No description provided for @walkthroughNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get walkthroughNext;
+
+  /// No description provided for @walkthroughSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip tour'**
+  String get walkthroughSkip;
+
+  /// No description provided for @walkthroughDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get walkthroughDone;
+
+  /// No description provided for @walkthroughStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {step} of {count}'**
+  String walkthroughStep(int step, int count);
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
@@ -596,6 +680,18 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 report synced} other{{count} reports synced}}'**
   String noticeSynced(int count);
 
+  /// No description provided for @noticeSyncRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'{reports, plural, =1{1 report} other{{reports} reports}} and {members, plural, =1{1 family member} other{{members} family members}} restored from your account.'**
+  String noticeSyncRestored(int reports, int members);
+
+  /// No description provided for @noticeSyncRestoredSent.
+  ///
+  /// In en, this message translates to:
+  /// **'{reports, plural, =1{1 report} other{{reports} reports}} and {members, plural, =1{1 family member} other{{members} family members}} restored from your account · {count, plural, =1{1 report sent} other{{count} reports sent}}.'**
+  String noticeSyncRestoredSent(int reports, int members, int count);
+
   /// No description provided for @noticeNothingToSync.
   ///
   /// In en, this message translates to:
@@ -619,6 +715,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cloud sync isn\'t set up in this build yet.'**
   String get noticeBackendNotConfigured;
+
+  /// No description provided for @foreignAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A different account signed in'**
+  String get foreignAccountTitle;
+
+  /// No description provided for @foreignAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone already holds reports and family members for another account. Keeping them leaves those reports here, and this new account\'s data is added on top. Clearing removes everything stored on this phone only — its reports, the member list, learned test categories and their documents. The account\'s cloud backup is never touched.'**
+  String get foreignAccountBody;
+
+  /// No description provided for @foreignAccountKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this phone\'s reports and continue'**
+  String get foreignAccountKeep;
+
+  /// No description provided for @foreignAccountClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this phone, then restore'**
+  String get foreignAccountClear;
+
+  /// No description provided for @restoreFetching.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching your account data…'**
+  String get restoreFetching;
+
+  /// No description provided for @memberRemoveNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove “{name}”?'**
+  String memberRemoveNamed(String name);
+
+  /// No description provided for @memberRemoveDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Their profile is removed from this phone.'**
+  String get memberRemoveDetail;
+
+  /// No description provided for @memberRemoveSyncedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The account\'s cloud backup loses this profile too.'**
+  String get memberRemoveSyncedNote;
+
+  /// No description provided for @memberRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get memberRemoveConfirm;
+
+  /// No description provided for @familyMemberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed.'**
+  String familyMemberRemoved(String name);
+
+  /// No description provided for @memberRemoveBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} still has reports here. Move or delete them first.'**
+  String memberRemoveBlocked(String name);
+
+  /// No description provided for @deleteAccountButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountButton;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the account and everything synced with it — reports, results and family member profiles — plus this phone\'s local copy. Other accounts\' records are separate and stay untouched. This can\'t be undone.'**
+  String get deleteAccountMessage;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @accountDeletedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted. This phone is clear.'**
+  String get accountDeletedNotice;
+
+  /// No description provided for @accountDeleteFailedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the server to delete the account. Nothing changed.'**
+  String get accountDeleteFailedNotice;
 
   /// No description provided for @familyEyebrow.
   ///
@@ -1266,7 +1464,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteReportSyncedNote.
   ///
   /// In en, this message translates to:
-  /// **'Data you already synced stays in your cloud backup.'**
+  /// **'Deleting also removes it from this account\'s cloud backup.'**
   String get deleteReportSyncedNote;
 
   /// No description provided for @deleteReportConfirm.

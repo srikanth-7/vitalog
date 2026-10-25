@@ -90,15 +90,38 @@ Run **`supabase/schema.sql`**. It creates:
 | `status` | text | `withinRange` \| `high` \| `low` \| `needsReview` |
 | `report_date` | date | |
 
+### `public.family_members`
+
+Added for Sync restore (2026-10-24): run **`supabase/schema_restore.sql`**
+after `schema.sql` (same columns/RLS shape; it reuses `touch_updated_at`).
+Names DO leave the phone now — restoring a reinstall brings the family back
+(owner decision 2026-10-24; supersedes the 2026-10-22 "names stay on the
+phone" note for signed-in, synced accounts).
+
+| column | type | notes |
+|---|---|---|
+| `user_id` | uuid, PK part | `default auth.uid()`, FK → `auth.users` (cascade delete) |
+| `id` | text, PK part | generated on the device |
+| `name` | text | |
+| `relation` | text | `You`, `Dad`, … |
+| `sex` | text, null | `male` \| `female` |
+| `birth_year` | integer | the client derives the age from it |
+| `created_at` / `updated_at` | timestamptz | `updated_at` maintained by trigger |
+
+Initials and avatar colours stay device-side (assigned locally on restore).
+
 ### Write pattern the app uses
 
 ```dart
 supabase.from('reports').upsert(rows, onConflict: 'user_id,id');
 supabase.from('lab_results').upsert(rows, onConflict: 'user_id,id');
+supabase.from('family_members').upsert(rows, onConflict: 'user_id,id');
 ```
 
 So the composite primary keys `(user_id, id)` **must** exist exactly as in
-the schema, otherwise upserts fail.
+the schema, otherwise upserts fail. The Sync tap also **pulls** all three
+tables with plain `select()` before pushing — that's what restores a
+reinstall; other users' rows stay invisible (RLS).
 
 ### Security (RLS) — required
 

@@ -64,3 +64,6 @@ tool/qa_out/
 # Symbolication and obfuscation
 app.*.symbols
 app.*.map.json
+
+# iOS workspace build output (xcodebuild)
+ios/build/

@@ -31,13 +31,17 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
           selectedMemberId: selectedMemberId,
           selectedTab: previous is HealthLoaded ? previous.selectedTab : 0,
         ));
+        // Cold start with an existing session counts as a sign-in: quietly
+        // bring anything the account has (no upload, no "already synced").
+        _restoreLater();
       } catch (error) {
         emit(HealthLoadFailure(error.toString()));
       }
     });
 
     on<RefreshHealthData>((event, emit) => _refresh(emit));
-    Backend.googleUser.addListener(_accountChanged);
+    Backend.googleUser.addListener(_googleChanged);
+    Backend.signedInUser.addListener(_sessionChanged);
 
     on<SelectFamilyMember>((event, emit) {
       final current = state;
@@ -130,41 +134,174 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
           sex: event.sex);
       await _refresh(emit,
           selectMemberId: member.id,
+          selectTab: 0,
           notice:
               HealthNotice(HealthNoticeKind.memberAdded, name: member.name));
     });
 
     on<SyncReports>((event, emit) async {
       final current = state;
-      if (current is! HealthLoaded || current.isSyncing) return;
+      if (current is! HealthLoaded) {
+        // A sign-in raced the first load: the load's _restoreLater call
+        // retries once data has landed, so nothing to do here.
+        return;
+      }
+      if (current.isSyncing) return;
       if (!Backend.configured) {
+        if (event.quiet) return;
         emit(current.copyWith(
             notice: HealthNotice(HealthNoticeKind.backendNotConfigured)));
         return;
       }
       if (!Backend.signedIn) {
+        if (event.quiet) return;
         emit(current.copyWith(
             notice: HealthNotice(HealthNoticeKind.signInRequired)));
         return;
       }
       emit(current.copyWith(isSyncing: true));
       try {
-        final count = await _repository.syncReports();
-        await _refresh(emit,
-            notice: count == 0
-                ? HealthNotice(HealthNoticeKind.nothingToSync)
-                : HealthNotice(HealthNoticeKind.synced, count: count));
+        final outcome = await _repository.syncReports(push: !event.quiet);
+        // Restore news beats send news: if anything came back from the
+        // account, that's what the user sees (count doubles as "sent").
+        final notice = switch (outcome) {
+          _ when outcome.restoredReports > 0 || outcome.restoredMembers > 0 =>
+            HealthNotice(HealthNoticeKind.syncRestored,
+                count: outcome.pushed,
+                restored: outcome.restoredReports,
+                membersRestored: outcome.restoredMembers),
+          _ when outcome.pushed > 0 =>
+            HealthNotice(HealthNoticeKind.synced, count: outcome.pushed),
+          // Quiet: an empty account on a normal sign-in isn't news.
+          _ => event.quiet ? null : HealthNotice(HealthNoticeKind.nothingToSync),
+        };
+        await _refresh(emit, notice: notice);
       } catch (_) {
         await _refresh(emit, notice: HealthNotice(HealthNoticeKind.syncFailed));
       }
     });
+
+    on<SignInDetected>((event, emit) async {
+      final current = state;
+      if (current is! HealthLoaded || current.isSyncing) return;
+      final previous = await _repository.syncedAccount();
+      // First use (no remembered account) or the same person again: quietly
+      // bring whatever the account holds. A different account over local
+      // data gets the keep-or-clear ask instead of a silent merge.
+      final foreign = previous != null &&
+          previous != event.accountKey &&
+          await _repository.hasLocalData();
+      if (foreign) {
+        _pendingForeignAccount = event.accountKey;
+        await _refresh(emit,
+            notice: HealthNotice(HealthNoticeKind.foreignAccount));
+        return;
+      }
+      await _restoreQuietly(emit);
+    });
+
+    on<ForeignAccountDecision>((event, emit) async {
+      final current = state;
+      if (current is! HealthLoaded) return;
+      _pendingForeignAccount = null;
+      if (event.clearPhone) {
+        // The ask already said exactly what goes: reports, members,
+        // learned categories and originals, phone-only. The server backup
+        // (anything that account synced) is untouched.
+        await _repository.clearLocalData();
+        await _refresh(emit); // timeline empties before the pull lands
+      }
+      await _restoreQuietly(emit);
+    });
+
+    on<DeleteFamilyMember>((event, emit) async {
+      HealthNotice? notice;
+      try {
+        await _repository.deleteMember(event.member.id);
+        notice = HealthNotice(HealthNoticeKind.memberRemoved,
+            name: event.member.name);
+      } on MemberHasReports {
+        notice = HealthNotice(HealthNoticeKind.memberRemoveBlocked,
+            name: event.member.name);
+      }
+      await _refresh(emit, notice: notice);
+    });
+
+    on<DeleteAccount>((event, emit) async {
+      final current = state;
+      if (current is! HealthLoaded) return;
+      try {
+        await _repository.deleteAccount();
+        // The session is dead with the account; sign out cleanly (Google
+        // too) — failures here don't roll back the deletion.
+        if (Backend.configured) {
+          try {
+            await Backend.signOut();
+          } catch (_) {}
+        }
+        await _refresh(emit,
+            notice: HealthNotice(HealthNoticeKind.accountDeleted));
+      } catch (_) {
+        await _refresh(emit,
+            notice: HealthNotice(HealthNoticeKind.accountDeleteFailed));
+      }
+    });
   }
 
-  void _accountChanged() => add(RefreshHealthData());
+  /// Automatic restore (no button, nothing uploaded): pull + merge the
+  /// signed-in account, then stamp the phone as this account's home. Only
+  /// restoration news shows — "already synced" on a normal sign-in isn't.
+  Future<void> _restoreQuietly(Emitter<HealthState> emit) async {
+    final current = state;
+    if (current is! HealthLoaded || current.isSyncing) return;
+    if (!Backend.configured || Backend.signedInUser.value == null) return;
+    emit(current.copyWith(isSyncing: true, restoring: true));
+    HealthNotice? notice;
+    try {
+      final outcome = await _repository.syncReports(push: false);
+      if (outcome.restoredReports > 0 || outcome.restoredMembers > 0) {
+        notice = HealthNotice(HealthNoticeKind.syncRestored,
+            restored: outcome.restoredReports,
+            membersRestored: outcome.restoredMembers);
+      }
+      await _repository.rememberSyncedAccount(
+          _pendingForeignAccount ?? Backend.signedInUser.value!);
+    } catch (_) {
+      notice = HealthNotice(HealthNoticeKind.syncFailed);
+    } finally {
+      _pendingForeignAccount = null;
+    }
+    await _refresh(emit, notice: notice);
+  }
+
+  /// The restore-on-sign-in rule (owner, 2026-10-25): pulling the account
+  /// back needs no button. Sending still needs the user's explicit Sync tap.
+  /// If data hasn't loaded yet, the first load calls this again afterwards.
+  void _restoreLater() {
+    if (!Backend.configured || !Backend.signedIn) return;
+    if (state is HealthLoaded) add(SyncReports(quiet: true));
+  }
+
+  /// Google's display name can change mid-session (the profile card greets
+  /// with it): reload when it does. Sign-in facts come via [_sessionChanged].
+  void _googleChanged() => add(RefreshHealthData());
+
+  /// Session fact (email, Google, or a restored session at cold start):
+  /// decide same account vs. a foreign one, then restore, all quietly.
+  void _sessionChanged() {
+    if (Backend.signedInUser.value != null) {
+      add(SignInDetected(Backend.signedInUser.value!));
+    }
+    add(RefreshHealthData());
+  }
+
+  /// Where the keep-or-clear answer is headed (set while the prompt shows).
+  String? _pendingForeignAccount;
 
   @override
   Future<void> close() {
-    Backend.googleUser.removeListener(_accountChanged);
+    Backend.googleUser.removeListener(_googleChanged);
+    Backend.signedInUser.removeListener(_sessionChanged);
     return super.close();
   }
 
@@ -205,15 +342,25 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
 
   /// Reloads data without flashing the loading screen.
   Future<void> _refresh(Emitter<HealthState> emit,
-      {HealthNotice? notice, String? selectMemberId}) async {
+      {HealthNotice? notice, String? selectMemberId, int? selectTab}) async {
     final data = await _loadFamilyHealth();
     final current = state;
     if (current is HealthLoaded) {
+      // If this reload lost the selected member (removed from Family), fall
+      // back rather than pointing dashboards at a person who isn't there.
+      final stillThere =
+          data.members.any((m) => m.id == current.selectedMemberId);
+      final selection = selectMemberId ??
+          (stillThere
+              ? current.selectedMemberId
+              : (data.members.firstOrNull?.id ?? ''));
       emit(current.copyWith(
           data: data,
           isSyncing: false,
+          restoring: false,
           notice: notice,
-          selectedMemberId: selectMemberId));
+          selectedMemberId: selection,
+          selectedTab: selectTab));
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:vitalog/features/family_health/data/extraction/report_text_recog
 import 'package:vitalog/features/family_health/data/local/local_report_store.dart';
 import 'package:vitalog/features/family_health/data/local/report_cipher.dart';
 import 'package:vitalog/features/family_health/data/mock/mock_family_health_data_source.dart';
+import 'package:vitalog/features/family_health/data/datasources/empty_family_health_data_source.dart';
 import 'package:vitalog/features/family_health/data/repositories/family_health_repository_impl.dart';
 import 'package:vitalog/features/family_health/data/sync/report_sync_service.dart';
 import 'package:vitalog/features/family_health/presentation/bloc/health_bloc.dart';
@@ -69,6 +70,52 @@ void main() {
     );
   });
   tearDown(() => dir.delete(recursive: true));
+
+  testWidgets(
+      'empty install has no sample profiles and can add the first member',
+      (tester) async {
+    final emptyRepository = FamilyHealthRepositoryImpl(
+      EmptyFamilyHealthDataSource(),
+      store: LocalReportStore(
+          directory: () async => dir,
+          cipher: ReportCipher(keyBytes: () async => List.filled(32, 7)),
+          vault: ReportCipher.vault(keyBytes: () async => List.filled(32, 9))),
+      recognizer: _FakeRecognizer(),
+      sync: ReportSyncService(),
+    );
+
+    await tester.pumpWidget(FamilyHealthApp(
+        initialSettings: const AppSettings(onboarded: true),
+        repository: emptyRepository));
+    await settle(tester);
+
+    // Eyebrow renders its label uppercased (health_widgets.dart), so the
+    // visible string is the all-caps form.
+    expect(find.text('NO FAMILY PROFILES YET.'), findsOneWidget);
+    expect(find.text('Maya Sharma'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('add-first-member')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('member-name')), 'Test User');
+    await tester.pump();
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('member-age')), 120,
+        scrollable: find.byType(Scrollable).last);
+    await tester.enterText(find.byKey(const ValueKey('member-age')), '35');
+    await tester.pump();
+    await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('save-member')), 120,
+        scrollable: find.byType(Scrollable).last);
+    await tester.tap(find.byKey(const ValueKey('save-member')));
+    await settle(tester);
+    await settle(tester); // member write and snapshot reload
+
+    expect(find.byType(VitalogNavBar), findsOneWidget);
+    await tester.tap(nav('Family'));
+    await tester.pumpAndSettle();
+    expect(find.text('Test User'), findsOneWidget);
+    expect(find.text('Maya Sharma'), findsNothing);
+  });
 
   testWidgets('dashboard switches family profiles', (tester) async {
     await tester.pumpWidget(FamilyHealthApp(

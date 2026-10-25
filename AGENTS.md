@@ -261,6 +261,10 @@ left to review. Decrypted originals never touch disk: OCR and the
   the secret in the `#fragment`. Crypto core: `data/sharing/sharing_crypto.dart`
   (+ `test/privacy/sharing_crypto_test.dart`). Today's plaintext Sync is to be
   replaced by sealed Sync v2 before real data is synced.
+- **Decided (2026-10-25): restore has no button.** Signing in quietly pulls
+  (merge, nothing uploaded) the account's reports, results and member
+  profiles — "no extra buttons or anything" (product owner). Pushing still
+  requires the explicit Sync tap.
 
 ## Any file type, Android
 

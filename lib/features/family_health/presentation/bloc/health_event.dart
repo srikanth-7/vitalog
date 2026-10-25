@@ -1,3 +1,4 @@
+import '../../domain/entities/family_member.dart';
 import '../../domain/entities/lab_result.dart';
 import '../../domain/reference/reference_range.dart';
 
@@ -35,7 +36,43 @@ class DeleteReport extends HealthEvent {
   final String reportId;
 }
 
-class SyncReports extends HealthEvent {}
+/// Removes a family member's profile from this phone. The repository
+/// refuses while local reports are filed under them (see MemberHasReports).
+class DeleteFamilyMember extends HealthEvent {
+  DeleteFamilyMember(this.member);
+  final FamilyMember member;
+}
+
+/// Deletes the signed-in account (its server rows cascade) and clears this
+/// phone's copy. Irreversible — confirmed by a destructive sheet first.
+class DeleteAccount extends HealthEvent {}
+
+class SyncReports extends HealthEvent {
+  SyncReports({this.quiet = false});
+
+  /// False (default) = the manual Sync tap: full round-trip and a notice for
+  /// every outcome. True = automatic restore triggered by a sign-in:
+  /// pulls the account back and only speaks when something was restored or
+  /// when it failed, never "already synced" — and never pushes (sending
+  /// stays the user's explicit tap).
+  final bool quiet;
+}
+
+/// A Supabase session became active: a fresh sign-in, or the restored
+/// session at app start (initialSession). The bloc decides whether this is
+/// the account this phone already knows or a different one (foreign-account
+/// ask), then restores.
+class SignInDetected extends HealthEvent {
+  SignInDetected(this.accountKey);
+  final String accountKey;
+}
+
+/// The foreign-account prompt's answer: keep what this phone holds (the new
+/// account's data merges in on top) or clear the phone first.
+class ForeignAccountDecision extends HealthEvent {
+  ForeignAccountDecision({required this.clearPhone});
+  final bool clearPhone;
+}
 
 /// The user corrected a value that was read wrongly from a report.
 class EditResult extends HealthEvent {

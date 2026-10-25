@@ -34,6 +34,54 @@ class AppLocalizationsTe extends AppLocalizations {
   String get noProfiles => 'ఇంకా కుటుంబ ప్రొఫైళ్లు లేవు.';
 
   @override
+  String get emptyHomeTitle => 'మీకు ముఖ్యమైన వారి నుంచే ప్రారంభించండి';
+
+  @override
+  String get emptyHomeMessage =>
+      'ప్రతి ఒక్కరి నివేదికలు, ఫలితాలను ఒకేచోట ఉంచడానికి ప్రొఫైల్ జోడించండి.';
+
+  @override
+  String get emptyCategoriesTitle => 'ఫలితాలు క్రమంగా వర్గీకరించబడతాయి';
+
+  @override
+  String get emptyCategoriesMessage =>
+      'నివేదికలు జోడించిన తర్వాత, ఫలితాలు ఆరోగ్య విభాగాలుగా క్రమబద్ధీకరించబడతాయి.';
+
+  @override
+  String get emptyReportsTitle => 'స్పష్టమైన కాలక్రమం ఇక్కడ మొదలవుతుంది';
+
+  @override
+  String get emptyReportsMessage =>
+      'ముందుగా కుటుంబ ప్రొఫైల్ జోడించండి. తర్వాత ప్రైవేట్ కాలక్రమం కోసం ల్యాబ్ నివేదిక ఫోటో లేదా PDF ఎంచుకోండి.';
+
+  @override
+  String get emptyFamilyTitle => 'మీ కుటుంబ విభాగాన్ని సెటప్ చేయండి';
+
+  @override
+  String get emptyFamilyMessage =>
+      'ప్రతి ఒక్కరి నివేదికలు, ఫలితాలు వేరుగా ఉంచడానికి ప్రొఫైళ్లు జోడించండి. దిగువన ప్రదర్శన, ఖాతా సెట్టింగ్‌లు అందుబాటులో ఉన్నాయి.';
+
+  @override
+  String get startWalkthrough => 'చిన్న పరిచయం చూడండి';
+
+  @override
+  String get walkthroughBack => 'వెనుకకు';
+
+  @override
+  String get walkthroughNext => 'తర్వాత';
+
+  @override
+  String get walkthroughSkip => 'పరిచయాన్ని దాటవేయండి';
+
+  @override
+  String get walkthroughDone => 'పూర్తి';
+
+  @override
+  String walkthroughStep(int step, int count) {
+    return '$countలో $stepవ దశ';
+  }
+
+  @override
   String get cancel => 'రద్దు చేయండి';
 
   @override
@@ -332,6 +380,46 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
+  String noticeSyncRestored(int reports, int members) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reports,
+      locale: localeName,
+      other: '$reports నివేదికలు',
+      one: '1 నివేదిక',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      members,
+      locale: localeName,
+      other: '$members కుటుంబ సభ్యులు',
+      one: '1 కుటుంబ సభ్యుడు',
+    );
+    return 'మీ ఖాతా నుంచి $_temp0, $_temp1 తిరిగి వచ్చాయి.';
+  }
+
+  @override
+  String noticeSyncRestoredSent(int reports, int members, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reports,
+      locale: localeName,
+      other: '$reports నివేదికలు',
+      one: '1 నివేదిక',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      members,
+      locale: localeName,
+      other: '$members కుటుంబ సభ్యులు',
+      one: '1 కుటుంబ సభ్యుడు',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count నివేదికలు పంపబడ్డాయి',
+      one: '1 నివేదిక పంపబడింది',
+    );
+    return 'మీ ఖాతా నుంచి $_temp0, $_temp1 తిరిగి వచ్చాయి · $_temp2.';
+  }
+
+  @override
   String get noticeNothingToSync => 'అన్నీ ఇప్పటికే సింక్ అయ్యాయి.';
 
   @override
@@ -345,6 +433,67 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get noticeBackendNotConfigured =>
       'ఈ బిల్డ్‌లో క్లౌడ్ సింక్ ఇంకా సెటప్ కాలేదు.';
+
+  @override
+  String get foreignAccountTitle => 'భిన్న ఖాతా సైన్ ఇన్ అయింది';
+
+  @override
+  String get foreignAccountBody =>
+      'ఈ ఫోన్‌లో ఇప్పటికే మరో ఖాతా నివేదికలు, కుటుంబ సభ్యులు ఉన్నారు. వాటిని ఉంచితే ఈ ఖాతా డేటా కూడా జోడించబడుతుంది. తుడిచితే ఈ ఫోన్‌లో ఉన్నవి మాత్రమే తొలగిపోతాయి — నివేదికలు, సభ్యుల జాబితా, నేర్చుకున్న టెస్ట్ విభాగాలు, వాటి డాక్యుమెంట్లు. ఖాతా క్లౌడ్ బ్యాకప్‌ను ఎక్కువగా ముట్టుకోబోము.';
+
+  @override
+  String get foreignAccountKeep => 'ఈ ఫోన్ నివేదికలు ఉంచి, కొనసాగించు';
+
+  @override
+  String get foreignAccountClear => 'ఫోన్ తుడిచి, తిరిగి తెచ్చుకో';
+
+  @override
+  String get restoreFetching => 'మీ ఖాతా డేటా తీసుకోబడుతోంది…';
+
+  @override
+  String memberRemoveNamed(String name) {
+    return '“$name” తొలగించాలా?';
+  }
+
+  @override
+  String get memberRemoveDetail => 'వారి వివరాలు ఈ ఫోన్ నుంచి తొలగించబడతాయి.';
+
+  @override
+  String get memberRemoveSyncedNote =>
+      'ఖాతా క్లౌడ్ బ్యాకప్ నుంచి కూడా ఇది తొలగించబడుతుంది.';
+
+  @override
+  String get memberRemoveConfirm => 'తొలగించు';
+
+  @override
+  String familyMemberRemoved(String name) {
+    return '$name తొలగించబడింది.';
+  }
+
+  @override
+  String memberRemoveBlocked(String name) {
+    return '$name పేరుపై ఇంకా నివేదికలు ఉన్నాయి. ముందుగా వాటిని మార్చండి లేదా తొలగించండి.';
+  }
+
+  @override
+  String get deleteAccountButton => 'ఖాతాను తొలగించు';
+
+  @override
+  String get deleteAccountTitle => 'ఈ ఖాతాను తొలగించాలా?';
+
+  @override
+  String get deleteAccountMessage =>
+      'ఇది ఖాతాను, దానితో సింక్ అయిన ప్రతిదీ (నివేదికలు, ఫలితాలు, కుటుంబ సభ్యులు) తొలగిస్తుంది — అలాగే ఈ ఫోన్‌లోని కాపీనీ. మరో ఖాతా డేటా వేరుగా ఉండి అలాగే ఉంటుంది. ఇది అనూహ్యంగా (undo చేయలేనిది).';
+
+  @override
+  String get deleteAccountConfirm => 'ఖాతాను తొలగించు';
+
+  @override
+  String get accountDeletedNotice => 'ఖాతా తొలగించబడింది. ఈ ఫోన్ ఖాళీగా ఉంది.';
+
+  @override
+  String get accountDeleteFailedNotice =>
+      'ఖాతాను తొలగించడానికి సర్వర్‌ను చేరలేదు. ఏమీ మారలేదు.';
 
   @override
   String get familyEyebrow => 'మీ కుటుంబం';
@@ -761,7 +910,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get deleteReportSyncedNote =>
-      'మీరు ఇప్పటికే సింక్ చేసిన డేటా క్లౌడ్ బ్యాకప్‌లో ఉంటుంది.';
+      'తొలగిస్తే ఈ ఖాతా క్లౌడ్ బ్యాకప్ నుంచి కూడా ఇది తొలగించబడుతుంది.';
 
   @override
   String get deleteReportConfirm => 'నివేదికను తొలగించండి';

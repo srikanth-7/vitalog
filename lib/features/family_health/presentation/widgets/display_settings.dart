@@ -34,7 +34,7 @@ Future<void> showLanguageSheet(BuildContext context) {
       child: BlocBuilder<SettingsCubit, AppSettings>(
         builder: (context, settings) {
           final l10n = context.l10n;
-          final languages = AppLanguage.values;
+          const languages = AppLanguage.values;
           return SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
@@ -52,19 +52,25 @@ Future<void> showLanguageSheet(BuildContext context) {
                       ),
                     ),
                   ),
-                  for (final language in languages)
-                    RadioListTile<AppLanguage>(
-                      key: ValueKey('language-${language.name}'),
-                      value: language,
-                      groupValue: settings.language,
-                      title: Text(languageLabel(l10n, language)),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        HapticFeedback.selectionClick();
-                        cubit.setLanguage(value);
-                        Navigator.of(context).pop();
-                      },
+                  RadioGroup<AppLanguage>(
+                    groupValue: settings.language,
+                    onChanged: (value) {
+                      if (value == null) return;
+                      HapticFeedback.selectionClick();
+                      cubit.setLanguage(value);
+                      Navigator.of(context).pop();
+                    },
+                    child: Column(
+                      children: [
+                        for (final language in languages)
+                          RadioListTile<AppLanguage>(
+                            key: ValueKey('language-${language.name}'),
+                            value: language,
+                            title: Text(languageLabel(l10n, language)),
+                          ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),

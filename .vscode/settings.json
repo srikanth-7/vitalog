@@ -1,3 +1,11 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "dart.flutterSdkPath": "/Users/srikanthviyyuri/Developer/flutter-clean",
+  "dart.flutterSdkPaths": [
+    "/Users/srikanthviyyuri/Developer/flutter-clean",
+    "/Users/srikanthviyyuri/Developer/flutter"
+  ],
+  "terminal.integrated.env.osx": {
+    "PATH": "/Users/srikanthviyyuri/Developer/flutter-clean/bin:${env:PATH}"
+  }
 }

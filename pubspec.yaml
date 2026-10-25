@@ -46,6 +46,9 @@ dependencies:
   cryptography: ^2.9.0
   cryptography_flutter: ^2.3.4
   flutter_secure_storage: ^11.2.0
+  # Direct: Backend's session migration reads the legacy plaintext
+  # SharedPreferences copy (see secure_session_storage.dart).
+  shared_preferences: ^2.5.5
   archive: ^4.5.2
   xml: ^6.6.1
   google_sign_in: ^7.2.0

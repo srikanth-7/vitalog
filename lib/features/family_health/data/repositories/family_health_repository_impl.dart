@@ -99,6 +99,21 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
   Future<HealthReport?> processReport(String reportId) async {
     final report =
         (await _store.load()).reports.firstWhere((r) => r.id == reportId);
+    // A report restored from the account has no copy of the original here
+    // (originals never upload), so there is nothing to read again. Fail
+    // cleanly instead of touching a file that doesn't exist.
+    if (report.filePath == null) {
+      final failed = report.copyWith(
+          status: ReportStatus.failed, resultCount: 0, timedOut: false);
+      await _locked(() async {
+        final local = await _store.load();
+        if (!local.reports.any((r) => r.id == reportId)) return;
+        await _store.save(
+            [for (final r in local.reports) r.id == reportId ? failed : r],
+            local.results);
+      });
+      return failed;
+    }
     HealthReport updated;
     List<LabResult> results;
     try {
@@ -242,6 +257,35 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         if (path != null && await File(path).exists()) {
           await File(path).delete();
         }
+        // When this phone is signed in, the account's copy goes too: the
+        // next restore must not resurrect the deletion, and the cloud
+        // backup is the timeline's mirror, not an archive. Offline-first:
+        // a failed server call never blocks the local delete — a later
+        // Sync re-fetches the server's truth (and brings the row back if
+        // the deletion genuinely didn't land).
+        if (Backend.configured && Backend.signedIn) {
+          try {
+            await _sync.deleteReports([reportId]);
+          } catch (_) {}
+        }
+      });
+
+  @override
+  Future<void> deleteMember(String memberId) => _locked(() async {
+        final saved = await _store.loadMembers();
+        if (!saved.any((m) => m.id == memberId)) return;
+        final filed =
+            (await _store.load()).reports.where((r) => r.profileId == memberId);
+        if (filed.isNotEmpty) throw MemberHasReports(filed.length);
+        await _store.saveMembers(
+            [for (final m in saved) if (m.id != memberId) m]);
+        // Same rule as report deletion: the account's backup loses the
+        // profile too, and a network hiccup never blocks the local one.
+        if (Backend.configured && Backend.signedIn) {
+          try {
+            await _sync.deleteServerMember(memberId);
+          } catch (_) {}
+        }
       });
 
   @override
@@ -277,7 +321,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
           name: name.trim(),
           relation: relation,
           initials: FamilyMember.initialsOf(name),
-          colorValue: _avatarTints[saved.length % _avatarTints.length],
+          colorValue: avatarTints[saved.length % avatarTints.length],
           age: age,
           sex: sex,
         );
@@ -287,26 +331,266 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       });
 
   @override
-  Future<int> syncReports() async {
-    final local = await _store.load();
-    final pending = local.reports
+  Future<SyncOutcome> syncReports({bool push = true}) async {
+    // Pull first: this account's other devices may have stored reports and
+    // members the phone doesn't have yet, and this tap must bring them
+    // back, not clobber them.
+    final rows = await _sync.pull();
+    final merge = await _locked(() async {
+      // Re-load inside the lock: uploads that finished while pulling must
+      // survive the restore.
+      final merged = mergeRestore(
+        localReports: (await _store.load()).reports,
+        localResults: (await _store.load()).results,
+        localMembers: await _store.loadMembers(),
+        reportRows: rows.reports,
+        resultRows: rows.results,
+        memberRows: rows.members,
+        // Sample members are demo data — never pulled, never pushed — but
+        // results filed under them still judge against their sex and age.
+        judgeMembers: (await _dataSource.fetchFamilyHealth()).members,
+      );
+      await _store.save(merged.reports, merged.results);
+      if (merged.restoredMembers > 0) {
+        await _store.saveMembers(merged.members);
+      }
+      return merged;
+    });
+
+    // Restore without a push (automatic, after sign-in): sending stays the
+    // user's explicit Sync tap. Restored rows already arrived marked synced.
+    if (!push) {
+      return (
+        pushed: 0,
+        restoredReports: merge.restoredReports,
+        restoredResults: merge.restoredResults,
+        restoredMembers: merge.restoredMembers,
+      );
+    }
+
+    // Then push: unsynced reports (with their results) and every member on
+    // this phone. Restored rows arrived synced, so only new work is sent.
+    final pending = merge.reports
         .where((r) => !r.synced && r.status != ReportStatus.processing)
         .toList();
-    if (pending.isEmpty) return 0;
-    final ids = {for (final r in pending) r.id};
-    await _sync.push(
-        pending, local.results.where((r) => ids.contains(r.reportId)).toList());
+    final pendingIds = {for (final r in pending) r.id};
+    if (pending.isNotEmpty) {
+      await _sync.push(
+          pending,
+          [
+            for (final r in merge.results)
+              if (pendingIds.contains(r.reportId)) r
+          ]);
+    }
+    await _sync.pushMembers(
+        [for (final m in merge.members) ReportSyncService.memberRow(m)]);
     await _locked(() async {
       final after = await _store.load();
       await _store.save(
-        [
-          for (final r in after.reports)
-            ids.contains(r.id) ? r.copyWith(synced: true) : r
-        ],
-        after.results,
-      );
+          [
+            for (final r in after.reports)
+              pendingIds.contains(r.id) ? r.copyWith(synced: true) : r
+          ],
+          after.results);
     });
-    return pending.length;
+    return (
+      pushed: pending.length,
+      restoredReports: merge.restoredReports,
+      restoredResults: merge.restoredResults,
+      restoredMembers: merge.restoredMembers,
+    );
+  }
+
+  @override
+  Future<String?> syncedAccount() => _store.loadSyncedAccount();
+
+  @override
+  Future<void> rememberSyncedAccount(String accountKey) =>
+      _store.saveSyncedAccount(accountKey);
+
+  @override
+  Future<bool> hasLocalData() async {
+    final local = await _store.load();
+    return local.reports.isNotEmpty ||
+        local.results.isNotEmpty ||
+        (await _store.loadMembers()).isNotEmpty;
+  }
+
+  @override
+  Future<void> clearLocalData() => _locked(_store.clearAll);
+
+  @override
+  Future<void> deleteAccount() => _locked(() async {
+        // Server first: if it can't be done, the phone is left exactly as
+        // it was. The auth delete cascades the synced rows; then the phone
+        // forgets its copy and the account marker.
+        await _sync.deleteAccount();
+        await _store.clearAll();
+      });
+
+  /// Pure merge of rows pulled from the account into the phone's data. Runs
+  /// before anything is saved or pushed, so tests can exercise it directly.
+  /// Local rows win when an id matches (the edition the user last edited
+  /// here); the rest is restored. Usual-range judgment is phone-only state
+  /// that never syncs, so pulled results are re-judged from the member's
+  /// sex and age. Unparsable rows are skipped, never guessed.
+  static ({
+    List<HealthReport> reports,
+    List<LabResult> results,
+    List<FamilyMember> members,
+    int restoredReports,
+    int restoredResults,
+    int restoredMembers,
+  }) mergeRestore({
+    required List<HealthReport> localReports,
+    required List<LabResult> localResults,
+    required List<FamilyMember> localMembers,
+    required List<Map<String, dynamic>> reportRows,
+    required List<Map<String, dynamic>> resultRows,
+    required List<Map<String, dynamic>> memberRows,
+    List<FamilyMember> judgeMembers = const [],
+  }) {
+    final reports = [...localReports];
+    final results = [...localResults];
+    final members = [...localMembers];
+    final reportIds = {for (final r in reports) r.id};
+    final resultIds = {for (final r in results) r.id};
+    final memberIds = {for (final m in members) m.id};
+    final localReportById = {for (final r in localReports) r.id: r};
+
+    // Members: identity only. Initials and the avatar tint are device-side,
+    // so a restored member gets them freshly from the name and the sequence.
+    var restoredMembers = 0;
+    for (final row in memberRows) {
+      if (row['id'] == null || memberIds.contains(row['id'])) continue;
+      final member = memberFromRow(row,
+          colorValue: avatarTints[members.length % avatarTints.length]);
+      if (member == null || !memberIds.add(member.id)) continue;
+      members.add(member);
+      restoredMembers++;
+    }
+
+    // Everyone a pulled result can be judged against: the phone's members,
+    // what the pull restored, and the sample members (judge-only).
+    final byId = {for (final m in members) m.id: m};
+    for (final m in judgeMembers) {
+      byId[m.id] = m;
+    }
+
+    var restoredReports = 0;
+    final restoredReportById = <String, HealthReport>{};
+    for (final row in reportRows) {
+      if (row['id'] == null || reportIds.contains(row['id'])) continue;
+      final report = reportFromRow(row);
+      if (report == null || reportIds.contains(report.id)) continue;
+      reportIds.add(report.id);
+      restoredReportById[report.id] = report;
+      reports.add(report);
+      restoredReports++;
+    }
+
+    // Results join their report (restored or local) for the printed dates
+    // and lab — the server never stores those on a result row. An orphan
+    // (its report isn't here) is skipped, not invented.
+    var restoredResults = 0;
+    for (final row in resultRows) {
+      final reportId = row['report_id'] as String?;
+      if (reportId == null) continue;
+      final report = restoredReportById[reportId] ?? localReportById[reportId];
+      if (report == null) continue;
+      if (row['id'] == null || resultIds.contains(row['id'])) continue;
+      final result = resultFromRow(row, report: report);
+      if (result == null || !resultIds.add(result.id)) continue;
+      results.add(_judgeByUsualRange(result, byId[result.profileId]));
+      restoredResults++;
+    }
+
+    // Keep the stored result counts in step with the results actually here.
+    return (
+      reports: [
+        for (final r in reports)
+          r.copyWith(
+              resultCount: results.where((x) => x.reportId == r.id).length)
+      ],
+      results: results,
+      members: members,
+      restoredReports: restoredReports,
+      restoredResults: restoredResults,
+      restoredMembers: restoredMembers,
+    );
+  }
+
+  /// Rows pulled from PostgREST arrive flat; these mappers keep the merge
+  /// readable. Any row with an unexpected shape returns null and is skipped
+  /// — an odd row must never stop the rest of the restore.
+  static HealthReport? reportFromRow(Map<String, dynamic> row) {
+    try {
+      return HealthReport(
+        id: row['id'] as String,
+        profileId: row['profile_id'] as String,
+        // The real file name never uploaded (it usually prints the patient's
+        // name); the server only ever kept the extension.
+        fileName: row['file_name'] as String,
+        lab: (row['lab'] ?? '') as String,
+        reportDate: DateTime.parse(row['report_date'] as String),
+        collectionDate: row['collection_date'] == null
+            ? null
+            : DateTime.parse(row['collection_date'] as String),
+        uploadDate: DateTime.parse(row['uploaded_at'] as String),
+        status: ReportStatus.values.byName(row['status'] as String),
+        resultCount: 0, // recomputed once the pulled results have joined
+        // The original was never uploaded: a restored report has no local
+        // copy (processReport guards that).
+        filePath: null,
+        synced: true, // it comes from the account; there's nothing to send
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static LabResult? resultFromRow(Map<String, dynamic> row,
+      {required HealthReport report}) {
+    try {
+      return LabResult(
+        id: row['id'] as String,
+        reportId: report.id,
+        profileId: row['profile_id'] as String,
+        name: row['name'] as String,
+        categoryIds: List<String>.from(row['category_ids'] as List),
+        value: row['value'] as String,
+        unit: (row['unit'] ?? '') as String,
+        referenceRange: (row['reference_range'] ?? '') as String,
+        status: ResultStatus.values.byName(row['status'] as String),
+        // The result table holds no dates or lab: they ride the report.
+        reportDate: report.reportDate,
+        collectionDate: report.collectionDate,
+        lab: report.lab,
+        // edited/reviewed/usualRange are phone-only; the merge re-judges.
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static FamilyMember? memberFromRow(Map<String, dynamic> row,
+      {required int colorValue}) {
+    try {
+      final name = row['name'] as String;
+      return FamilyMember(
+        id: row['id'] as String,
+        name: name,
+        relation: row['relation'] as String,
+        initials: FamilyMember.initialsOf(name),
+        // Tints are device-side; a restored member gets the next one here.
+        colorValue: colorValue,
+        age: DateTime.now().year - (row['birth_year'] as int),
+        sex:
+            row['sex'] == null ? null : Sex.values.byName(row['sex'] as String),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Files an unfiled result under the category the user picked for the
@@ -314,7 +598,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
   /// With no printed range, judge against the built-in usual range for this
   /// person's sex and age. The lab's printed range always wins; unfiled
   /// ('other') results, missing units and unknown sex are never guessed.
-  LabResult _judgeByUsualRange(LabResult r, FamilyMember? member) {
+  static LabResult _judgeByUsualRange(LabResult r, FamilyMember? member) {
     // A printed range (or a correction that added one) takes over.
     if (r.referenceRange.trim().isNotEmpty) {
       return r.judgedByUsualRange ? r.copyWith(clearUsual: true) : r;
@@ -365,8 +649,9 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     ];
   }
 
-  /// Avatar backgrounds for added members, matching the sample profiles.
-  static const _avatarTints = [0xFFD8EFE5, 0xFFDCE9FA, 0xFFF6E3D4, 0xFFEAE1F6];
+  /// Avatar backgrounds for added and restored members, matching the sample
+  /// profiles. Public: restore tests check the sequence members pick from.
+  static const avatarTints = [0xFFD8EFE5, 0xFFDCE9FA, 0xFFF6E3D4, 0xFFEAE1F6];
 
   LabResult _fileByChoice(LabResult r, Map<String, String> choices) {
     final choice = choices[r.name.toLowerCase()];

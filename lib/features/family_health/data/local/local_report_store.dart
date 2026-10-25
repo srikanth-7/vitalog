@@ -112,6 +112,52 @@ class LocalReportStore {
             .encode(jsonEncode([for (final m in members) memberToJson(m)]))));
   }
 
+  /// Which account's data this phone currently holds (the Supabase user
+  /// id), so a later sign-in can tell the same person from a different one.
+  /// Stored encrypted, and it dies with the store when the phone is cleared,
+  /// so a fresh install never remembers a previous user.
+  Future<String?> loadSyncedAccount() async {
+    final file = File('${(await _directory()).path}/sync_account.json');
+    if (!await file.exists()) return null;
+    try {
+      final clear =
+          utf8.decode(await _cipher.decrypt(await file.readAsBytes()));
+      return (jsonDecode(clear) as Map<String, dynamic>)['account'] as String?;
+    } catch (_) {
+      return null; // damaged or foreign bytes: treat as unknown.
+    }
+  }
+
+  Future<void> saveSyncedAccount(String? account) async {
+    final file = File('${(await _directory()).path}/sync_account.json');
+    if (account == null) {
+      if (await file.exists()) await file.delete();
+      return;
+    }
+    await _writeAtomically(
+        file,
+        await _cipher
+            .encrypt(utf8.encode(jsonEncode({'account': account}))));
+  }
+
+  /// Wipes this phone's copy (reports + results, members, learned
+  /// categories, originals, the account marker). For "a different account
+  /// signed in here" — the account's server backup is never touched.
+  Future<void> clearAll() async {
+    final dir = await _directory();
+    for (final name in [
+      'reports.json',
+      'members.json',
+      'category_choices.json',
+      'sync_account.json',
+    ]) {
+      final file = File('${dir.path}/$name');
+      if (await file.exists()) await file.delete();
+    }
+    final originals = Directory('${dir.path}/reports');
+    if (await originals.exists()) await originals.delete(recursive: true);
+  }
+
   /// The original document's bytes, decrypted in memory only.
   Future<Uint8List> readOriginal(String path) async {
     final bytes = await File(path).readAsBytes();

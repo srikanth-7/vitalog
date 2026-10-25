@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,10 +9,12 @@ import '../../../../core/theme/app_shape.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../health_presentation.dart';
 import '../widgets/add_member_sheet.dart';
+import '../widgets/apple_menus.dart';
 import '../widgets/health_widgets.dart';
 import '../../../auth/sign_in_screen.dart';
 import 'health_subscreens.dart';
 import 'home_screen.dart';
+import 'empty_family_experience.dart';
 import 'navigation.dart';
 import 'profile_screen.dart';
 import 'reports_screen.dart';
@@ -30,8 +31,6 @@ const _trayInset = AppRadius.xl - AppRadius.lg;
 
 class DashBoardScreen extends StatelessWidget {
   const DashBoardScreen({super.key});
-
-  static Timer? _noticeDismissTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +68,14 @@ class DashBoardScreen extends StatelessWidget {
         }
         final loaded = state as HealthLoaded;
         if (loaded.data.members.isEmpty) {
-          return Scaffold(body: Center(child: Text(l10n.noProfiles)));
+          return EmptyFamilyExperience(
+            selectedTab: loaded.selectedTab,
+            onSelected: (index) {
+              HapticFeedback.selectionClick();
+              context.read<HealthBloc>().add(SelectNavigationTab(index));
+            },
+            onAddMember: () => showAddMemberSheet(context),
+          );
         }
         final full = loaded.data;
         final profile = full.members.firstWhere(
@@ -109,17 +115,24 @@ class DashBoardScreen extends StatelessWidget {
         return Scaffold(
           // Switching person cross-fades the whole view, so the change is
           // seen, not missed.
-          body: AnimatedSwitcher(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 220),
-            child: KeyedSubtree(
-              key: ValueKey(profile.id),
-              child: _TabFade(
-                  index: loaded.selectedTab,
-                  child:
-                      IndexedStack(index: loaded.selectedTab, children: pages)),
-            ),
+          body: Column(
+            children: [
+              _FetchBanner(visible: loaded.restoring),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 220),
+                  child: KeyedSubtree(
+                    key: ValueKey(profile.id),
+                    child: _TabFade(
+                        index: loaded.selectedTab,
+                        child: IndexedStack(
+                            index: loaded.selectedTab, children: pages)),
+                  ),
+                ),
+              ),
+            ],
           ),
           // One floating tray, inset from the edges like iOS: dock row on
           // top, tabs below. Corners are concentric: tray xl (26) minus the
@@ -179,6 +192,13 @@ class DashBoardScreen extends StatelessWidget {
   }
 
   static void _showNotice(BuildContext context, HealthNotice notice) {
+    switch (notice.kind) {
+      case HealthNoticeKind.foreignAccount:
+        _askForeignAccount(context);
+        return;
+      default:
+        break;
+    }
     // Confetti only when nothing is out of range: celebrating a report with
     // worrying values would be the wrong tone.
     if (notice.kind == HealthNoticeKind.reportReady && notice.attention == 0) {
@@ -192,8 +212,6 @@ class DashBoardScreen extends StatelessWidget {
     final text = notice.unfiled == 0
         ? _noticeText(l10n, notice)
         : '${_noticeText(l10n, notice)} · ${l10n.needCategory(notice.unfiled)}';
-    _noticeDismissTimer?.cancel();
-    _noticeDismissTimer = null;
     final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
     // A report finished in the background: let the user jump straight to it
     // from wherever they are in the app.
@@ -205,7 +223,7 @@ class DashBoardScreen extends StatelessWidget {
             .where((r) => r.id == notice.reportId)
             .firstOrNull;
     final simple = context.read<SettingsCubit>().state.simpleMode;
-    final controller = messenger.showSnackBar(SnackBar(
+    messenger.showSnackBar(SnackBar(
       behavior: SnackBarBehavior.floating,
       // Simple mode: time to read it and reach "View".
       duration: Duration(seconds: simple ? 10 : 4),
@@ -230,19 +248,6 @@ class DashBoardScreen extends StatelessWidget {
                       onPressed: () => openReport(context, report))
                   : null,
     ));
-    final dismissalTimer = Timer(
-      Duration(seconds: simple ? 10 : 4),
-      () {
-        if (messenger.mounted) messenger.hideCurrentSnackBar();
-      },
-    );
-    _noticeDismissTimer = dismissalTimer;
-    controller.closed.then((_) {
-      if (identical(_noticeDismissTimer, dismissalTimer)) {
-        dismissalTimer.cancel();
-        _noticeDismissTimer = null;
-      }
-    });
   }
 
   static String _noticeText(AppLocalizations l10n, HealthNotice n) =>
@@ -260,7 +265,17 @@ class DashBoardScreen extends StatelessWidget {
           l10n.noticeReportOtherPerson(n.name ?? ''),
         HealthNoticeKind.reportCancelled => l10n.noticeReportCancelled,
         HealthNoticeKind.memberAdded => l10n.noticeMemberAdded(n.name ?? ''),
+        HealthNoticeKind.memberRemoved =>
+          l10n.familyMemberRemoved(n.name ?? ''),
+        HealthNoticeKind.memberRemoveBlocked =>
+          l10n.memberRemoveBlocked(n.name ?? ''),
+        HealthNoticeKind.accountDeleted => l10n.accountDeletedNotice,
+        HealthNoticeKind.accountDeleteFailed =>
+          l10n.accountDeleteFailedNotice,
         HealthNoticeKind.synced => l10n.noticeSynced(n.count),
+        HealthNoticeKind.syncRestored => n.count > 0
+            ? l10n.noticeSyncRestoredSent(n.restored, n.membersRestored, n.count)
+            : l10n.noticeSyncRestored(n.restored, n.membersRestored),
         HealthNoticeKind.nothingToSync => l10n.noticeNothingToSync,
         HealthNoticeKind.syncFailed => l10n.noticeSyncFailed,
         HealthNoticeKind.resultEdited => l10n.noticeResultEdited,
@@ -269,7 +284,79 @@ class DashBoardScreen extends StatelessWidget {
         HealthNoticeKind.signInRequired => l10n.noticeSignInRequired,
         HealthNoticeKind.backendNotConfigured =>
           l10n.noticeBackendNotConfigured,
+        HealthNoticeKind.foreignAccount => '', // handled by _askForeignAccount
       };
+}
+
+/// The quiet restore goes unseen otherwise: while the account is fetched,
+/// a slim banner above the tabs says plainly what is happening. Size and
+/// opacity only, ≤250 ms, off with the system animation kill switch.
+class _FetchBanner extends StatelessWidget {
+  const _FetchBanner({required this.visible});
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    final off = MediaQuery.disableAnimationsOf(context);
+    final colors = context.colors;
+    return ClipRect(
+      child: AnimatedSize(
+        duration: off ? Duration.zero : const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: visible
+            ? SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: DecoratedBox(
+                    decoration: AppShape.decoration(
+                        radius: AppRadius.sm,
+                        color: colors.brandSoft,
+                        side: BorderSide(color: colors.border)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Row(children: [
+                        SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: colors.brand)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            context.l10n.restoreFetching,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: colors.textPrimary),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ),
+              )
+            : const SizedBox(width: double.infinity, height: 0),
+      ),
+    );
+  }
+}
+
+/// A different account just signed in over local data. The destructive
+/// sheet (project rule: anything irreversible goes through it) names exactly
+/// what a clear removes; keeping is the default the sheet closes on.
+Future<void> _askForeignAccount(BuildContext context) async {
+  final l10n = context.l10n;
+  final bloc = context.read<HealthBloc>();
+  final clear = await showDestructiveSheet(context,
+      title: l10n.foreignAccountTitle,
+      message: l10n.foreignAccountBody,
+      confirmLabel: l10n.foreignAccountClear,
+      cancelLabel: l10n.foreignAccountKeep);
+  bloc.add(ForeignAccountDecision(clearPhone: clear));
 }
 
 /// Fades the new tab in (with a slight rise) instead of hard-cutting.

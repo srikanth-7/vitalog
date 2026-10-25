@@ -8,6 +8,21 @@
   "loadFailed": "Could not load family health. Please try again.",
   "tryAgain": "Try again",
   "noProfiles": "No family profiles yet.",
+  "emptyHomeTitle": "Start with the people you care for",
+  "emptyHomeMessage": "Add a profile to keep each person’s reports and results together.",
+  "emptyCategoriesTitle": "Results, thoughtfully sorted",
+  "emptyCategoriesMessage": "Once reports are added, results are grouped into health categories so they’re easy to find.",
+  "emptyReportsTitle": "A clear timeline starts here",
+  "emptyReportsMessage": "Add a family profile first. Then choose a lab report photo or PDF to begin a private timeline.",
+  "emptyFamilyTitle": "Set up your family space",
+  "emptyFamilyMessage": "Add profiles to keep each person’s reports and results together. Your display and account settings are ready below.",
+  "startWalkthrough": "Take a quick tour",
+  "walkthroughBack": "Back",
+  "walkthroughNext": "Next",
+  "walkthroughSkip": "Skip tour",
+  "walkthroughDone": "Done",
+  "walkthroughStep": "Step {step} of {count}",
+  "@walkthroughStep": {"placeholders": {"step": {"type": "int"}, "count": {"type": "int"}}},
   "cancel": "Cancel",
   "homeEyebrow": "Family health",
   "homeTitle": "A clearer picture,\ntogether.",
@@ -170,10 +185,68 @@
       }
     }
   },
+  "noticeSyncRestored": "{reports, plural, =1{1 report} other{{reports} reports}} and {members, plural, =1{1 family member} other{{members} family members}} restored from your account.",
+  "@noticeSyncRestored": {
+    "placeholders": {
+      "reports": {
+        "type": "int"
+      },
+      "members": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeSyncRestoredSent": "{reports, plural, =1{1 report} other{{reports} reports}} and {members, plural, =1{1 family member} other{{members} family members}} restored from your account · {count, plural, =1{1 report sent} other{{count} reports sent}}.",
+  "@noticeSyncRestoredSent": {
+    "placeholders": {
+      "reports": {
+        "type": "int"
+      },
+      "members": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "noticeNothingToSync": "Everything is already synced.",
   "noticeSyncFailed": "Sync failed. Your reports are safe on this phone — try again later.",
   "noticeSignInRequired": "Sign in to sync your reports.",
   "noticeBackendNotConfigured": "Cloud sync isn't set up in this build yet.",
+  "foreignAccountTitle": "A different account signed in",
+  "@foreignAccountTitle": {},
+  "foreignAccountBody": "This phone already holds reports and family members for another account. Keeping them leaves those reports here, and this new account's data is added on top. Clearing removes everything stored on this phone only — its reports, the member list, learned test categories and their documents. The account's cloud backup is never touched.",
+  "@foreignAccountBody": {},
+  "foreignAccountKeep": "Keep this phone's reports and continue",
+  "@foreignAccountKeep": {},
+  "foreignAccountClear": "Clear this phone, then restore",
+  "restoreFetching": "Fetching your account data…",
+  "@restoreFetching": {},
+  "memberRemoveNamed": "Remove “{name}”?",
+  "@memberRemoveNamed": { "placeholders": { "name": { "type": "String" } } },
+  "memberRemoveDetail": "Their profile is removed from this phone.",
+  "@memberRemoveDetail": {},
+  "memberRemoveSyncedNote": "The account's cloud backup loses this profile too.",
+  "@memberRemoveSyncedNote": {},
+  "memberRemoveConfirm": "Remove",
+  "@memberRemoveConfirm": {},
+  "familyMemberRemoved": "{name} removed.",
+  "@familyMemberRemoved": { "placeholders": { "name": { "type": "String" } } },
+  "memberRemoveBlocked": "{name} still has reports here. Move or delete them first.",
+  "@memberRemoveBlocked": { "placeholders": { "name": { "type": "String" } } },
+  "deleteAccountButton": "Delete account",
+  "@deleteAccountButton": {},
+  "deleteAccountTitle": "Delete this account?",
+  "@deleteAccountTitle": {},
+  "deleteAccountMessage": "This removes the account and everything synced with it — reports, results and family member profiles — plus this phone's local copy. Other accounts' records are separate and stay untouched. This can't be undone.",
+  "@deleteAccountMessage": {},
+  "deleteAccountConfirm": "Delete account",
+  "@deleteAccountConfirm": {},
+  "accountDeletedNotice": "Account deleted. This phone is clear.",
+  "@accountDeletedNotice": {},
+  "accountDeleteFailedNotice": "Couldn't reach the server to delete the account. Nothing changed.",
+  "@accountDeleteFailedNotice": {},
   "familyEyebrow": "Your household",
   "familyTitle": "Family profiles",
   "familySubtitle": "Choose whose health timeline you want to view.",
@@ -346,7 +419,7 @@
   "@deleteReportNamed": {"placeholders": {"name": {"type": "String"}}},
   "deleteReportDetail": "{count, plural, =0{The original document will be removed from this phone. This can't be undone.} =1{The original document and its 1 result will be removed from this phone. This can't be undone.} other{The original document and its {count} results will be removed from this phone. This can't be undone.}}",
   "@deleteReportDetail": {"placeholders": {"count": {"type": "int"}}},
-  "deleteReportSyncedNote": "Data you already synced stays in your cloud backup.",
+  "deleteReportSyncedNote": "Deleting also removes it from this account's cloud backup.",
   "deleteReportConfirm": "Delete Report",
   "statusWithinUsual": "Within usual range",
   "statusHighUsual": "High · usual range",

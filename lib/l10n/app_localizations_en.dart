@@ -33,6 +33,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noProfiles => 'No family profiles yet.';
 
   @override
+  String get emptyHomeTitle => 'Start with the people you care for';
+
+  @override
+  String get emptyHomeMessage =>
+      'Add a profile to keep each person’s reports and results together.';
+
+  @override
+  String get emptyCategoriesTitle => 'Results, thoughtfully sorted';
+
+  @override
+  String get emptyCategoriesMessage =>
+      'Once reports are added, results are grouped into health categories so they’re easy to find.';
+
+  @override
+  String get emptyReportsTitle => 'A clear timeline starts here';
+
+  @override
+  String get emptyReportsMessage =>
+      'Add a family profile first. Then choose a lab report photo or PDF to begin a private timeline.';
+
+  @override
+  String get emptyFamilyTitle => 'Set up your family space';
+
+  @override
+  String get emptyFamilyMessage =>
+      'Add profiles to keep each person’s reports and results together. Your display and account settings are ready below.';
+
+  @override
+  String get startWalkthrough => 'Take a quick tour';
+
+  @override
+  String get walkthroughBack => 'Back';
+
+  @override
+  String get walkthroughNext => 'Next';
+
+  @override
+  String get walkthroughSkip => 'Skip tour';
+
+  @override
+  String get walkthroughDone => 'Done';
+
+  @override
+  String walkthroughStep(int step, int count) {
+    return 'Step $step of $count';
+  }
+
+  @override
   String get cancel => 'Cancel';
 
   @override
@@ -331,6 +379,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String noticeSyncRestored(int reports, int members) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reports,
+      locale: localeName,
+      other: '$reports reports',
+      one: '1 report',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      members,
+      locale: localeName,
+      other: '$members family members',
+      one: '1 family member',
+    );
+    return '$_temp0 and $_temp1 restored from your account.';
+  }
+
+  @override
+  String noticeSyncRestoredSent(int reports, int members, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      reports,
+      locale: localeName,
+      other: '$reports reports',
+      one: '1 report',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      members,
+      locale: localeName,
+      other: '$members family members',
+      one: '1 family member',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reports sent',
+      one: '1 report sent',
+    );
+    return '$_temp0 and $_temp1 restored from your account · $_temp2.';
+  }
+
+  @override
   String get noticeNothingToSync => 'Everything is already synced.';
 
   @override
@@ -343,6 +431,67 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noticeBackendNotConfigured =>
       'Cloud sync isn\'t set up in this build yet.';
+
+  @override
+  String get foreignAccountTitle => 'A different account signed in';
+
+  @override
+  String get foreignAccountBody =>
+      'This phone already holds reports and family members for another account. Keeping them leaves those reports here, and this new account\'s data is added on top. Clearing removes everything stored on this phone only — its reports, the member list, learned test categories and their documents. The account\'s cloud backup is never touched.';
+
+  @override
+  String get foreignAccountKeep => 'Keep this phone\'s reports and continue';
+
+  @override
+  String get foreignAccountClear => 'Clear this phone, then restore';
+
+  @override
+  String get restoreFetching => 'Fetching your account data…';
+
+  @override
+  String memberRemoveNamed(String name) {
+    return 'Remove “$name”?';
+  }
+
+  @override
+  String get memberRemoveDetail => 'Their profile is removed from this phone.';
+
+  @override
+  String get memberRemoveSyncedNote =>
+      'The account\'s cloud backup loses this profile too.';
+
+  @override
+  String get memberRemoveConfirm => 'Remove';
+
+  @override
+  String familyMemberRemoved(String name) {
+    return '$name removed.';
+  }
+
+  @override
+  String memberRemoveBlocked(String name) {
+    return '$name still has reports here. Move or delete them first.';
+  }
+
+  @override
+  String get deleteAccountButton => 'Delete account';
+
+  @override
+  String get deleteAccountTitle => 'Delete this account?';
+
+  @override
+  String get deleteAccountMessage =>
+      'This removes the account and everything synced with it — reports, results and family member profiles — plus this phone\'s local copy. Other accounts\' records are separate and stay untouched. This can\'t be undone.';
+
+  @override
+  String get deleteAccountConfirm => 'Delete account';
+
+  @override
+  String get accountDeletedNotice => 'Account deleted. This phone is clear.';
+
+  @override
+  String get accountDeleteFailedNotice =>
+      'Couldn\'t reach the server to delete the account. Nothing changed.';
 
   @override
   String get familyEyebrow => 'Your household';
@@ -759,7 +908,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteReportSyncedNote =>
-      'Data you already synced stays in your cloud backup.';
+      'Deleting also removes it from this account\'s cloud backup.';
 
   @override
   String get deleteReportConfirm => 'Delete Report';

@@ -21,6 +21,7 @@ enum HealthNoticeKind {
   reportCancelled,
   memberAdded,
   synced,
+  syncRestored,
   nothingToSync,
   syncFailed,
   resultEdited,
@@ -28,6 +29,11 @@ enum HealthNoticeKind {
   reportDuplicate,
   signInRequired,
   backendNotConfigured,
+  foreignAccount,
+  memberRemoved,
+  memberRemoveBlocked,
+  accountDeleted,
+  accountDeleteFailed,
 }
 
 /// A one-off message for the UI (snackbar). [serial] makes repeats distinct.
@@ -36,6 +42,8 @@ class HealthNotice {
       {this.count = 0,
       this.unfiled = 0,
       this.attention = 0,
+      this.restored = 0,
+      this.membersRestored = 0,
       this.reportId,
       this.name})
       : serial = _next++;
@@ -47,6 +55,12 @@ class HealthNotice {
 
   /// Results outside their range (printed or usual) in the report.
   final int attention;
+
+  /// Reports restored from the account on sync (a reinstall's bring-back).
+  final int restored;
+
+  /// Family member profiles restored from the account on sync.
+  final int membersRestored;
 
   /// The report a "finished reading" notice is about, so it can be opened.
   final String? reportId;
@@ -63,13 +77,20 @@ class HealthLoaded extends HealthState {
     required this.selectedMemberId,
     this.selectedTab = 0,
     this.isSyncing = false,
+    this.restoring = false,
     this.notice,
   });
 
   final FamilyHealthSnapshot data;
   final String selectedMemberId;
   final int selectedTab;
+
+  /// A Sync round-trip is running (chip spinner on Reports).
   final bool isSyncing;
+
+  /// The account is being quietly restored (sign-in fetch): drives the
+  /// "Fetching your data…" banner above the tabs.
+  final bool restoring;
   final HealthNotice? notice;
 
   HealthLoaded copyWith({
@@ -77,6 +98,7 @@ class HealthLoaded extends HealthState {
     String? selectedMemberId,
     int? selectedTab,
     bool? isSyncing,
+    bool? restoring,
     HealthNotice? notice,
   }) {
     return HealthLoaded(
@@ -84,6 +106,7 @@ class HealthLoaded extends HealthState {
       selectedMemberId: selectedMemberId ?? this.selectedMemberId,
       selectedTab: selectedTab ?? this.selectedTab,
       isSyncing: isSyncing ?? this.isSyncing,
+      restoring: restoring ?? this.restoring,
       notice: notice,
     );
   }

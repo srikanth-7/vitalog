@@ -25,10 +25,10 @@ enum AppLanguage { system, english, telugu }
 
 extension AppLanguageLocale on AppLanguage {
   Locale? get locale => switch (this) {
-    AppLanguage.system => null,
-    AppLanguage.english => const Locale('en'),
-    AppLanguage.telugu => const Locale('te'),
-  };
+        AppLanguage.system => null,
+        AppLanguage.english => const Locale('en'),
+        AppLanguage.telugu => const Locale('te'),
+      };
 }
 
 class AppSettings {
@@ -106,10 +106,7 @@ class AppSettings {
                     (j['accent'] == 'fammo' ? 'vitalog' : j['accent']))
                 .firstOrNull ??
             ThemeAccent.vitalog,
-        // ponytail: for now every launch starts at onboarding (owner's
-        // request, 2026-10-23). To remember it again:
-        // onboarded: j['onboarded'] == true,
-        onboarded: false,
+        onboarded: j['onboarded'] == true,
       );
 }
 

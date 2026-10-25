@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'secure_session_storage.dart';
 
 /// Supabase connection + auth. Configured at build time so no keys live in
 /// source control:
@@ -21,8 +25,47 @@ class Backend {
 
   static bool get configured => _url.isNotEmpty && _key.isNotEmpty;
 
+  /// Key supabase_flutter persists the session JSON under. Same shape the
+  /// library derives itself (`sb-<host>-auth-token`), so the migration in
+  /// [SecureSessionStorage] finds what earlier builds left in plaintext
+  /// SharedPreferences. Don't change the format.
+  static String get _sessionKey =>
+      'sb-${Uri.parse(_url).host.split('.').first}-auth-token';
+
   static Future<void> init() async {
-    if (configured) await Supabase.initialize(url: _url, publishableKey: _key);
+    if (configured) {
+      await Supabase.initialize(
+        url: _url,
+        publishableKey: _key,
+        // Hardened storage (hardening plan Phase 1.1/1.3): session + PKCE
+        // verifier go to Keychain/Keystore instead of the library default's
+        // plaintext SharedPreferences/NSUserDefaults.
+        authOptions: FlutterAuthClientOptions(
+          // PKCE pinned explicitly: the auth callback is a custom-scheme
+          // deep link (`authRedirect`) that any app can claim, so the code
+          // must be unusable without the verifier. NEVER switch to
+          // AuthFlowType.implicit.
+          authFlowType: AuthFlowType.pkce,
+          pkceAsyncStorage: SecureGotrueAsyncStorage(),
+          localStorage: SecureSessionStorage(persistSessionKey: _sessionKey),
+        ),
+      );
+      // One notifier for who is in, covering email and Google sign-ins and
+      // the restored session at cold start (initialSession). Token refreshes
+      // are not sign-in facts and are ignored. The subscription lives for
+      // the app's lifetime (root scope).
+      authChanges.listen((change) {
+        switch (change.event) {
+          case AuthChangeEvent.initialSession:
+          case AuthChangeEvent.signedIn:
+            signedInUser.value = change.session?.user.id;
+          case AuthChangeEvent.signedOut:
+            signedInUser.value = null;
+          default:
+            break;
+        }
+      });
+    }
     // Restore a previous Google sign-in without showing any UI.
     try {
       await _initGoogle();
@@ -36,6 +79,11 @@ class Backend {
   /// The Google account on this phone, signed in even when Supabase isn't
   /// configured (so Google sign-in can be checked on its own).
   static final googleUser = ValueNotifier<GoogleSignInAccount?>(null);
+
+  /// The signed-in Supabase user's id (null when out). Driven by the auth
+  /// event stream so email and Google both surface here, including the
+  /// restored session on a fresh app launch.
+  static final signedInUser = ValueNotifier<String?>(null);
 
   /// Name to greet the user with: Google's display name, else the email.
   static String? get displayName {
