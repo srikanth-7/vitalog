@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,82 +7,139 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_shape.dart';
+import '../widgets/empty_art.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/family_health_snapshot.dart';
+import '../../domain/repositories/family_health_repository.dart';
 import '../bloc/health_bloc.dart';
 import '../bloc/health_event.dart';
+import '../bloc/health_state.dart';
 import '../health_presentation.dart';
 import '../widgets/apple_menus.dart';
+import '../widgets/header_wash.dart';
 import '../widgets/health_widgets.dart';
 import '../widgets/motion.dart';
 import 'navigation.dart';
+import '../widgets/permission_help.dart';
 
-/// Timeline of every report for the selected member, newest upload first.
+/// Timeline of every report for the selected member, newest report first.
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen(
       {super.key,
       required this.profile,
       required this.snapshot,
-      required this.isSyncing});
+      required this.isSyncing,
+      this.adding = false});
   final FamilyMember profile;
   final FamilyHealthSnapshot snapshot;
   final bool isSyncing;
+  final bool adding;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final reports = snapshot.reports
-        .where((r) => r.profileId == profile.id)
-        .toList()
-      ..sort((a, b) => b.uploadDate.compareTo(a.uploadDate));
+    final reports = snapshot.reportsFor(profile.id);
     final unsynced = snapshot.unsyncedCount;
 
     return Scaffold(
-        body: SafeArea(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      PageTitle(
-          eyebrow: profile.name,
-          title: l10n.reportsTitle,
-          subtitle: l10n.reportsSubtitle),
-      // Add and Sync live in the bottom dock, within thumb reach.
-      Padding(
-        padding: const EdgeInsets.fromLTRB(22, 0, 20, 8),
-        child: Text(
-            unsynced == 0 ? l10n.allSynced : l10n.unsyncedCount(unsynced),
-            style: TextStyle(color: context.colors.textMuted, fontSize: 11)),
-      ),
-      Expanded(
-          // Pull down to check on reports still being read.
-          child: RefreshIndicator(
-        onRefresh: () async {
-          final bloc = context.read<HealthBloc>();
-          final next = bloc.stream.first;
-          bloc.add(RefreshHealthData());
-          await next;
-        },
-        child: reports.isEmpty
-            ? ListView(padding: const EdgeInsets.all(20), children: [
-                EmptyMessage(
-                    icon: Icons.document_scanner_outlined,
-                    title: l10n.reportsEmptyTitle,
-                    message: l10n.reportsEmptyMessage)
-              ])
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                itemCount: reports.length,
-                itemBuilder: (context, i) => Reveal(
-                    key: ValueKey(reports[i].id),
-                    index: i,
-                    child: _TimelineEntry(
-                        report: reports[i],
-                        profile: profile,
-                        members: snapshot.members,
-                        isFirst: i == 0,
-                        isLast: i == reports.length - 1)),
-              ),
-      )),
-    ])));
+        body: HeaderWash(
+            child: SafeArea(
+                bottom: false, // scrolls on under the frosted tray
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PageTitle(
+                          eyebrow: profile.name,
+                          title: l10n.reportsTitle,
+                          subtitle: l10n.reportsSubtitle),
+                      // Add and Sync live in the bottom dock, within thumb reach. With no
+                      // reports there's nothing to sync, so no status either.
+                      if (reports.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 0, 20, 8),
+                          child: Text(
+                              unsynced == 0
+                                  ? l10n.allSynced
+                                  : l10n.unsyncedCount(unsynced),
+                              style: TextStyle(
+                                  color: context.colors.onWash, fontSize: 11)),
+                        ),
+                      Expanded(
+                          // Pull down to check on reports still being read.
+                          child: ScrollCut(
+                              left: reports.isEmpty ? 20 : 50,
+                              child: RefreshIndicator(
+                                onRefresh: () async {
+                                  final bloc = context.read<HealthBloc>();
+                                  final next = bloc.stream.first;
+                                  bloc.add(RefreshHealthData());
+                                  await next;
+                                },
+                                child: reports.isEmpty && !adding
+                                    // Centred in the free space; still a list, so pull to refresh
+                                    // works.
+                                    ? LayoutBuilder(
+                                        builder: (context, box) => ListView(
+                                            padding: EdgeInsets.fromLTRB(
+                                                20,
+                                                20,
+                                                20,
+                                                20 +
+                                                    MediaQuery.paddingOf(
+                                                            context)
+                                                        .bottom),
+                                            children: [
+                                              ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                    minHeight: math.max(
+                                                        0,
+                                                        box.maxHeight -
+                                                            40 -
+                                                            MediaQuery
+                                                                    .paddingOf(
+                                                                        context)
+                                                                .bottom)),
+                                                child: Center(
+                                                  child: EmptyState(
+                                                      scene: EmptyScene.report,
+                                                      title: l10n
+                                                          .reportsEmptyTitle,
+                                                      message: l10n
+                                                          .reportsEmptyMessage),
+                                                ),
+                                              ),
+                                            ]),
+                                      )
+                                    : ListView.builder(
+                                        padding: EdgeInsets.fromLTRB(
+                                            20,
+                                            4,
+                                            20,
+                                            24 +
+                                                MediaQuery.paddingOf(context)
+                                                    .bottom),
+                                        itemCount:
+                                            reports.length + (adding ? 1 : 0),
+                                        itemBuilder: (context, i) {
+                                          if (adding && i == 0) {
+                                            return _AddingEntry(
+                                                isLast: reports.isEmpty);
+                                          }
+                                          final r = adding ? i - 1 : i;
+                                          return Reveal(
+                                              key: ValueKey(reports[r].id),
+                                              index: r,
+                                              child: _TimelineEntry(
+                                                  report: reports[r],
+                                                  profile: profile,
+                                                  members: snapshot.members,
+                                                  isFirst: i == 0,
+                                                  isLast:
+                                                      r == reports.length - 1));
+                                        },
+                                      ),
+                              ))),
+                    ]))));
   }
 }
 
@@ -122,6 +181,55 @@ class SyncChip extends StatelessWidget {
   }
 }
 
+/// Shown the instant a file is picked, while it's encrypted and stored
+/// (or Face ID is asked); the real "Reading…" row replaces it.
+class _AddingEntry extends StatelessWidget {
+  const _AddingEntry({required this.isLast});
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return IntrinsicHeight(
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SizedBox(
+          width: 22,
+          child: Column(children: [
+            const SizedBox(height: 18),
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                  color: c.brand,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.brandSoft, width: 3)),
+            ),
+            Expanded(
+                child: Container(width: 2, color: isLast ? null : c.border)),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: TapCard(
+              child: Row(children: [
+                ScanBeam(color: c.brand, background: c.brandSoft),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Text(context.l10n.addingReport,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: c.textSecondary))),
+              ]),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
 class _TimelineEntry extends StatelessWidget {
   const _TimelineEntry(
       {required this.report,
@@ -145,7 +253,7 @@ class _TimelineEntry extends StatelessWidget {
       ReportStatus.needsReview => (c.warning, c.warningSoft),
       ReportStatus.failed => (c.danger, c.dangerSoft),
     };
-    final isUploaded = report.filePath != null;
+    final isSample = report.isSample;
     final processing = report.status == ReportStatus.processing;
 
     return IntrinsicHeight(
@@ -174,7 +282,7 @@ class _TimelineEntry extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: TapCard(
               onTap: processing ? null : () => openReport(context, report),
-              onLongPress: isUploaded && !processing
+              onLongPress: !isSample && !processing
                   ? () => _showEntryActions(context, report)
                   : null,
               child: Column(
@@ -195,12 +303,12 @@ class _TimelineEntry extends StatelessWidget {
                               style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: c.textPrimary))),
-                      if (isUploaded && !processing) _EntryMenu(report: report),
+                      if (!isSample && !processing) _EntryMenu(report: report),
                     ]),
                     const SizedBox(height: 6),
                     if (!processing)
                       Text(
-                          '${report.lab.isEmpty ? l10n.labNotDetected : report.lab} · ${formatDate(report.reportDate)}',
+                          '${report.lab.isEmpty ? l10n.labNotDetected : report.lab} · ${report.undated ? l10n.dateNotDetected : formatDate(report.reportDate)}',
                           style:
                               TextStyle(fontSize: 12, color: c.textSecondary)),
                     Text(
@@ -235,7 +343,9 @@ class _TimelineEntry extends StatelessWidget {
                     ],
                     if (report.patientName case final printed?
                         when !processing &&
-                            !profile.matchesPrintedName(printed)) ...[
+                            (!profile.matchesPrintedName(printed) ||
+                                profile.betterMatchIn(members, printed) !=
+                                    null)) ...[
                       const SizedBox(height: 10),
                       _NameMismatch(
                           report: report,
@@ -258,7 +368,7 @@ class _TimelineEntry extends StatelessWidget {
                             color: color,
                             background: bg),
                       ),
-                      if (!isUploaded)
+                      if (isSample)
                         Pill(
                             label: l10n.sampleBadge,
                             color: c.textMuted,
@@ -285,7 +395,8 @@ class _TimelineEntry extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(l10n.unsupportedFileLine,
                           style: TextStyle(fontSize: 12, color: c.danger)),
-                    ] else if (report.status == ReportStatus.failed) ...[
+                    ] else if (report.status == ReportStatus.failed &&
+                        report.filePath != null) ...[
                       const SizedBox(height: 8),
                       TextButton.icon(
                           onPressed: () => context
@@ -322,7 +433,7 @@ class _NameMismatch extends StatelessWidget {
     final l10n = context.l10n;
     final bloc = context.read<HealthBloc>();
     final others = members.where((m) => m.id != profile.id).toList();
-    final match =
+    final match = profile.betterMatchIn(members, printed) ??
         others.where((m) => m.matchesPrintedName(printed)).firstOrNull;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 4),
@@ -344,8 +455,7 @@ class _NameMismatch extends StatelessWidget {
           if (others.isNotEmpty)
             TextButton(
                 onPressed: () async {
-                  final id =
-                      match?.id ?? await _pickMember(context, others, printed);
+                  final id = match?.id ?? await _pickMember(context, others);
                   if (id != null) bloc.add(AssignReport(report.id, id));
                 },
                 child: Text(match == null
@@ -355,31 +465,46 @@ class _NameMismatch extends StatelessWidget {
       ]),
     );
   }
-
-  static Future<String?> _pickMember(
-          BuildContext context, List<FamilyMember> others, String printed) =>
-      showModalBottomSheet<String>(
-        context: context,
-        showDragHandle: true,
-        builder: (context) => SafeArea(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(context.l10n.moveReportTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: context.colors.textPrimary)),
-            const SizedBox(height: 8),
-            for (final m in others)
-              ListTile(
-                leading: MemberAvatar(member: m, size: 38),
-                title: Text(m.name),
-                subtitle: Text(m.relation),
-                onTap: () => Navigator.pop(context, m.id),
-              ),
-            const SizedBox(height: 8),
-          ]),
-        ),
-      );
 }
+
+/// Who else a report could belong to: everyone but its current member.
+List<FamilyMember> _othersFor(BuildContext context, HealthReport report) {
+  final state = context.read<HealthBloc>().state;
+  return state is HealthLoaded
+      ? state.data.members.where((m) => m.id != report.profileId).toList()
+      : const [];
+}
+
+/// Asks whose report this is; moves it there. Always available from the
+/// report's menus, not only when the printed name looks wrong.
+Future<void> _moveReport(BuildContext context, HealthReport report) async {
+  final bloc = context.read<HealthBloc>();
+  final id = await _pickMember(context, _othersFor(context, report));
+  if (id != null) bloc.add(AssignReport(report.id, id));
+}
+
+Future<String?> _pickMember(BuildContext context, List<FamilyMember> others) =>
+    showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(context.l10n.moveReportTitle,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colors.textPrimary)),
+          const SizedBox(height: 8),
+          for (final m in others)
+            ListTile(
+              leading: MemberAvatar(member: m, size: 38),
+              title: Text(m.name),
+              subtitle: Text(relationName(context.l10n, m.relation)),
+              onTap: () => Navigator.pop(context, m.id),
+            ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
 
 /// Long-press actions, as a sheet from the bottom (thumb reach).
 Future<void> _showEntryActions(
@@ -387,12 +512,18 @@ Future<void> _showEntryActions(
   HapticFeedback.mediumImpact();
   final bloc = context.read<HealthBloc>();
   final l10n = context.l10n;
+  final canMove = _othersFor(context, report).isNotEmpty;
   final action = await showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
     builder: (context) => SafeArea(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (!report.unsupported)
+        if (canMove)
+          ListTile(
+              leading: const Icon(Icons.drive_file_move_outline),
+              title: Text(l10n.moveReport),
+              onTap: () => Navigator.pop(context, 'move')),
+        if (report.filePath != null && !report.unsupported)
           ListTile(
               leading: const Icon(Icons.refresh_rounded),
               title: Text(l10n.retry),
@@ -408,7 +539,9 @@ Future<void> _showEntryActions(
     ),
   );
   if (!context.mounted) return;
-  if (action == 'retry') {
+  if (action == 'move') {
+    await _moveReport(context, report);
+  } else if (action == 'retry') {
     bloc.add(RetryReport(report.id));
   } else if (action == 'delete' &&
       await confirmDeleteReport(context, report) &&
@@ -427,9 +560,15 @@ class _EntryMenu extends StatelessWidget {
       label: l10n.moreActions,
       onPressed: (anchor) async {
         final bloc = context.read<HealthBloc>();
+        final canMove = _othersFor(context, report).isNotEmpty;
         final action = await showPullDownMenu<String>(anchor, items: [
-          // Re-reading an unsupported file type can't help.
-          if (!report.unsupported)
+          if (canMove)
+            PullDownItem(
+                value: 'move',
+                label: l10n.moveReport,
+                icon: Icons.drive_file_move_outline),
+          // Re-reading needs the original, and can't help an unsupported type.
+          if (report.filePath != null && !report.unsupported)
             PullDownItem(
                 value: 'retry', label: l10n.retry, icon: Icons.refresh_rounded),
           PullDownItem(
@@ -439,7 +578,9 @@ class _EntryMenu extends StatelessWidget {
               destructive: true),
         ]);
         if (!context.mounted) return;
-        if (action == 'retry') {
+        if (action == 'move') {
+          await _moveReport(context, report);
+        } else if (action == 'retry') {
           bloc.add(RetryReport(report.id));
         } else if (action == 'delete' &&
             await confirmDeleteReport(context, report) &&
@@ -483,7 +624,74 @@ Future<String?> _scan() async {
   }
 }
 
+/// Before the first report is stored, explain the lock on originals and let
+/// the user choose; the system's Face ID / fingerprint prompt only ever
+/// follows a "Turn on" they understood. Returns false if they backed out.
+Future<bool> _askOriginalsLock(BuildContext context) async {
+  final bloc = context.read<HealthBloc>();
+  final current = bloc.state;
+  if (current is! HealthLoaded ||
+      current.originalsLock != OriginalsLock.unasked) {
+    return true;
+  }
+  final on = await showModalBottomSheet<bool>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (context) {
+      final l10n = context.l10n;
+      final c = context.colors;
+      return SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(Icons.lock_outline, size: 40, color: c.brand),
+              const SizedBox(height: 12),
+              Text(l10n.originalsLockTitle,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700, color: c.textPrimary)),
+              const SizedBox(height: 8),
+              Text(l10n.originalsLockBody,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: c.textPrimary)),
+              const SizedBox(height: 8),
+              Text(l10n.originalsLockNext,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: c.textMuted)),
+              const SizedBox(height: 20),
+              FilledButton(
+                key: const ValueKey('originals-lock-on'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(l10n.originalsLockTurnOn),
+              ),
+              TextButton(
+                key: const ValueKey('originals-lock-not-now'),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.originalsLockNotNow),
+              ),
+              Text(l10n.originalsLockLater,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: c.textMuted, fontSize: 12)),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+  if (on == null) return false; // dismissed: ask again next time
+  bloc.add(SetOriginalsLock(on, quiet: !on));
+  await bloc.stream.firstWhere(
+      (s) => s is! HealthLoaded || s.originalsLock != OriginalsLock.unasked);
+  return true;
+}
+
 Future<void> showAddReportSheet(BuildContext context) async {
+  if (!await _askOriginalsLock(context)) return;
+  if (!context.mounted) return;
   final bloc = context.read<HealthBloc>();
   final source = await showModalBottomSheet<String>(
     context: context,
@@ -526,25 +734,34 @@ Future<void> showAddReportSheet(BuildContext context) async {
 
   String? path;
   String? name;
-  if (source == 'file') {
-    // Any type: the type is detected from the bytes when the report is read.
-    final picked = await FilePicker.pickFile(type: FileType.any);
-    path = picked?.path;
-    name = picked?.name;
-  } else {
-    final scanned = source == 'camera' ? await _scan() : '';
-    if (scanned != '') {
-      // Scanned, or null if the user cancelled.
-      path = scanned;
-      name = scanned?.split('/').last;
+  try {
+    if (source == 'file') {
+      // Any type: the type is detected from the bytes when the report is read.
+      final picked = await FilePicker.pickFile(type: FileType.any);
+      path = picked?.path;
+      name = picked?.name;
     } else {
-      final image = await ImagePicker().pickImage(
-          source:
-              source == 'camera' ? ImageSource.camera : ImageSource.gallery,
-          imageQuality: 92);
-      path = image?.path;
-      name = image?.name;
+      final scanned = source == 'camera' ? await _scan() : '';
+      if (scanned != '') {
+        // Scanned, or null if the user cancelled.
+        path = scanned;
+        name = scanned?.split('/').last;
+      } else {
+        final image = await ImagePicker().pickImage(
+            source:
+                source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+            imageQuality: 92);
+        path = image?.path;
+        name = image?.name;
+      }
     }
+  } on PlatformException {
+    // Camera / Photos access denied, or no camera here.
+    if (context.mounted) {
+      showPermissionOff(ScaffoldMessenger.maybeOf(context), context.l10n,
+          context.l10n.pickerFailed);
+    }
+    return;
   }
   if (path != null && name != null) {
     bloc.add(UploadReport(sourcePath: path, fileName: name));

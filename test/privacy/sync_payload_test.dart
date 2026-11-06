@@ -1,3 +1,5 @@
+import 'package:vitalog/features/family_health/domain/entities/family_member.dart';
+import 'dart:typed_data';
 import 'package:vitalog/features/family_health/data/sync/report_sync_service.dart';
 import 'package:vitalog/features/family_health/domain/entities/health_report.dart';
 import 'package:vitalog/features/family_health/domain/entities/lab_result.dart';
@@ -35,5 +37,18 @@ void main() {
         lab: 'Sunrise Lab, 12 MG Road'));
     expect(result['name'], 'Cystatin C mob');
     expect(result.containsKey('lab'), isFalse);
+  });
+
+  test("a member's photo never leaves the phone", () {
+    final row = ReportSyncService.memberRow(FamilyMember(
+        id: 'm1',
+        name: 'Ravi Kumar',
+        relation: 'Parent',
+        initials: 'RK',
+        colorValue: 0,
+        age: 61,
+        photo: Uint8List.fromList(const [1, 2, 3])));
+    expect(row.keys, isNot(contains(matches(RegExp('photo|image|avatar')))));
+    expect(row.values.whereType<List<int>>(), isEmpty);
   });
 }

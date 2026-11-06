@@ -55,6 +55,7 @@ key.properties
 ios/Runner/GoogleService-Info.plist
 android/app/google-services.json
 supabase*.local.json
+supabase.json
 supabase/*.local.json
 
 # Generated analysis artifacts

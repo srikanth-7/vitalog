@@ -14,11 +14,13 @@ Status: **in the app** as compiled constants
 - Future API updates: `data/reference/signed_range_table.dart` accepts a
   table only if it carries a valid **Ed25519 signature** from the server's
   private key, matches `rangeSigningPublicKey`, and is a **newer edition**
-  (no downgrades). Otherwise the built-in table stays. The shipped public key
-  is empty → updates disabled until you generate a key pair:
-  `dart run` a one-off script with `Ed25519().newKeyPair()`; keep the private
-  key in your server's secret store; paste the 32 public-key bytes into the
-  app.
+  (no downgrades). Otherwise the built-in table stays. Key pair generated
+  2026-11-04: public key in `rangeSigningPublicKey`; the 32-byte private
+  seed (base64) is in the macOS login Keychain of the dev Mac —
+  `security find-generic-password -s vitalog-range-signing -a ed25519-seed -w`.
+  Move it to the server's secret store when range updates ship, then delete
+  it from the Keychain. Lost seed = generate a new pair and ship the new
+  public key in an app update.
 - Users' own results are AES-256-GCM encrypted (any edit to the file is
   rejected on load).
 

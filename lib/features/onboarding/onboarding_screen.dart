@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
+import '../../core/layout/readable_width.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/brand/vitalog_mark.dart';
@@ -88,11 +90,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   value: SystemUiOverlayStyle.light,
                   child: Builder(builder: (context) {
                     return SafeArea(
-                      child: Column(children: [
+                      child: ReadableWidth(
+                          child: Column(children: [
                         Align(
                           alignment: Alignment.centerRight,
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 4, 8, 0),
+                            padding: const EdgeInsets.fromLTRB(0, 4, 8, 0)
+                                .add(headerClearance(context)),
                             // Not needed on the last page: its button says it.
                             child: AnimatedOpacity(
                               opacity: _last ? 0 : 1,
@@ -138,7 +142,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               startLabel: l10n.onboardingStart,
                               nextLabel: l10n.onboardingNext),
                         ),
-                      ]),
+                      ])),
                     );
                   }),
                 ),
@@ -368,6 +372,8 @@ class _Controls extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         label: last ? startLabel : nextLabel,
+                        // The label already says it; don't read the text twice.
+                        excludeSemantics: true,
                         child: Center(
                           child: AnimatedSwitcher(
                             duration: grow,

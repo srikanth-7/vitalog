@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.app.vitalog.dev"],
+        "components": [{ "/": "/i/*", "comment": "Family invites" }]
+      }
+    ]
+  }
+}

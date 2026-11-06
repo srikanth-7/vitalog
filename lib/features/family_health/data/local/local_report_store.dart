@@ -9,6 +9,8 @@ import '../../domain/entities/family_member.dart';
 import '../../domain/entities/health_report.dart';
 import '../../domain/reference/reference_range.dart';
 import '../../domain/entities/lab_result.dart';
+import '../../domain/repositories/family_health_repository.dart';
+import '../../../reminders/reminder.dart';
 import 'report_cipher.dart';
 
 /// On-device source of truth for uploaded reports: one encrypted JSON file
@@ -31,6 +33,14 @@ class LocalReportStore {
   /// Original documents (names, phone numbers, addresses) use the vault key,
   /// which needs Face ID / passcode once per app session.
   final ReportCipher _vault;
+
+  /// Forgets the vault key, so the next original opened asks for Face ID /
+  /// passcode again.
+  void lockVault() => _vault.lock();
+
+  Future<OriginalsLock> originalsLock() => _vault.lockMode();
+
+  Future<void> setOriginalsLock(bool on) => _vault.setLock(on);
 
   Future<File> get _file async =>
       File('${(await _directory()).path}/reports.json');
@@ -67,9 +77,16 @@ class LocalReportStore {
   /// Also returns the plaintext's SHA-256 (hex), from the same single read.
   Future<({String path, String hash})> keepOriginal(
       String sourcePath, String reportId) async {
+    if (await File(sourcePath).length() > FileTooLarge.maxBytes) {
+      throw const FileTooLarge();
+    }
     final dir = Directory('${(await _directory()).path}/reports');
     await dir.create(recursive: true);
-    final ext = sourcePath.contains('.') ? sourcePath.split('.').last : 'bin';
+    // Extension of the file name only (not a dotted folder), and only a
+    // short alphanumeric one, so it can never add a path segment.
+    final name = sourcePath.split(Platform.pathSeparator).last;
+    final ext =
+        RegExp(r'\.([A-Za-z0-9]{1,5})$').firstMatch(name)?.group(1) ?? 'bin';
     final target = File('${dir.path}/$reportId.$ext');
     final bytes = await File(sourcePath).readAsBytes();
     await _writeAtomically(target, await _vault.encrypt(bytes));
@@ -79,6 +96,64 @@ class LocalReportStore {
       hash: [for (final b in digest.bytes) b.toRadixString(16).padLeft(2, '0')]
           .join(),
     );
+  }
+
+  /// Reminders set on this phone (titles can be personal), encrypted.
+  Future<List<Reminder>> loadReminders() async {
+    final file = File('${(await _directory()).path}/reminders.json');
+    if (!await file.exists()) return const [];
+    final clear = await _cipher.decrypt(await file.readAsBytes());
+    return [
+      for (final j in jsonDecode(utf8.decode(clear)) as List)
+        Reminder.fromJson(j as Map<String, dynamic>)
+    ];
+  }
+
+  Future<void> saveReminders(List<Reminder> reminders) async {
+    final file = File('${(await _directory()).path}/reminders.json');
+    await _writeAtomically(
+        file,
+        await _cipher.encrypt(
+            utf8.encode(jsonEncode([for (final r in reminders) r.toJson()]))));
+  }
+
+  /// A member's photo, encrypted like the rest of the phone's data, under
+  /// photos/ by member id (ids are the app's own; anything else is refused).
+  Future<File> _photoFile(String memberId) async {
+    if (!RegExp(r'^[A-Za-z0-9_-]{1,64}$').hasMatch(memberId)) {
+      throw ArgumentError.value(memberId, 'memberId');
+    }
+    return File('${(await _directory()).path}/photos/$memberId.bin');
+  }
+
+  Future<void> savePhoto(String memberId, Uint8List bytes) async {
+    final file = await _photoFile(memberId);
+    await file.parent.create(recursive: true);
+    await _writeAtomically(file, await _cipher.encrypt(bytes));
+  }
+
+  /// Every saved photo by member id, from one listing of photos/ (nothing
+  /// to read at all when no photo was ever added).
+  Future<Map<String, Uint8List>> loadPhotos() async {
+    final dir = Directory('${(await _directory()).path}/photos');
+    if (!await dir.exists()) return const {};
+    final photos = <String, Uint8List>{};
+    await for (final f in dir.list()) {
+      if (f is! File || !f.path.endsWith('.bin')) continue;
+      final id = f.uri.pathSegments.last.replaceFirst(RegExp(r'\.bin$'), '');
+      try {
+        photos[id] =
+            Uint8List.fromList(await _cipher.decrypt(await f.readAsBytes()));
+      } catch (_) {
+        // Unreadable (key gone): that member shows initials instead.
+      }
+    }
+    return photos;
+  }
+
+  Future<void> deletePhoto(String memberId) async {
+    final file = await _photoFile(memberId);
+    if (await file.exists()) await file.delete();
   }
 
   /// Categories the user picked for tests the app couldn't file, by
@@ -134,10 +209,8 @@ class LocalReportStore {
       if (await file.exists()) await file.delete();
       return;
     }
-    await _writeAtomically(
-        file,
-        await _cipher
-            .encrypt(utf8.encode(jsonEncode({'account': account}))));
+    await _writeAtomically(file,
+        await _cipher.encrypt(utf8.encode(jsonEncode({'account': account}))));
   }
 
   /// Wipes this phone's copy (reports + results, members, learned
@@ -150,12 +223,15 @@ class LocalReportStore {
       'members.json',
       'category_choices.json',
       'sync_account.json',
+      'reminders.json',
     ]) {
       final file = File('${dir.path}/$name');
       if (await file.exists()) await file.delete();
     }
-    final originals = Directory('${dir.path}/reports');
-    if (await originals.exists()) await originals.delete(recursive: true);
+    for (final folder in ['reports', 'photos']) {
+      final d = Directory('${dir.path}/$folder');
+      if (await d.exists()) await d.delete(recursive: true);
+    }
   }
 
   /// The original document's bytes, decrypted in memory only.

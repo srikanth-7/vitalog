@@ -109,14 +109,38 @@ abstract final class SharingCrypto {
         await open(wrappedKey, await _inviteKey(link.secret, id), aad: id));
   }
 
-  /// What the server stores and compares to accept a claim exactly once.
-  /// One-way, and derived separately from the key that opens the invite,
-  /// so knowing it doesn't help open anything.
+  /// What the server stores and compares to accept a claim exactly once:
+  /// SHA-256 of the claim token. One-way, and derived separately from the
+  /// key that opens the invite, so knowing it doesn't help open anything.
   static Future<String> claimHashFor(List<int> secret, List<int> id) async {
-    final token = await _hkdf.deriveKey(
-        secretKey: SecretKey(secret), nonce: id, info: _claimInfo);
-    final digest = await Sha256().hash(await token.extractBytes());
+    final digest = await Sha256().hash(await _claimToken(secret, id));
     return _b64(digest.bytes);
+  }
+
+  /// The claim token the claimant sends (hex); `open_invite` hashes it.
+  static Future<String> claimTokenFor(InviteLink link) async => [
+        for (final b in await _claimToken(link.secret, _unb64(link.id)))
+          b.toRadixString(16).padLeft(2, '0')
+      ].join();
+
+  static Future<List<int>> _claimToken(List<int> secret, List<int> id) async =>
+      (await _hkdf.deriveKey(
+              secretKey: SecretKey(secret), nonce: id, info: _claimInfo))
+          .extractBytes();
+
+  /// The invite's preview ("who shared whom"), sealed with the invite key,
+  /// so only someone holding the link can read it before claiming.
+  static Future<Uint8List> sealPreview(InviteLink link, List<int> clear) async {
+    final id = _unb64(link.id);
+    return seal(clear, await _inviteKey(link.secret, id),
+        aad: utf8.encode('preview:${link.id}'));
+  }
+
+  static Future<List<int>> openPreview(
+      InviteLink link, List<int> sealed) async {
+    final id = _unb64(link.id);
+    return open(sealed, await _inviteKey(link.secret, id),
+        aad: utf8.encode('preview:${link.id}'));
   }
 
   static Future<SecretKey> _inviteKey(List<int> secret, List<int> id) => _hkdf
@@ -140,24 +164,45 @@ class InviteLink {
   final String id;
   final List<int> secret;
 
-  // ponytail: placeholder host; set the real domain once app links
-  // (Android App Links / iOS Universal Links) are configured for it.
+  /// The invite web host: serves the "Open in Vitalog" page at `/i/<id>`
+  /// and the app-link files (invite_site/). Change it here AND in
+  /// AndroidManifest.xml (and the iOS associated domain, when added).
+  // ponytail: placeholder until the product owner picks the domain.
   static const host = 'vitalog.app';
+
+  /// The app's own scheme: the web page hands the link over with it when the
+  /// phone didn't open the app directly (no app link verified yet).
+  static const appScheme = 'com.vitalog.app';
 
   Uri toUri() =>
       Uri(scheme: 'https', host: host, path: '/i/$id', fragment: _b64(secret));
 
-  /// Null for anything that isn't a complete Vitalog invite link.
+  /// Null for anything that isn't a complete Vitalog invite link:
+  /// `https://<host>/i/<id>#<secret>` or `com.vitalog.app://invite/<id>#…`.
+  /// Tolerates text around it (a pasted message).
   static InviteLink? parse(String text) {
-    final uri = Uri.tryParse(text.trim());
-    if (uri == null || uri.host != host || uri.pathSegments.length != 2) {
+    final found =
+        RegExp(r'(https://|com\.vitalog\.app://)[^\s#]+#[A-Za-z0-9_-]+')
+            .firstMatch(text);
+    final uri = found == null ? null : Uri.tryParse(found[0]!);
+    if (uri == null || uri.fragment.isEmpty) return null;
+    final String id;
+    if (uri.scheme == 'https' &&
+        uri.host == host &&
+        uri.pathSegments.length == 2 &&
+        uri.pathSegments.first == 'i') {
+      id = uri.pathSegments.last;
+    } else if (uri.scheme == appScheme &&
+        uri.host == 'invite' &&
+        uri.pathSegments.length == 1) {
+      id = uri.pathSegments.single;
+    } else {
       return null;
     }
-    if (uri.pathSegments.first != 'i' || uri.fragment.isEmpty) return null;
     try {
       final secret = _unb64(uri.fragment);
-      return secret.length == 32
-          ? InviteLink(id: uri.pathSegments.last, secret: secret)
+      return secret.length == 32 && _unb64(id).length == 16
+          ? InviteLink(id: id, secret: secret)
           : null;
     } on FormatException {
       return null;

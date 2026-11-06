@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Vitalog family invite</title>
+<!--
+  Served for https://<invite host>/i/<id>#<secret> (InviteLink in
+  sharing_crypto.dart). The #secret never reaches this server: browsers
+  don't send the fragment. This page reads it on the phone and hands the
+  whole link to the app through its own scheme. No analytics, no external
+  resources (see the Content-Security-Policy in firebase.json).
+-->
+<style>
+  :root {
+    --bg: #F4F7F5; --card: #FFFFFF; --text: #14211D; --muted: #4A5B55;
+    --brand: #173D35; --on-brand: #FFFFFF; --line: #DCE5E1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1513; --card: #17211E; --text: #E8F0EC; --muted: #A9BAB3;
+      --brand: #8FD3BE; --on-brand: #0E1513; --line: #26332F;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: var(--bg); color: var(--text);
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 24px 16px;
+  }
+  main {
+    width: 100%; max-width: 420px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 26px; padding: 28px 24px;
+  }
+  h1 { font-size: 24px; line-height: 1.2; margin: 0 0 10px; }
+  p { margin: 0 0 14px; color: var(--muted); }
+  a.button, button {
+    display: block; width: 100%; text-align: center; text-decoration: none;
+    font: inherit; font-weight: 600; border-radius: 16px; padding: 15px;
+    margin-top: 12px; cursor: pointer;
+  }
+  a.button { background: var(--brand); color: var(--on-brand); border: 0; }
+  button { background: transparent; color: var(--brand); border: 1px solid var(--line); }
+  .small { font-size: 14px; margin-top: 18px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Your family shared health reports with you</h1>
+  <div id="ok">
+    <p>Open this invite in the Vitalog app to see them. It works once, for 7 days.</p>
+    <a class="button" id="open" href="#">Open in Vitalog</a>
+    <button type="button" id="copy">Copy the link</button>
+    <p class="small">Don't have Vitalog yet? Install it from the App Store or
+      Google Play, sign in, then tap this link again. Or, in the app, go to
+      Family → Open an invite link and paste it.</p>
+    <p class="small">The reports are end-to-end encrypted. The secret part of
+      this link stays on your phone; this website never sees it.</p>
+  </div>
+  <p id="broken" hidden>This link is incomplete. Ask for the whole link
+    again, including the part after the “#”.</p>
+</main>
+<script>
+  (function () {
+    var id = location.pathname.split('/').filter(Boolean)[1] || '';
+    var secret = location.hash.slice(1);
+    var valid = /^[A-Za-z0-9_-]{22}$/.test(id) && /^[A-Za-z0-9_-]{43}$/.test(secret);
+    if (!valid) {
+      document.getElementById('ok').hidden = true;
+      document.getElementById('broken').hidden = false;
+      return;
+    }
+    document.getElementById('open').href =
+      'com.vitalog.app://invite/' + id + '#' + secret;
+    document.getElementById('copy').onclick = function () {
+      var btn = this;
+      navigator.clipboard.writeText(location.href).then(function () {
+        btn.textContent = 'Copied';
+      });
+    };
+  })();
+</script>
+</body>
+</html>

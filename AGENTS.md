@@ -5,6 +5,8 @@ out, and the rules every change must follow. Companion docs:
 
 - `docs/SUPABASE_REQUIREMENTS.md` — what the backend must provide (schema, RLS, auth).
 - `docs/PENDING_TASKS.md` — what is not done yet, in priority order.
+- `docs/HANDOFF_2026-11-04.md` — latest change log (no git history): what
+  changed, what didn't travel in the zip, how to verify. Read it on a new Mac.
 - `graphify-out/GRAPH_REPORT.md` — generated code graph (communities, hubs).
   Refresh after code changes with `graphify update .` (local, no LLM).
 
@@ -92,7 +94,8 @@ lib/
           lab_test_catalog.dart         Test aliases → category, section headings, typical units
         local/local_report_store.dart   reports.json + original files in app documents dir, AES-256-GCM encrypted
         local/report_cipher.dart        AES-GCM; key in Keychain/Keystore (this device only); legacy plaintext auto-migrated
-        sync/report_sync_service.dart   Upserts reports + lab_results to Supabase
+        sync/report_sync_service.dart   Sealed Sync v2: seals/opens rows, profile keys
+        sync/account_key.dart           Account X25519 key, recovery key encode/decode
         repositories/family_health_repository_impl.dart   Composes all of the above
       family_health_dependencies.dart   Composition root
       presentation/
@@ -233,9 +236,15 @@ left to review. Decrypted originals never touch disk: OCR and the
 
 - **Two encryption tiers** (`report_cipher.dart`): `ReportCipher()` (tag
   `FAMMO1`) for reports.json / category_choices.json, no prompt;
-  `ReportCipher.vault()` (tag `FAMMO2`) for original documents, key in a
-  Keychain item gated by `userPresence` (Face ID / passcode), cached in memory
-  for the app session; falls back to the plain key on phones with no passcode.
+  `ReportCipher.vault()` (tag `FAMMO2`) for original documents. The lock on
+  it is the user's choice (`OriginalsLock`, decided 2026-10-26): before the
+  first report, `_askOriginalsLock` explains it and only "Turn on" leads to a
+  system prompt; a toggle on the Family tab changes it later. `VaultKeys`
+  moves the one key between plain secure storage and a `LockedKeySlot`
+  (iOS: Keychain `userPresence`; Android 11+: Keystore key needing
+  fingerprint/face or screen-lock PIN per use, NOT invalidated by a new
+  fingerprint — `VaultKey` in MainActivity.kt). Reads take the key wherever
+  it is; a new key is made only if none exists. Re-locks after 2 min away.
   `readOriginal` routes by tag, so older FAMMO1 originals still open.
 - **Redaction** (`data/privacy/redactor.dart`): lab names are cut at the first
   address/contact marker; unknown test names lose phones/emails/URLs. Applied
@@ -250,17 +259,46 @@ left to review. Decrypted originals never touch disk: OCR and the
 - **Catalog matching** uses `AliasTrie` (one pass per row); results are
   grouped with `FamilyHealthSnapshot.resultsByCategory` (one pass).
 - **Theme**: `AppSettings.themeMode` (system/light/dark) and `ThemeAccent`
-  presets recolour only brand/brandSoft/hero/onHeroMuted; status colours and
-  neutrals stay fixed. The logo/splash colours never change.
+  presets recolour brand/brandSoft/hero/onHeroMuted and re-hue the near-grey
+  neutrals to the accent (`AppColors.withAccent`: hue only, so contrast
+  holds); status colours stay fixed. The logo/splash colours never change.
 - **Decided (2026-10-22):** after sync, everything stays on the phone (Sync
-  is a backup; originals never upload). Family member names stay on the
-  phone; the server only sees opaque `profile_id`s.
+  is a backup; originals never upload). The server only sees opaque
+  `profile_id`s; names go up sealed (see 2026-11-03 below).
+- **Decided (2026-11-03): member names (security #4).** Names go to the
+  server only sealed, with Sync v2 (restore shows real names, the server
+  can't read them). Done: `memberRow` travels only inside the
+  `sealed_profiles` box (test: `test/privacy/sealed_sync_test.dart`).
+  Never send a member field outside a sealed box.
 - **Decided (2026-10-23): sharing is end-to-end encrypted** — see
   `docs/SHARING.md`. No ownership (equal access); "You" is per account; the
   server stores only sealed data; no email matching; invites are links with
   the secret in the `#fragment`. Crypto core: `data/sharing/sharing_crypto.dart`
-  (+ `test/privacy/sharing_crypto_test.dart`). Today's plaintext Sync is to be
-  replaced by sealed Sync v2 before real data is synced.
+  (+ `test/privacy/sharing_crypto_test.dart`).
+- **Sync v2 is sealed (2026-11-03, security audit #5).** `ReportSyncService`
+  seals each report (+ its results) and each member with a per-profile
+  AES-256 key; profile keys are wrapped for the account's X25519 public key
+  (`data/sync/account_key.dart`). Server tables: `account_keys`,
+  `profile_keys`, `sealed_profiles`, `sealed_reports` (supabase/schema.sql).
+  The private key: Keychain (iOS `synchronizable` → iCloud Keychain, for
+  reset/new iPhones) + the **recovery key** shown once after the first Sync
+  (`recovery_key_sheets.dart`: "Save to my passwords" via the system's
+  password save, Copy; again from the Family tab). A phone without the key
+  gets `RecoveryKeyNeeded` → "Enter your recovery key". Never replace an
+  account key (RLS has no update) — that orphans every sealed row. Profile
+  and report ids are global since sharing (2026-11-04): access = a
+  `profile_keys` row (`has_profile` in RLS).
+- **Invite family (2026-11-04, docs/SHARING.md "How it was built").**
+  Long-press a member → Share → family card (`share_profile_sheet.dart`):
+  who has access, pending invites, Remove, *Invite someone* (pushes that
+  member, then share sheet with `https://<InviteLink.host>/i/<id>#<secret>`).
+  Links reach `ClaimInviteScreen` via app_links (`InviteLinkListener` in
+  main.dart; Flutter's own deep linking is off) or Family → *Open an invite
+  link*. Accepting pulls the profile + reports and opens Home on them.
+  Relation is per account (`profile_keys.sealed_meta`). Removing a member =
+  leaving; it never deletes shared reports server-side. Server rules live
+  in supabase/schema.sql (`open_invite`, `may_take_profile`,
+  `drop_orphan_profile`); web page + app-link files in `invite_site/`.
 - **Decided (2026-10-25): restore has no button.** Signing in quietly pulls
   (merge, nothing uploaded) the account's reports, results and member
   profiles — "no extra buttons or anything" (product owner). Pushing still
@@ -279,8 +317,7 @@ left to review. Decrypted originals never touch disk: OCR and the
   `MainActivity.kt` hosts `ReportOcr`: ML Kit text recognition (bundled Latin
   model), EXIF-upright photos, PDFs via `PdfRenderer` at ≤3x from an in-memory
   `memfd` (Android 11+) or an immediately-unlinked cache file, rows grouped
-  like `ReportOcrPlugin.rows()` on iOS. The old root-level
-  build.gradle/settings.gradle/app/ is unused; delete it when convenient.
+  like `ReportOcrPlugin.rows()` on iOS.
 
 ## Onboarding, sign-in, members, scan control
 
@@ -288,7 +325,11 @@ left to review. Decrypted originals never touch disk: OCR and the
   pages whose illustrations assemble with the swipe and idle-loop (active page
   only), then `SignInScreen(onDone:)` with "Continue without an account".
   `AppSettings.onboarded` (settings.json) gates it; tests pass
-  `initialSettings: AppSettings(onboarded: true)`.
+  `initialSettings: AppSettings(onboarded: true, toured: true)`.
+- **First-run tour** (`_Spotlight` in `empty_family_experience.dart`): plays
+  once on the empty app (signed in or not) until `AppSettings.toured`; dims
+  the screen around the real Add-member button, then each tab; replay via
+  "Take a quick tour". Home greets by time of day (`timeGreeting`).
 - **Google sign-in is native** (`google_sign_in` → `signInWithIdToken`).
   iOS client id = `GIDClientID` in Info.plist; web client id =
   `Backend.googleWebClientId`. Supabase Google provider must list both client
@@ -308,12 +349,44 @@ left to review. Decrypted originals never touch disk: OCR and the
 - **Categories** show one tile per test (latest value + "N readings"); the
   test page lists every dated value, charting only same-unit ones.
 
+## Held sideways / iPhone Duo open (`widgets/side_layout.dart`)
+
+- `isSideLayout`: width ≥ 700 and wider than tall. Upright and folded keep
+  the phone layout below; nothing else changes between the two.
+- **Side tray** (`_SideTray` in `dash_board_screen.dart`): the bottom tray
+  stood on its side on the LEFT edge (product owner's call over Apple's
+  right-side default) — person on top, `VitalogNavBar(vertical: true)`,
+  Sync on Reports, Add report at the bottom. On the Duo the right strip is
+  the system status column (clock, Wi-Fi); content keeps clear of it.
+- **Two panes** (`DetailPane`): split at the fold (Android reports it;
+  elsewhere the middle of the screen). Home = status | history
+  (`HomePart`), Categories = groups | results, Reports = timeline | report,
+  Family = people | settings (`FamilyPart`). `navigation.dart` opens into
+  the right pane when one exists (replace from the list, push from inside
+  the pane, with back). Pages that leave themselves use `maybePop`; full-
+  screen flows (sign-in) push on the root navigator.
+- **Insets:** a one-sided side inset (Duo status column) doesn't narrow the
+  content (`evenSideInsets` in `core/layout/readable_width.dart`); only top
+  header rows keep clear of it (`headerClearance`). Screens wider than
+  736 pt (tablets) use a centred 640 pt column (`ReadableWidth`), with the
+  header wash filling its sides; up to 736 pt (open Duo 669 pt, phones)
+  content uses the full width.
+- Widget tests run at a phone size (`setUp` in `widget_test.dart`); the
+  sideways test sets its own.
+
 ## Thumb-zone layout (big phones)
 
 - **Bottom tray:** one floating, inset container (AppRadius.xl) holding the
   dock row and the tabs. Everything inside is concentric: radius
-  AppRadius.lg at a 6 px inset (`_trayInset`); the selected tab is an lg
-  highlight. Nested shapes elsewhere follow the same rule: inner = outer − gap.
+  AppRadius.lg at a 6 px inset (`_trayInset`); one brandSoft tile slides (spring,
+  slight settle) under the selected tab, which opens to show its label
+  (rises out of a blur); the others show only their glyph
+  (`VitalogNavBar.tabRect`; tooltip + semantics carry the name). Glyphs are
+  painted (`TabGlyphPainter`, logo language + the coral `reading` token) and
+  each plays a moment on select: house draws a pulse, a tile becomes the
+  dot, report lines scan in, the child hops. Standing up (side tray) slots
+  stay equal, label under the glyph. The side frame's wash runs edge to
+  edge, under the Duo status column. Nested shapes elsewhere follow the same rule: inner = outer − gap.
 - **Read at the top, act at the bottom.** Primary actions live in the bottom
   dock (`_ActionDock` in `dash_board_screen.dart`): member switcher (always
   shows who you're viewing; tap → sheet, incl. "Add family member"), Sync
@@ -321,8 +394,38 @@ left to review. Decrypted originals never touch disk: OCR and the
 - Item actions: long-press → bottom sheet (`_showEntryActions`); the ⋯ menu
   stays for discoverability. Test detail's Edit is a bottom bar.
 - Switching member from the dock keeps the tab; from the Family list → Home.
+- **10-second rule:** Home must say "family lab results" at a glance in
+  every state. The headline is what you're looking at ("Here's Maya's
+  health snapshot"), the time greeting is the small line above; empty
+  screens show the health groups (`CategoryPreview`). Category tiles count
+  each test's latest high/low as "N outside range", like At a glance.
 - Home order: greeting → At a glance / Needs attention → trends → latest
   report → categories → recent. Page titles have no eyebrow (name is in the
   dock), subtitles max 2 lines.
 - Reports timeline: pull to refresh (`RefreshHealthData`, no loading flash);
   status pill pops (easeOutBack) when reading finishes.
+
+## Members, duplicates, reminders (2026-10-27)
+
+- **Removing a member with reports** asks once, naming how many reports go
+  (`deleteMember(id, withReports: true)`: reports, results, originals,
+  photo, server rows when signed in). A report still being read saves
+  nothing.
+- **Duplicates:** the same file is caught on upload (`fileHash`); the same
+  paper report from another file is caught after reading (same member,
+  printed date, lab, and `sameReading`: every test already there with the
+  same value). The new copy is dropped and the notice's "View" opens the
+  one kept. Undated reports are never called duplicates.
+- **Editing members** (long-press on the Family tab → Edit details) reuses
+  the add sheet; `updateMember` re-judges usual ranges. A saved copy
+  overlays a sample member by id (`_overlay`).
+- **Photos:** `photos/<memberId>.bin`, encrypted (FAMMO1), carried in memory
+  as `FamilyMember.photo`; never in members.json or `memberRow`.
+- **Reminders** (`lib/features/reminders/`): phone-only scheduled
+  notifications (flutter_local_notifications, inexact on Android).
+  `reminders.json` encrypted; `RemindersCubit` schedules the next 4 times
+  per reminder and re-syncs on start and whenever members change (a removed
+  member's reminders go). Lock screen shows the user's own title +
+  "Reminder for {name}", never test names or values. Entry: Home bell (dot
+  when one is due within 7 days) and Family tab. Reminders for other
+  family members' phones need sharing (docs/SHARING.md) — not built.

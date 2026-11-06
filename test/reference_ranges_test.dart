@@ -123,7 +123,7 @@ void main() {
           isNull);
     });
 
-    test('older editions (downgrade) and missing keys are rejected', () async {
+    test('older editions (downgrade) and other keys are rejected', () async {
       final old = encodeRangeTable('2020-01', referenceRanges);
       expect(
           await verifyRangeTable(old, await sign(old),
@@ -132,8 +132,9 @@ void main() {
       final payload = encodeRangeTable('2027-01', referenceRanges);
       expect(
           await verifyRangeTable(payload, await sign(payload),
-              currentEdition: referenceEdition), // shipped key is empty
+              currentEdition: referenceEdition), // not the shipped key
           isNull);
+      expect(rangeSigningPublicKey, hasLength(32));
     });
   });
 

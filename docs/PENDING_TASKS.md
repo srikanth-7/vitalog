@@ -1,85 +1,126 @@
 # Pending tasks — Vitalog
 
-Status as of 2026-10-23. Ordered by priority within each section.
-✅ = done and verified · ⏳ = pending · 👤 = needs the product owner ·
-🔒 = blocks launch (docs/GO_LIVE.md). Item numbers are stable; other docs
-refer to them.
+Status as of **2026-11-04**. Ordered by priority within each section.
+✅ = done and verified · 🟡 = done in code, not yet checked on a phone ·
+⏳ = pending · 👤 = needs the product owner · 🔒 = blocks launch
+(docs/GO_LIVE.md). Item numbers are stable; other docs refer to them.
+Security audit items are written **S1–S14** (docs/SECURITY_AUDIT_2026-10-26.md).
 
 ## Next up
 
-| Who | Items |
-|---|---|
-| 👤 Product owner | Hotspot once for the Android scanner library (#9) · try sign-up + Sync with fake reports (#1) · Google sign-in setup (#2) · Apple team + final app id (#3) · real lab reports on a phone (#4) · clinician sign-off of ranges (#6b) · privacy policy (#20) · design review (#21) · invite domain (P0b) |
-| Next (after the owner's go-ahead) | P0b encrypted Sync v2 + sharing, which brings #10, #11, #12 · edit/remove members (#5, #6c). Only the crypto core exists so far. |
-| After that | Remove sample data (#6) |
-| Can be done now, no input | Pick the sex band from the member's sex (#18) · age-banded ranges (#18) · range signing key (#6e) · dependency upgrades (#22) |
+| Order | Who | What | Why first |
+|---|---|---|---|
+| 1 | 👤 | **Supabase setup for Sync v2**, staging then prod: docs/plans/2026-11-04-supabase-sync-v2-setup.md | Sync fails on both projects until it's done |
+| 2 | 👤 | **Plug the Android phone back in** (A015, id `00116652L000714`) so the latest build installs | Everything since 2026-11-02 is untested on a phone (see "Phone check") |
+| 3 | 👤 | **S6:** change the Supabase dashboard password, turn on two-factor | The password was typed in a chat on 2026-10-24 |
+| 4 | 👤 | **Git:** pick Option A (`gh auth login`) or B (macOS prompt) and a repo name | Several sessions edit the same files with no history or undo |
+| 5 | 👤 | Answer two open questions: do buttons (Add member) work in the open Duo layout after a full restart? How to install the cloudflare skill past the office SSL proxy (other network / office cert / skip)? | Blocks the Duo session |
+| 6 | 👤 | **Invite family (P0b)**: code done 🟡. Pick the invite domain, re-run `supabase/schema.sql` + `hardening.sql` on staging (migrates to shared ids), host `invite_site/`, then try it with two accounts | Sharing can't be tried end to end until the SQL runs |
+
+## Phone check (after the new build is on the phone)
+
+All 🟡 until done on the Android phone (and an iPhone where it applies).
+Run against **staging** only (`--dart-define-from-file=supabase.staging.local.json`).
+Only one `flutter run` / Gradle build at a time: two share `build/` and the
+second fails in `mergeDebugResources`.
+
+- [ ] **Recents / app switcher (S2):** Vitalog's preview is blank
+- [ ] **Invite family:** account A long-presses a member → Share → Invite someone → share sheet; account B (other phone) opens the link → claim screen → Add to my family → Home shows the reports; A's family card lists B; Remove works; a second use of the link says it was used
+- [ ] **First Sync:** "Save your recovery key" sheet appears once; Save to my passwords works
+- [ ] **Restore:** reinstall + sign in + recovery key brings back members (with names) and reports
+- [ ] **Reminders:** explanation sheet before Android's permission prompt; "Don't allow" → message with **Open Settings**; a reminder actually fires
+- [ ] **Notification icon:** not a white square
+- [ ] **Permissions text:** camera / photos / fingerprint prompts read plainly (written for older users)
+- [ ] **Member photos:** add, change, denied-permission message
+- [ ] **Tab bar:** sliding tile, animated icons, 250 ms, Reduce Motion = instant
+- [ ] **Empty states:** picture builds in, idles ~20 s, then rests; Reduce Motion = still
+- [ ] **Home 10-second rule:** "Your family's lab reports, in one place", category chips, "N outside range"
+- [ ] **Overflows:** Reports dock at 375 pt / Simple mode shows "+"; category tiles; At a glance legend
+- [ ] **Ten small bugs** (fixed 2026-11-03, list in "Done" below), especially chart labels and "Date not found"
+- [ ] **S1:** no readable report copies left in the app cache after a scan
+- [ ] **S3:** originals ask for fingerprint/face again after 2 minutes away
+- [ ] **S14:** Android fingerprint/PIN lock on originals, when turned on
+- [ ] **Delete account** removes the server rows (staging)
+- [ ] Open Duo / sideways layout on the iPhone Duo simulator after a full restart
 
 ## Done (for context)
 
 - ✅ On-device report reading: iOS (Apple Vision) and Android (ML Kit); photos, multi-page PDFs, Word, Excel, CSV, text, HTML, email; unsupported files flagged
 - ✅ Parser: tests, values, units, ranges, H/L flags, dates, lab name (address/contacts stripped), 17 predefined categories, unknown tests → Other with a learned category picker
 - ✅ Built-in usual ranges when none is printed (never guessing unit, sex or age); "Needs attention" list and upload notice
-- ✅ Edit any value; "Looks right" to confirm one that can't be judged; compare with the original
-- ✅ Duplicate uploads detected per member
-- ✅ Document scanner camera (iOS done; Android needs the library download, #9)
-- ✅ Encryption at rest (results file + originals behind Face ID/passcode); temp copies deleted after storing
-- ✅ Reports timeline, single-report dashboard, charts (at a glance, trends), test history
-- ✅ Simple mode, hide Home sections, light/dark/system theme + accents, onboarding, animated logo splash
-- ✅ Add family members (name, relation, age, sex), on the phone
-- ✅ Sign-in screen (email + Google) and Sync (plaintext v1, fake data only); dev Supabase project
-- ✅ Docs: TEST_PLAN, GO_LIVE, HOW_IT_WORKS; fake sample reports in `test-data/reports/`
-- ✅ 60 automated tests, analyzer clean
+- ✅ Edit any value; "Looks right"; compare with the original
+- ✅ Duplicate uploads detected per member (same file, or same paper report)
+- ✅ Encryption at rest (results file + originals behind an opt-in Face ID / fingerprint / PIN lock)
+- ✅ Reports timeline, single-report dashboard, charts, test history
+- ✅ Simple mode, Home sections, theme + accents, language (English / Telugu), onboarding, splash, first-run tour
+- ✅ Family members: add, edit, remove (with their reports), photos
+- ✅ Reminders (phone-only scheduled notifications)
+- ✅ Sideways / iPhone Duo two-pane layout with a side tray
+- ✅ Real installs start empty: no sample members or reports (#6)
+- 🟡 **Sync v2** (2026-11-03): reports, results and members sealed on the phone before upload; per-member keys locked with the account key; recovery key (iCloud Keychain on iPhone, "Save to my passwords" / Copy elsewhere); plaintext tables dropped by `schema.sql`. Server not set up yet (Next up #1)
+- 🟡 **Security fixes** (2026-11-03): S2 app-switcher cover, S5 Sync v2, S7 release signing fails without `key.properties`, S8 Android backup / device-transfer exclusions, S10 `supabase-js` pinned to 2.49.4 (version unverified, see the plan), S11 `search_path` on every SQL function. Earlier (2026-10-26): S1, S3, S9, S12, S13, S14
+- ✅ **S4 member names** (decided 2026-11-03): names reach the server only sealed; test in `test/privacy/sealed_sync_test.dart`
+- 🟡 **Permission prompts** (2026-11-03): plain explanation before the system prompt, Open Settings after a refusal; iOS prompt texts rewritten (en + te)
+- 🟡 **Ten small bugs** (2026-11-03): right pane picks by report date; restored failed reports lose "Try again"; undated reports say "Date not found"; account stats skip sample reports; Home setting renamed "Last tested date"; chart labels no longer overlap; relation saved as a fixed key; photo-picker errors handled; Android notification icon; channel name localized
+- 🟡 **Design** (2026-11-02/03): new tab bar (sliding tile, painted animated icons, coral `reading` token); rounded scroll edges (`ScrollCut`); Home 10-second rule; empty-state pictures animate like onboarding; overflow fixes
+- ✅ Android builds on the office network: `android/build.gradle.kts` forces AGP 8.11.1 / Kotlin 2.2.20 for every plugin (don't revert)
+- ✅ 158 automated tests, analyzer clean (2026-11-04)
 
 ## P0 — needed before anyone else uses it
 
-1. ⏳ 👤 **Supabase setup** — ✅ dev project created (tables, email auth, redirect URL); keys in git-ignored `supabase.local.json`, run with `--dart-define-from-file=supabase.local.json`. Still to do: test sign-up and Sync end to end (fake data only — docs/TEST_PLAN.md). A separate production project comes later (docs/GO_LIVE.md §4).
-2. ⏳ 👤 **Google sign-in** — ✅ native flow + client ids wired. Still to do: add both client ids + "Skip nonce check" in Supabase; register the Android SHA-1 in Firebase (Android sign-in fails until then).
-3. ⏳ 👤 🔒 **Final bundle id & signing** — today `com.app.vitalog.dev` on iOS and Android. Pick the store id (can't change after release), select an Apple team, keep the `com.vitalog.app` URL scheme, Supabase redirect and Google client ids consistent.
-4. ⏳ 👤 🔒 **Test on real reports** — scan/photograph reports from target labs (Thyrocare, SRL, Dr Lal PathLabs, Apollo, Metropolis) in a build **without** Supabase keys (nothing can leave the phone). Add each lab's wording to `lab_test_catalog.dart` with a made-up-values regression test.
-5. ⏳ **Real family members** — ✅ add on-device. Still to do: edit/remove members, members API sync. *(with P0b)*
-6. ⏳ 🔒 **Remove sample data** — sample members and reports (shown with a "Sample" badge). After #5.
+1. ⏳ 👤 **Supabase setup** — two projects, **staging** and **prod**. Sync v2 tables, checks and function not yet applied to either: follow docs/plans/2026-11-04-supabase-sync-v2-setup.md. Keys in git-ignored `supabase.staging.local.json` / `supabase.prod.local.json`.
+2. ⏳ 👤 **Google sign-in** — ✅ native flow + client ids wired. Still to do: both client ids + "Skip nonce check" decision in Supabase (both projects); register the Android SHA-1 in Firebase (Android Google sign-in fails until then).
+3. ⏳ 👤 🔒 **Final bundle id & signing** — today `com.app.vitalog.dev`. Pick the store id (can't change after release), Apple team, release keystore + `key.properties` (the release build now refuses to build without it), keep the `com.vitalog.app` URL scheme, Supabase redirect and Google client ids consistent.
+4. ⏳ 👤 🔒 **Test on real reports** — target labs (Thyrocare, SRL, Dr Lal PathLabs, Apollo, Metropolis) in a build **without** Supabase keys. Add each lab's wording to `lab_test_catalog.dart` with a made-up-values regression test.
+5. ✅ **Real family members** — add, edit, remove on the phone; synced sealed with Sync v2.
+6. ✅ **Remove sample data** — real builds use `EmptyFamilyHealthDataSource`.
 
-6b. ⏳ 👤 🔒 **Clinical review of built-in ranges** — docs/REFERENCE_RANGES.md (edition 2026-10) signed off by a clinician/lab professional.
-6c. ⏳ **Sex on family profiles** — ✅ asked when adding. Still to do: editing it (with #5). *(with P0b)*
+6b. ⏳ 👤 🔒 **Clinical review of built-in ranges** — docs/REFERENCE_RANGES.md signed off by a clinician / lab professional.
+6c. ✅ **Sex on family profiles** — asked when adding, editable.
 6d. ⏳ **Pediatric ranges** — adult-only ranges are skipped for under-18s (except the WHO haemoglobin cut-off). Needs clinical sources.
-6e. ⏳ **Range signing key** — generate the Ed25519 key pair before shipping server-side range updates; range notes are English-only (localise with the rest).
+6e. ✅ **Range signing key** (2026-11-04) — public key in `signed_range_table.dart`; private seed in the dev Mac's login Keychain (`vitalog-range-signing`), move it to the server's secret store when updates ship. Range notes are still English-only.
 
-## P0b — family sharing & encrypted Sync (docs/SHARING.md) — next, awaiting go-ahead 🔒
+## P0b — family sharing (docs/SHARING.md) 🔒
 
 - ✅ Crypto core: profile keys, wrap for account, invite links (+ tests)
-- ⏳ Account key pair + recovery key
-- ⏳ Sync v2 (sealed push + pull, tombstones) — replaces plaintext Sync; drop the old `reports` / `lab_results` tables
-- ⏳ Invites: share link, app links on the invite domain, claim screen, combine duplicates
-- ⏳ Family card: access list, pending invite, leave / remove
-- ⏳ 👤 Decide the invite domain (`InviteLink.host`)
+- 🟡 Account key + recovery key; Sync v2 sealed push + pull. ⏳ Android silent Google backup of the key (Block Store), once Gradle can fetch it
+- 🟡 Shared ids + access = `profile_keys` rows (`has_profile`), migration in schema.sql
+- 🟡 **Invites:** share link, claim screen, paste a link, app scheme hand-over. ⏳ combine duplicates, iOS Universal Links (paid Apple team)
+- 🟡 **Family card:** who has access, pending invite / cancel, remove (leave = remove the member)
+- ⏳ **Reminders on other family members' phones** (tester item #13) — needs the above
+- ⏳ 👤 Decide the invite domain (`InviteLink.host`, placeholder today)
 
 ## P1 — product gaps
 
-7. ✅ **Android OCR** — ML Kit + `PdfRenderer` in `MainActivity.kt`, sign-in deep link in the manifest. Still to verify on a real Android phone.
-8. ✅ **"Needs review" resolution** — "Looks right" marks a result checked (`LabResult.reviewed`, phone-only) without marking it edited; the report turns Ready once nothing awaits review.
-9. ⏳ 👤 **Document scanner camera** — ✅ "Scan with camera": VisionKit (iOS, builds) / ML Kit document scanner (Android), PDF out, plain camera fallback. Still to do: download `play-services-mlkit-document-scanner` (Gradle gets 403 on the office network — **the Android build fails until this is fetched once**, e.g. on a phone hotspot), then try both on real phones.
-10. ⏳ 🔒 **Restore from cloud** — Sync is push-only. Part of Sync v2. *(with P0b)*
-11. ⏳ 🔒 **Deletes don't sync** — tombstones in Sync v2. *(with P0b)*
-12. ⏳ 🔒 **Account deletion in-app** — App Store rule; Edge Function `delete-account`. *(with P0b)*
-13. ⏳ **Settings** — ✅ theme, accent, Simple mode, Home sections. Still to do: language picker (with #14).
-14. ⏳ **More languages** — `lib/l10n/app_hi.arb` etc.; a native speaker should check. Test names stay as printed.
+7. 🟡 **Android OCR** — ML Kit + `PdfRenderer`; app now builds and runs on the phone. Still to check: scanning real reports on it.
+8. ✅ **"Needs review" resolution** — "Looks right".
+9. ⏳ 👤 **Document scanner camera** — Android needs `play-services-mlkit-document-scanner` fetched once (Gradle 403 on the office network; try a phone hotspot), then try on both phones.
+10. 🟡 **Restore from cloud** — sealed pull on sign-in (no button, decided 2026-10-25), recovery key on a new phone.
+11. 🟡 **Deletes sync** — deleting a report or member removes its server rows (real deletes, not tombstones).
+12. 🟡 **Account deletion in-app** — Family tab → Delete account → `delete-account` edge function (redeploy: plan A4).
+13. ✅ **Settings** — theme, accent, Simple mode, Home sections, language.
+14. 🟡 **More languages** — Hindi added 2026-11-04 (`app_hi.arb`, iOS `hi.lproj`). 👤 Hindi and Telugu need a native speaker's review; Telugu is missing the 17 `recoveryKey*` strings.
 15. ✅ **"See all" on Home** switches to the Categories tab.
 
-## P2 — hardening
+## P2 — hardening and before launch
 
-16. ✅ **Encrypt local data at rest** — AES-256-GCM, keys in Keychain/Keystore, originals behind Face ID/passcode, plaintext temp copies deleted after storing.
-17. ⏳ **Scale local store** — single JSON file rewritten on each save (`ponytail:` in `local_report_store.dart`); move to sqlite/drift when histories get large.
-18. ⏳ **Parser edge cases** — ✅ Indian-grouped ranges, "L" of `µL` read as Low, count spans (`2-3 /hpf`), range on the next line, two tests side by side, sex-banded ranges (kept whole, left for review). Still open: pick the band from the member's sex, age-banded ranges, non-English reports.
-19. ✅ **Duplicate uploads** — SHA-256 of the file (phone-only) per member; "You've already added this report" with View, or a retry if it had failed.
-20. ⏳ 👤 🔒 **Privacy policy & store disclosures** — DPDP Act, medical disclaimer, App Privacy labels, Play Data safety + Health apps declaration (docs/GO_LIVE.md §5).
-21. ⏳ 👤 **Design review** — animations and layouts; accessibility pass (Dynamic Type, VoiceOver labels, dark-mode contrast).
-22. ⏳ **Dependency upgrades** — ~40 newer package versions; Flutter itself is old. Needs a full retest.
+16. ✅ **Encrypt local data at rest.**
+17. ⏳ **Scale local store** — one JSON file rewritten on every save (`ponytail:` in `local_report_store.dart`); move to sqlite/drift when histories get large.
+18. ⏳ **Parser edge cases** — ✅ ranges printed per sex are judged by the member's sex (2026-11-04). Still open: age-banded printed ranges (need sample rows from real reports), non-English reports.
+19. ✅ **Duplicate uploads.**
+20. ⏳ 👤 🔒 **Privacy policy & store disclosures** — DPDP Act, medical disclaimer, App Privacy labels, Play Data safety + Health apps declaration. Say that health data and names are stored end-to-end encrypted.
+21. 🟡 **Accessibility** — code pass done 2026-11-04 (tappable cards read as buttons, tab bar/accent swatch usable by screen reader, reminder switches labelled, count-up values read once, reminder dot not colour-only). 👤 Still: try VoiceOver/TalkBack on a phone; CategoryCard reads its "N outside range" before the group name.
+22. 🟡 **Dependency upgrades** — packages upgraded 2026-11-04 (bloc/flutter_bloc 9, flutter_lints 6, file_picker 13.3, archive 4.6; tests pass, needs a phone check). ⏳ Flutter SDK itself (3.38.10): `flutter upgrade` blocked by the office SSL proxy — run it on another network, then retest.
+23. ⏳ 👤 🔒 **Prod-only Supabase settings** — confirm email, CAPTCHA, redirect allow-list, backups (plan C3). CAPTCHA also needs an app change to send the token once the provider is chosen.
+24. ✅ **Zip size check** — archive ≥ 4.5.2 stops inflating an entry at its stated size; a forged size now fails as `UnsupportedDocument` (test in `document_reader_test.dart`).
+25. ✅ **Temporary "You" name** — removed (2026-11-04).
+26. ⏳ **Cleanup** — ✅ unused root-level Gradle project deleted (2026-11-04). Still: remove the bulk-delete section of `cleanup_test_data.sql` once staging is clean.
 
 ## Later (planned, not started)
 
-- **Scans & imaging** (X-ray, CT, MRI, ECG): store and view images, read the radiology report's Impression; DICOM with patient details stripped as a second step. Waiting for the go-ahead.
+- **Scans & imaging** (X-ray, CT, MRI, ECG). Waiting for the go-ahead.
 - **Apple Health / Google Fit import** — docs/HEALTH_APPS_SYNC_PLAN.md.
-- Known build quirk: on Xcode 27.1 `flutter build ios --simulator` fails a two-architecture `lipo` check; use `flutter run` or an arm64-only `xcodebuild` (docs/GO_LIVE.md §6).
+- Known build quirk: on Xcode 27.1 `flutter build ios --simulator` fails a `lipo` check; use `flutter run` (docs/GO_LIVE.md §6).
 
 ## How to verify after changes
 

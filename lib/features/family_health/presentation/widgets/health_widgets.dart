@@ -1,10 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/settings/settings_cubit.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../core/layout/readable_width.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../health_presentation.dart';
+import '../../domain/health_categories.dart';
+import 'empty_art.dart';
 import 'motion.dart';
 import '../../../../core/theme/app_shape.dart';
 
@@ -20,7 +24,8 @@ class PressScale extends StatefulWidget {
 class _PressScaleState extends State<PressScale> {
   bool _down = false;
   void _set(bool down) {
-    if (_down == down) return;
+    // The finger can lift after a scroll took this item off screen.
+    if (!mounted || _down == down) return;
     if (down) HapticFeedback.selectionClick();
     setState(() => _down = down);
   }
@@ -50,7 +55,8 @@ class TapCard extends StatelessWidget {
       this.onTap,
       this.onLongPress,
       this.padding = const EdgeInsets.all(15),
-      this.borderColor});
+      this.borderColor,
+      this.color});
   final Widget child;
   final VoidCallback? onTap;
 
@@ -59,12 +65,15 @@ class TapCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color? borderColor;
 
+  /// Background; the surface when null.
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     // Material animates the border colour change between shapes.
     final card = Material(
-      color: c.surface,
+      color: color ?? c.surface,
       shape: AppShape.of(AppRadius.lg,
           side: BorderSide(color: borderColor ?? c.border)),
       clipBehavior: Clip.antiAlias,
@@ -75,9 +84,10 @@ class TapCard extends StatelessWidget {
         child: Padding(padding: padding, child: child),
       ),
     );
+    // A tappable card reads as one button: its texts merge into one label.
     return onTap == null && onLongPress == null
         ? card
-        : PressScale(child: card);
+        : Semantics(button: onTap != null, child: PressScale(child: card));
   }
 }
 
@@ -134,14 +144,25 @@ class MemberAvatar extends StatelessWidget {
   final FamilyMember member;
   final double size;
   @override
-  Widget build(BuildContext context) => CircleAvatar(
-      radius: size / 2,
-      backgroundColor: member.color,
-      child: Text(member.initials,
-          style: TextStyle(
-              color: context.colors.onAvatar,
-              fontWeight: FontWeight.w700,
-              fontSize: size * .28)));
+  // Decorative: the name always sits beside it (or a label names it).
+  Widget build(BuildContext context) => ExcludeSemantics(
+      child: CircleAvatar(
+          radius: size / 2,
+          backgroundColor: member.color,
+          // Their photo when one was added (decoded at avatar size), else
+          // initials on their tint.
+          backgroundImage: member.photo == null
+              ? null
+              : ResizeImage(MemoryImage(member.photo!),
+                  width:
+                      (size * MediaQuery.devicePixelRatioOf(context)).round()),
+          child: member.photo != null
+              ? null
+              : Text(member.initials,
+                  style: TextStyle(
+                      color: context.colors.onAvatar,
+                      fontWeight: FontWeight.w700,
+                      fontSize: size * .28))));
 }
 
 class SectionHeading extends StatelessWidget {
@@ -184,21 +205,40 @@ class CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final l10n = context.l10n;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return TapCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
+      // Each group in its own soft tint, icon on a surface circle.
+      color: categorySoft(category.color, c, dark: dark),
+      borderColor: categorySoft(category.color, c, dark: dark),
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(children: [
-              CategoryIcon(category: category, size: 34),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: ShapeDecoration(
+                    shape: const CircleBorder(), color: c.surface),
+                child: Icon(category.icon,
+                    size: 19,
+                    color: categoryInk(category.color, c, dark: dark)),
+              ),
               const Spacer(),
+              // Narrow tiles (two panes, long languages): shrink, don't spill.
               if (flaggedCount > 0)
-                Pill(
-                    label: l10n.toReviewCount(flaggedCount),
-                    color: c.danger,
-                    background: c.dangerSoft),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Pill(
+                        label: l10n.outsideRangeCount(flaggedCount),
+                        color: c.danger,
+                        background: c.dangerSoft),
+                  ),
+                ),
             ]),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(category.label(l10n),
@@ -215,7 +255,7 @@ class CategoryCard extends StatelessWidget {
                       : '${l10n.testsCount(testCount)} · ${formatDate(lastDate!)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10, color: c.textMuted))
+                  style: TextStyle(fontSize: 11, color: c.textSecondary))
             ]),
           ]),
     );
@@ -233,7 +273,10 @@ class CategoryIcon extends StatelessWidget {
       decoration: AppShape.decoration(
           radius: AppRadius.tile(size),
           color: category.color.withValues(alpha: .14)),
-      child: Icon(category.icon, size: size * .55, color: category.color));
+      child: Icon(category.icon,
+          size: size * .55,
+          color: categoryInk(category.color, context.colors,
+              dark: Theme.of(context).brightness == Brightness.dark)));
 }
 
 class ResultTile extends StatelessWidget {
@@ -383,6 +426,45 @@ class EmptyMessage extends StatelessWidget {
       ]));
 }
 
+/// A whole screen with nothing in it yet: a picture of the next step, then
+/// what will appear here and how to fill it.
+class EmptyState extends StatelessWidget {
+  const EmptyState(
+      {super.key,
+      required this.scene,
+      required this.title,
+      required this.message,
+      this.footer});
+  final EmptyScene scene;
+  final String title;
+  final String message;
+  final Widget? footer;
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    // As tall as its content, so whoever places it can centre it; lines
+    // no longer than is comfortable to read on wide screens.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 480),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        EmptyArt(scene: scene),
+        const SizedBox(height: 18),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700, color: c.textPrimary)),
+        const SizedBox(height: 8),
+        Text(message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: c.textSecondary, height: 1.45)),
+        if (footer != null) ...[const SizedBox(height: 16), footer!],
+      ]),
+    );
+  }
+}
+
 class InfoNote extends StatelessWidget {
   const InfoNote(this.text, {super.key});
   final String text;
@@ -403,6 +485,55 @@ class InfoNote extends StatelessWidget {
       ]));
 }
 
+/// The edge where a list scrolls away under a pinned header (or above a
+/// bottom bar, with [bottom]). Its corners follow the cards' own
+/// (AppRadius.lg, continuous) and sit where the cards start, [left]/[right]
+/// in from the sides, so a card sliding out keeps its rounded shoulders
+/// instead of being sliced flat. The side margins stay open.
+class ScrollCut extends StatelessWidget {
+  const ScrollCut(
+      {super.key,
+      required this.child,
+      this.left = 20,
+      this.right = 20,
+      this.bottom = false});
+  final Widget child;
+  final double left, right;
+  final bool bottom;
+  @override
+  Widget build(BuildContext context) =>
+      ClipPath(clipper: _ScrollCutClipper(left, right, bottom), child: child);
+}
+
+class _ScrollCutClipper extends CustomClipper<Path> {
+  const _ScrollCutClipper(this.left, this.right, this.bottom);
+  final double left, right;
+  final bool bottom;
+
+  @override
+  Path getClip(Size size) {
+    const r = AppRadius.lg;
+    const corner = Radius.circular(r);
+    final w = size.width, h = size.height;
+    final body = Path()
+      ..addRect(Rect.fromLTRB(0, r, w, bottom ? h - r : h))
+      // The margins outside the cards stay open top to bottom.
+      ..addRect(Rect.fromLTRB(0, 0, left, h))
+      ..addRect(Rect.fromLTRB(w - right, 0, w, h));
+    final rounded = Path()
+      ..addRSuperellipse(RSuperellipse.fromLTRBAndCorners(left, 0, w - right, h,
+          topLeft: corner,
+          topRight: corner,
+          bottomLeft: bottom ? corner : Radius.zero,
+          bottomRight: bottom ? corner : Radius.zero));
+    return Path.combine(PathOperation.union, body, rounded);
+  }
+
+  @override
+  bool shouldReclip(_ScrollCutClipper old) =>
+      old.left != left || old.right != right || old.bottom != bottom;
+}
+
 class PageTitle extends StatelessWidget {
   const PageTitle(
       {super.key,
@@ -416,7 +547,8 @@ class PageTitle extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 10)
+          .add(headerClearance(context)),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
           child:
@@ -430,11 +562,46 @@ class PageTitle extends StatelessWidget {
               Text(subtitle!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      TextStyle(color: context.colors.textMuted, height: 1.4))
+                  style: TextStyle(color: context.colors.onWash, height: 1.4))
             ]
           ]),
         ),
         if (trailing != null) trailing!,
       ]));
+}
+
+/// The health groups results get sorted into, each in its own colour: a
+/// preview on empty screens, so they say "health" before any report.
+class CategoryPreview extends StatelessWidget {
+  const CategoryPreview({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final g in healthCategories.where((g) => !g.onAdvice))
+          Container(
+            padding: const EdgeInsets.fromLTRB(8, 6, 12, 6),
+            decoration: ShapeDecoration(
+                shape: const StadiumBorder(),
+                color: categorySoft(g.color, c, dark: dark)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(g.icon,
+                  size: 16, color: categoryInk(g.color, c, dark: dark)),
+              const SizedBox(width: 6),
+              Text(g.label(l10n),
+                  style: TextStyle(
+                      color: c.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
+            ]),
+          ),
+      ],
+    );
+  }
 }

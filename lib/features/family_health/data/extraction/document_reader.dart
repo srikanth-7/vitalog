@@ -204,9 +204,14 @@ class DocumentReader {
 
   static List<String> _office(Uint8List bytes) {
     final zip = ZipDecoder().decodeBytes(bytes);
+    // Entries unpack lazily; refuse a zip bomb before any is unpacked.
+    // archive >= 4.5.2 stops inflating an entry at its stated size, so a
+    // forged (too small) size fails the read instead of over-unpacking.
+    final unpacked = zip.files.fold<int>(0, (sum, f) => sum + f.size);
+    if (unpacked > _maxUnpackedBytes) throw const UnsupportedDocument('zip');
     String? entry(String name) {
       final f = zip.findFile(name);
-      return f == null ? null : utf8.decode(f.content, allowMalformed: true);
+      return f == null ? null : _text(f);
     }
 
     final word = entry('word/document.xml');
@@ -216,11 +221,22 @@ class DocumentReader {
         for (final f in zip.files)
           if (RegExp(r'^xl/worksheets/sheet\d+\.xml$').hasMatch(f.name)) f
       ]..sort((a, b) => _sheetNumber(a.name).compareTo(_sheetNumber(b.name)));
-      return xlsxRows(entry('xl/sharedStrings.xml'), [
-        for (final s in sheets) utf8.decode(s.content, allowMalformed: true)
-      ]);
+      return xlsxRows(
+          entry('xl/sharedStrings.xml'), [for (final s in sheets) _text(s)]);
     }
     throw const UnsupportedDocument('zip');
+  }
+
+  static const _maxUnpackedBytes = 100 * 1024 * 1024;
+
+  /// An entry that unpacks past its stated size (forged header) or is
+  /// corrupt is an unreadable document, not a crash.
+  static String _text(ArchiveFile f) {
+    try {
+      return utf8.decode(f.content, allowMalformed: true);
+    } on ArchiveException {
+      throw const UnsupportedDocument('zip');
+    }
   }
 
   static int _sheetNumber(String name) =>

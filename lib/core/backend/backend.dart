@@ -102,6 +102,21 @@ class Backend {
   static Stream<AuthState> get authChanges =>
       configured ? _auth.onAuthStateChange : const Stream.empty();
 
+  /// What went wrong with a sign-in, sign-up or reset, in terms the user
+  /// can act on. A wrong email and a wrong password are one case on
+  /// purpose, so the message never confirms an account exists.
+  static AuthProblem problemOf(Object error) => switch (error) {
+        AuthException(statusCode: '429') ||
+        AuthException(code: 'over_request_rate_limit') ||
+        AuthException(code: 'over_email_send_rate_limit') =>
+          AuthProblem.tooManyTries,
+        AuthRetryableFetchException() => AuthProblem.offline,
+        AuthException(code: 'weak_password') => AuthProblem.weakPassword,
+        AuthException(code: 'email_not_confirmed') => AuthProblem.confirmEmail,
+        AuthException(code: 'invalid_credentials') => AuthProblem.wrongDetails,
+        _ => AuthProblem.other,
+      };
+
   static Future<void> signInWithEmail(String email, String password) =>
       _auth.signInWithPassword(email: email, password: password);
 
@@ -172,4 +187,13 @@ class Backend {
     googleUser.value = null;
     if (configured) await _auth.signOut();
   }
+}
+
+enum AuthProblem {
+  wrongDetails,
+  tooManyTries,
+  offline,
+  weakPassword,
+  confirmEmail,
+  other
 }

@@ -16,7 +16,8 @@ void main() {
     test('round-trips the session string under the given key', () async {
       expect(await storage.hasAccessToken(), isFalse);
 
-      await storage.persistSession('{"access_token":"at1","refresh_token":"rt1"}');
+      await storage
+          .persistSession('{"access_token":"at1","refresh_token":"rt1"}');
 
       expect(await storage.hasAccessToken(), isTrue);
       expect(await backing.read('sb-testhost-auth-token'),

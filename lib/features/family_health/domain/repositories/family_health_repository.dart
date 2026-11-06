@@ -1,15 +1,37 @@
 import 'dart:typed_data';
 
+import '../entities/sharing.dart';
+
 import '../entities/family_health_snapshot.dart';
 import '../entities/family_member.dart';
 import '../reference/reference_range.dart';
 import '../entities/health_report.dart';
 import '../entities/lab_result.dart';
+import '../../../reminders/reminder.dart';
 
 /// The member already has a report made from the same file.
 class DuplicateReport implements Exception {
   const DuplicateReport(this.existing);
   final HealthReport existing;
+}
+
+/// Whether original documents need Face ID / fingerprint / screen-lock PIN
+/// to open. [unasked] until the app has explained it and the user chose.
+enum OriginalsLock { unasked, on, off }
+
+/// The picked file is bigger than the app will read ([maxBytes]).
+class FileTooLarge implements Exception {
+  const FileTooLarge();
+
+  /// Phone photos and scanned PDFs are a few MB; anything this big is read
+  /// into memory whole, so it's refused before it's touched.
+  static const maxBytes = 50 * 1024 * 1024;
+}
+
+/// The account's backup is sealed with a key this phone doesn't have (a
+/// new or reset phone): the user's recovery key opens it.
+class RecoveryKeyNeeded implements Exception {
+  const RecoveryKeyNeeded();
 }
 
 /// The member still files local reports: removing their profile would
@@ -26,6 +48,8 @@ typedef SyncOutcome = ({
   int restoredReports, // reports pulled back from the account
   int restoredResults, // results that arrived with them
   int restoredMembers, // family member profiles that arrived
+  // First Sync on this account: the recovery key to show the user once.
+  String? newRecoveryKey,
 });
 
 abstract class FamilyHealthRepository {
@@ -42,7 +66,9 @@ abstract class FamilyHealthRepository {
 
   /// Reads the stored document on-device and saves its tests, dates and lab.
   /// Null when the report was deleted (cancelled) while it was being read:
-  /// nothing is saved then.
+  /// nothing is saved then. A document with no tests, or one that can't be
+  /// read, isn't a lab report: it's removed with its original, and the
+  /// returned report no longer exists.
   Future<HealthReport?> processReport(String reportId);
 
   /// Files a report (and its results) under [profileId]; also confirms the
@@ -56,6 +82,19 @@ abstract class FamilyHealthRepository {
       required int age,
       Sex? sex});
 
+  /// Saves an edited member (name, relation, age, sex) on this phone and
+  /// re-judges their results against usual ranges, which depend on sex and
+  /// age.
+  Future<FamilyMember> updateMember(FamilyMember member);
+
+  /// Sets (from a picked image file) or, with null, removes a member's photo.
+  /// Kept encrypted on this phone only; never synced.
+  Future<void> setMemberPhoto(String memberId, String? sourcePath);
+
+  /// Reminders set on this phone (encrypted; never synced).
+  Future<List<Reminder>> loadReminders();
+  Future<void> saveReminders(List<Reminder> reminders);
+
   /// Saves a user's correction to one extracted value and re-judges its
   /// status against the printed range.
   Future<LabResult> updateResult(LabResult edited);
@@ -66,16 +105,47 @@ abstract class FamilyHealthRepository {
   Future<void> deleteReport(String reportId);
 
   /// Removes a family member's profile from this phone (and the account's
-  /// backup when signed in). Throws [MemberHasReports] while local reports
-  /// are still filed under them: move or delete those first, so removing a
+  /// backup when signed in). With [withReports] their reports, results and
+  /// originals go too (the person confirmed exactly that). Without it, throws
+  /// [MemberHasReports] while reports are filed under them, so removing a
   /// person can never orphan their records.
-  Future<void> deleteMember(String memberId);
+  Future<void> deleteMember(String memberId, {bool withReports = false});
 
   /// Pulls what the account already holds, restores what this phone misses,
   /// then uploads every unsynced report and this phone's member profiles.
   /// See [SyncOutcome] for what one tap did. With `push: false` (the
   /// automatic restore-on-sign-in) nothing is uploaded — pull and merge only.
   Future<SyncOutcome> syncReports({bool push = true});
+
+  // --- family sharing (docs/SHARING.md) --------------------------------
+
+  /// Uploads [memberId]'s profile and unsynced reports (sealed), then makes
+  /// a one-use, 7-day invite link for it. Throws [CannotShare] for a sample
+  /// member or when not signed in.
+  Future<NewInvite> inviteTo(String memberId);
+
+  /// The family card: who can see [memberId]'s profile, pending invites.
+  Future<ProfileSharing> sharingFor(String memberId);
+
+  Future<void> cancelInvite(String inviteId);
+
+  /// Takes another account's access to [memberId]'s profile away.
+  Future<void> removeAccess(String memberId, String userId);
+
+  /// What an invite [link] (or a message containing one) says, without
+  /// using it up.
+  Future<InvitePreview> previewInvite(String link);
+
+  /// Uses the invite: the profile becomes a member on this phone, with
+  /// [relation] as this account's view of it; its reports are pulled.
+  Future<AcceptedInvite> acceptInvite(String link, {required String relation});
+
+  /// Saves the account key from the user's recovery key (a new or reset
+  /// phone). False when it isn't this account's key.
+  Future<bool> useRecoveryKey(String text);
+
+  /// This phone's recovery key for the signed-in account, to show again.
+  Future<String?> recoveryKey();
 
   /// The account id whose data this phone holds (null: unknown, first use).
   /// Lets a sign-in tell the same person apart from a different account.
@@ -99,4 +169,11 @@ abstract class FamilyHealthRepository {
   /// clears this phone. Throws when the edge function isn't reachable —
   /// nothing local is wiped unless the server said yes.
   Future<void> deleteAccount();
+
+  /// Whether original documents need an unlock to open.
+  Future<OriginalsLock> originalsLock();
+
+  /// Turns that lock on or off; the user confirms with one unlock. Throws,
+  /// and nothing changes, if that's cancelled or there's no screen lock.
+  Future<void> setOriginalsLock(bool on);
 }

@@ -20,6 +20,9 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications (reminders) needs Java 8+ APIs on old
+        // Android versions.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -53,11 +56,15 @@ android {
 
     buildTypes {
         release {
-            // Keep local development working when the ignored release key is absent.
-            signingConfig = if (releaseSigningPropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            // Never ship a debug-signed release (security audit #7): without
+            // the git-ignored key.properties a release build stops here.
+            // Debug/profile runs don't request release tasks, so they still work.
+            if (releaseSigningPropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+                throw GradleException(
+                    "Release build needs android/key.properties (release signing). " +
+                        "Refusing to fall back to the debug key.")
             }
         }
     }
@@ -68,6 +75,7 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // On-device text recognition (Latin script model bundled in the app, so
     // nothing is downloaded and no report text leaves the phone).
     implementation("com.google.mlkit:text-recognition:16.0.1")

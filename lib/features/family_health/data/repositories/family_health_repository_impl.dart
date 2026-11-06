@@ -6,9 +6,11 @@ import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 
+import '../../../reminders/reminder.dart';
 import '../../domain/entities/family_health_snapshot.dart';
 import '../../domain/entities/health_report.dart';
 import '../../domain/entities/lab_result.dart';
+import '../../domain/entities/sharing.dart';
 import '../../domain/health_categories.dart';
 import '../../domain/repositories/family_health_repository.dart';
 import '../datasources/family_health_data_source.dart';
@@ -20,6 +22,7 @@ import '../local/local_report_store.dart';
 import '../../domain/reference/reference_table.dart';
 import '../../domain/reference/reference_range.dart';
 import '../../domain/entities/family_member.dart';
+import '../sharing/sharing_crypto.dart';
 import '../sync/report_sync_service.dart';
 
 class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
@@ -51,7 +54,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     final local = await _store.load();
     return FamilyHealthSnapshot(
       members:
-          _withSignedInName([...base.members, ...await _store.loadMembers()]),
+          await _withPhotos(_overlay(base.members, await _store.loadMembers())),
       // Categories are predefined in the app, whatever the source sends.
       categories: healthCategories,
       results: [...base.results, ...local.results],
@@ -116,6 +119,11 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     }
     HealthReport updated;
     List<LabResult> results;
+    // Read fine but holds no tests (a bill, a prescription…), or a file type
+    // that can't be read: not a lab report, so it isn't kept at all.
+    var notReport = false;
+    // Only a printed date can tell two reports apart from one re-scanned.
+    var datePrinted = false;
     try {
       // Photos and PDFs go to on-device OCR; Word, Excel, text, HTML and
       // email are read directly.
@@ -127,6 +135,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       }()
           .timeout(_readTimeout);
       final reportDate = parsed.reportDate ?? report.uploadDate;
+      datePrinted = parsed.reportDate != null;
       final lab = parsed.lab ?? '';
       // Tests the user filed before go straight to their chosen category.
       final choices = await _store.loadCategoryChoices();
@@ -152,6 +161,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
                   choices),
               member),
       ];
+      notReport = results.isEmpty;
       final uncertain = parsed.reportDate == null ||
           results.any((r) => r.status == ResultStatus.needsReview);
       updated = report.copyWith(
@@ -173,6 +183,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       updated = report.copyWith(
           status: ReportStatus.failed, resultCount: 0, timedOut: true);
     } on UnsupportedDocument {
+      notReport = true;
       results = const [];
       updated = report.copyWith(
           status: ReportStatus.failed, resultCount: 0, unsupported: true);
@@ -186,6 +197,36 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       final local = await _store.load();
       // Cancelled (deleted) while it was being read: keep nothing.
       if (!local.reports.any((r) => r.id == reportId)) return null;
+      if (notReport) {
+        await _store.save(local.reports.where((r) => r.id != reportId).toList(),
+            local.results);
+        final path = report.filePath!;
+        if (await File(path).exists()) await File(path).delete();
+        return updated;
+      }
+      // The same paper report scanned again (another photo, a PDF of it):
+      // keep the one already here and say so.
+      final twin = !datePrinted
+          ? null
+          : local.reports
+              .where((r) =>
+                  r.id != reportId &&
+                  r.profileId == report.profileId &&
+                  r.lab == updated.lab &&
+                  r.reportDate.year == updated.reportDate.year &&
+                  r.reportDate.month == updated.reportDate.month &&
+                  r.reportDate.day == updated.reportDate.day &&
+                  sameReading(
+                      local.results.where((x) => x.reportId == r.id).toList(),
+                      results))
+              .firstOrNull;
+      if (twin != null) {
+        await _store.save(local.reports.where((r) => r.id != reportId).toList(),
+            local.results);
+        final path = report.filePath!;
+        if (await File(path).exists()) await File(path).delete();
+        throw DuplicateReport(twin);
+      }
       await _store.save(
         [for (final r in local.reports) r.id == reportId ? updated : r],
         [...local.results.where((r) => r.reportId != reportId), ...results],
@@ -245,40 +286,60 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       _store.readOriginal(report.filePath!);
 
   @override
-  Future<void> deleteReport(String reportId) => _locked(() async {
-        final local = await _store.load();
-        final report = local.reports.where((r) => r.id == reportId).firstOrNull;
-        if (report == null) return;
-        await _store.save(
-          local.reports.where((r) => r.id != reportId).toList(),
-          local.results.where((r) => r.reportId != reportId).toList(),
-        );
-        final path = report.filePath;
-        if (path != null && await File(path).exists()) {
-          await File(path).delete();
-        }
-        // When this phone is signed in, the account's copy goes too: the
-        // next restore must not resurrect the deletion, and the cloud
-        // backup is the timeline's mirror, not an archive. Offline-first:
-        // a failed server call never blocks the local delete — a later
-        // Sync re-fetches the server's truth (and brings the row back if
-        // the deletion genuinely didn't land).
-        if (Backend.configured && Backend.signedIn) {
-          try {
-            await _sync.deleteReports([reportId]);
-          } catch (_) {}
-        }
-      });
+  Future<void> deleteReport(String reportId) =>
+      _locked(() => _deleteReportsUnlocked({reportId}));
+
+  /// Removes [ids] with their results and originals; call inside [_locked].
+  /// With [server] false only this phone's copy goes (removing a member:
+  /// the server side is "leave", see [deleteMember]).
+  Future<void> _deleteReportsUnlocked(Set<String> ids,
+      {bool server = true}) async {
+    final local = await _store.load();
+    final gone = local.reports.where((r) => ids.contains(r.id)).toList();
+    if (gone.isEmpty) return;
+    await _store.save(
+      local.reports.where((r) => !ids.contains(r.id)).toList(),
+      local.results.where((r) => !ids.contains(r.reportId)).toList(),
+    );
+    for (final report in gone) {
+      final path = report.filePath;
+      if (path != null && await File(path).exists()) {
+        await File(path).delete();
+      }
+    }
+    // When this phone is signed in, the account's copy goes too: the
+    // next restore must not resurrect the deletion, and the cloud
+    // backup is the timeline's mirror, not an archive. Offline-first:
+    // a failed server call never blocks the local delete — a later
+    // Sync re-fetches the server's truth (and brings the row back if
+    // the deletion genuinely didn't land).
+    if (server && Backend.configured && Backend.signedIn) {
+      try {
+        await _sync.deleteReports(gone.map((r) => r.id));
+      } catch (_) {}
+    }
+  }
 
   @override
-  Future<void> deleteMember(String memberId) => _locked(() async {
+  Future<void> deleteMember(String memberId, {bool withReports = false}) =>
+      _locked(() async {
         final saved = await _store.loadMembers();
         if (!saved.any((m) => m.id == memberId)) return;
         final filed =
             (await _store.load()).reports.where((r) => r.profileId == memberId);
-        if (filed.isNotEmpty) throw MemberHasReports(filed.length);
-        await _store.saveMembers(
-            [for (final m in saved) if (m.id != memberId) m]);
+        if (filed.isNotEmpty && !withReports) {
+          throw MemberHasReports(filed.length);
+        }
+        // Not deleted report by report on the server: a shared profile's
+        // reports belong to the whole family. This account leaves instead
+        // (below); the server drops the data only if nobody else has it.
+        await _deleteReportsUnlocked({for (final r in filed) r.id},
+            server: false);
+        await _store.deletePhoto(memberId);
+        await _store.saveMembers([
+          for (final m in saved)
+            if (m.id != memberId) m
+        ]);
         // Same rule as report deletion: the account's backup loses the
         // profile too, and a network hiccup never blocks the local one.
         if (Backend.configured && Backend.signedIn) {
@@ -321,7 +382,8 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
           name: name.trim(),
           relation: relation,
           initials: FamilyMember.initialsOf(name),
-          colorValue: avatarTints[saved.length % avatarTints.length],
+          colorValue: FamilyMember
+              .avatarTints[saved.length % FamilyMember.avatarTints.length],
           age: age,
           sex: sex,
         );
@@ -329,6 +391,68 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         await _store.saveMembers([...saved, member]);
         return member;
       });
+
+  @override
+  Future<FamilyMember> updateMember(FamilyMember member) => _locked(() async {
+        final edited = FamilyMember(
+          id: member.id,
+          name: member.name.trim(),
+          relation: member.relation,
+          initials: FamilyMember.initialsOf(member.name),
+          colorValue: member.colorValue,
+          age: member.age,
+          sex: member.sex,
+        );
+        final saved = await _store.loadMembers();
+        // A sample member, once edited, is saved too; [_overlay] then shows
+        // the edited copy in its place.
+        await _store.saveMembers([
+          for (final m in saved) m.id == edited.id ? edited : m,
+          if (!saved.any((m) => m.id == edited.id)) edited,
+        ]);
+        // Usual ranges depend on sex and age: judge their results again.
+        final local = await _store.load();
+        await _store.save(local.reports, [
+          for (final r in local.results)
+            r.profileId == edited.id ? _judgeByUsualRange(r, edited) : r
+        ]);
+        return edited;
+      });
+
+  Future<List<FamilyMember>> _withPhotos(List<FamilyMember> members) async {
+    final photos = await _store.loadPhotos();
+    if (photos.isEmpty) return members;
+    return [for (final m in members) m.withPhoto(photos[m.id])];
+  }
+
+  @override
+  Future<List<Reminder>> loadReminders() => _store.loadReminders();
+
+  @override
+  Future<void> saveReminders(List<Reminder> reminders) =>
+      _locked(() => _store.saveReminders(reminders));
+
+  @override
+  Future<void> setMemberPhoto(String memberId, String? sourcePath) =>
+      _locked(() async {
+        if (sourcePath == null) return _store.deletePhoto(memberId);
+        final file = File(sourcePath);
+        if (await file.length() > FileTooLarge.maxBytes) {
+          throw const FileTooLarge();
+        }
+        await _store.savePhoto(memberId, await file.readAsBytes());
+      });
+
+  /// Sample members, with any saved (edited) copy in their place, then the
+  /// members added on this phone.
+  static List<FamilyMember> _overlay(
+      List<FamilyMember> base, List<FamilyMember> saved) {
+    final byId = {for (final m in saved) m.id: m};
+    return [
+      for (final m in base) byId.remove(m.id) ?? m,
+      ...byId.values,
+    ];
+  }
 
   @override
   Future<SyncOutcome> syncReports({bool push = true}) async {
@@ -365,41 +489,157 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         restoredReports: merge.restoredReports,
         restoredResults: merge.restoredResults,
         restoredMembers: merge.restoredMembers,
+        newRecoveryKey: null,
       );
     }
 
-    // Then push: unsynced reports (with their results) and every member on
-    // this phone. Restored rows arrived synced, so only new work is sent.
-    final pending = merge.reports
-        .where((r) => !r.synced && r.status != ReportStatus.processing)
-        .toList();
-    final pendingIds = {for (final r in pending) r.id};
-    if (pending.isNotEmpty) {
-      await _sync.push(
-          pending,
-          [
-            for (final r in merge.results)
-              if (pendingIds.contains(r.reportId)) r
-          ]);
-    }
-    await _sync.pushMembers(
-        [for (final m in merge.members) ReportSyncService.memberRow(m)]);
-    await _locked(() async {
-      final after = await _store.load();
-      await _store.save(
-          [
-            for (final r in after.reports)
-              pendingIds.contains(r.id) ? r.copyWith(synced: true) : r
-          ],
-          after.results);
-    });
+    final pushed = await _push();
     return (
-      pushed: pending.length,
+      pushed: pushed.count,
       restoredReports: merge.restoredReports,
       restoredResults: merge.restoredResults,
       restoredMembers: merge.restoredMembers,
+      newRecoveryKey: pushed.newRecoveryKey,
     );
   }
+
+  /// Pushes unsynced reports (with their results) and the members on this
+  /// phone — or only [memberId]'s. Restored rows arrived synced, so only
+  /// new work is sent. Sealed on the phone (Sync v2); the first push makes
+  /// the account key. Reports of a profile this account was removed from
+  /// stay unsynced on the phone.
+  Future<({int count, String? newRecoveryKey})> _push(
+      {String? memberId}) async {
+    final local = await _store.load();
+    final members = [
+      for (final m in await _store.loadMembers())
+        if (memberId == null || m.id == memberId) m
+    ];
+    final pending = local.reports
+        .where((r) =>
+            !r.synced &&
+            r.status != ReportStatus.processing &&
+            (memberId == null || r.profileId == memberId))
+        .toList();
+    if (pending.isEmpty && members.isEmpty) {
+      return (count: 0, newRecoveryKey: null);
+    }
+    final pendingIds = {for (final r in pending) r.id};
+    final out = await _sync.push(
+        pending,
+        [
+          for (final r in local.results)
+            if (pendingIds.contains(r.reportId)) r
+        ],
+        [for (final m in members) ReportSyncService.memberRow(m)],
+        myName: await _myName());
+    final sent = {
+      for (final r in pending)
+        if (!out.skipped.contains(r.profileId)) r.id
+    };
+    await _locked(() async {
+      final after = await _store.load();
+      await _store.save([
+        for (final r in after.reports)
+          sent.contains(r.id) ? r.copyWith(synced: true) : r
+      ], after.results);
+    });
+    return (count: sent.length, newRecoveryKey: out.newRecoveryKey);
+  }
+
+  /// How this account names itself to family it shares profiles with: the
+  /// member marked "You", else the sign-in name or email.
+  Future<String?> _myName() async =>
+      (await _store.loadMembers())
+          .where((m) => m.relation == 'You')
+          .firstOrNull
+          ?.name ??
+      Backend.displayName ??
+      Backend.userEmail;
+
+  @override
+  Future<NewInvite> inviteTo(String memberId) async {
+    final member =
+        (await _store.loadMembers()).where((m) => m.id == memberId).firstOrNull;
+    // Sample members are demo data and never leave the phone.
+    if (member == null || !Backend.configured || !Backend.signedIn) {
+      throw const CannotShare();
+    }
+    // Sharing needs the profile (and its reports) on the account first.
+    final pushed = await _push(memberId: memberId);
+    try {
+      final link = await _sync.invite(memberId, {
+        'name': member.name,
+        'from': await _myName(),
+        'reports': (await _store.load())
+            .reports
+            .where((r) => r.profileId == memberId)
+            .length,
+      });
+      return (link: link, newRecoveryKey: pushed.newRecoveryKey);
+    } catch (e) {
+      // The push just made the account key: it must still be shown once.
+      if (pushed.newRecoveryKey != null) {
+        throw SharingFailed(e, newRecoveryKey: pushed.newRecoveryKey);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProfileSharing> sharingFor(String memberId) => _sync.sharing(memberId);
+
+  @override
+  Future<void> cancelInvite(String inviteId) => _sync.cancelInvite(inviteId);
+
+  @override
+  Future<void> removeAccess(String memberId, String userId) =>
+      _sync.removeAccess(memberId, userId);
+
+  @override
+  Future<InvitePreview> previewInvite(String link) async {
+    final parsed = InviteLink.parse(link);
+    if (parsed == null) return const InvitePreview(InviteStatus.invalid);
+    return _sync.previewInvite(parsed);
+  }
+
+  @override
+  Future<AcceptedInvite> acceptInvite(String link,
+      {required String relation}) async {
+    final parsed = InviteLink.parse(link);
+    if (parsed == null) {
+      return (
+        status: InviteStatus.invalid,
+        memberId: null,
+        newRecoveryKey: null
+      );
+    }
+    final res = await _sync.acceptInvite(parsed,
+        relation: relation, myName: await _myName());
+    final ok =
+        res.status == InviteStatus.ok || res.status == InviteStatus.already;
+    // Bring the profile and its reports here (pull + merge, nothing sent).
+    if (ok) await syncReports(push: false);
+    return (
+      status: res.status,
+      memberId: ok ? res.profileId : null,
+      newRecoveryKey: res.newRecoveryKey
+    );
+  }
+
+  @override
+  Future<bool> useRecoveryKey(String text) => _sync.useRecoveryKey(text);
+
+  @override
+  Future<String?> recoveryKey() => _sync.recoveryKey();
+
+  @override
+  Future<OriginalsLock> originalsLock() => _store.originalsLock();
+
+  // Locked so a key move never interleaves with storing an upload.
+  @override
+  Future<void> setOriginalsLock(bool on) =>
+      _locked(() => _store.setOriginalsLock(on));
 
   @override
   Future<String?> syncedAccount() => _store.loadSyncedAccount();
@@ -464,7 +704,8 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
     for (final row in memberRows) {
       if (row['id'] == null || memberIds.contains(row['id'])) continue;
       final member = memberFromRow(row,
-          colorValue: avatarTints[members.length % avatarTints.length]);
+          colorValue: FamilyMember
+              .avatarTints[members.length % FamilyMember.avatarTints.length]);
       if (member == null || !memberIds.add(member.id)) continue;
       members.add(member);
       restoredMembers++;
@@ -598,10 +839,21 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
   /// With no printed range, judge against the built-in usual range for this
   /// person's sex and age. The lab's printed range always wins; unfiled
   /// ('other') results, missing units and unknown sex are never guessed.
+  static final _bandJudge = LabReportParser();
   static LabResult _judgeByUsualRange(LabResult r, FamilyMember? member) {
-    // A printed range (or a correction that added one) takes over.
+    // A printed range (or a correction that added one) takes over. Ranges
+    // printed per sex are judged by the member's band once sex is known.
     if (r.referenceRange.trim().isNotEmpty) {
-      return r.judgedByUsualRange ? r.copyWith(clearUsual: true) : r;
+      final cleared = r.judgedByUsualRange ? r.copyWith(clearUsual: true) : r;
+      // ponytail: only results still waiting are judged (a printed H/L flag
+      // isn't stored separately), so changing sex later doesn't re-judge.
+      if (r.status != ResultStatus.needsReview ||
+          !LabReportParser.hasSexBands(r.referenceRange)) {
+        return cleared;
+      }
+      return cleared.copyWith(
+          status: _bandJudge.statusFor(r.value, r.referenceRange,
+              sex: member?.sex));
     }
     if (r.status != ResultStatus.needsReview && !r.judgedByUsualRange) {
       return r; // judged by a printed H/L flag
@@ -627,31 +879,8 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         ...await _store.loadMembers()
       ].where((m) => m.id == profileId).firstOrNull;
 
-  /// The first "You" profile takes the signed-in account's name.
-  // ponytail: temporary, to confirm Google sign-in works on a device;
-  // remove once the user's own profile comes from the members API.
-  static List<FamilyMember> _withSignedInName(List<FamilyMember> members) {
-    final name = Backend.displayName;
-    final i = members.indexWhere((m) => m.relation == 'You');
-    if (name == null || name.trim().isEmpty || i < 0) return members;
-    final m = members[i];
-    return [
-      ...members.take(i),
-      FamilyMember(
-          id: m.id,
-          name: name,
-          relation: m.relation,
-          initials: FamilyMember.initialsOf(name),
-          colorValue: m.colorValue,
-          age: m.age,
-          sex: m.sex),
-      ...members.skip(i + 1),
-    ];
-  }
-
   /// Avatar backgrounds for added and restored members, matching the sample
   /// profiles. Public: restore tests check the sequence members pick from.
-  static const avatarTints = [0xFFD8EFE5, 0xFFDCE9FA, 0xFFF6E3D4, 0xFFEAE1F6];
 
   LabResult _fileByChoice(LabResult r, Map<String, String> choices) {
     final choice = choices[r.name.toLowerCase()];
@@ -681,3 +910,18 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
 Future<ParsedReport> _parseOffThread(
         LabReportParser parser, List<String> lines) =>
     Isolate.run(() => parser.parse(lines));
+
+/// Whether [fresh] reads the same as [existing]: every test in it is already
+/// there with the same value (a re-take may read fewer rows, never new or
+/// different ones). Empty [fresh] is never a match.
+bool sameReading(List<LabResult> existing, List<LabResult> fresh) {
+  if (fresh.isEmpty) return false;
+  final values = {for (final r in existing) r.name.toLowerCase(): r.value};
+  bool same(String? a, String b) {
+    if (a == null) return false;
+    final (x, y) = (double.tryParse(a), double.tryParse(b));
+    return x != null && y != null ? x == y : a.trim() == b.trim();
+  }
+
+  return fresh.every((r) => same(values[r.name.toLowerCase()], r.value));
+}

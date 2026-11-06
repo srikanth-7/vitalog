@@ -62,7 +62,8 @@ class SecureKeyValueStore implements KeyValueStore {
 /// and deletes the original, so an upgrade never leaves a live token behind
 /// on disk.
 class SecureSessionStorage extends LocalStorage {
-  SecureSessionStorage({required String persistSessionKey, KeyValueStore? store})
+  SecureSessionStorage(
+      {required String persistSessionKey, KeyValueStore? store})
       : _persistSessionKey = persistSessionKey,
         _store = store ?? const SecureKeyValueStore();
 

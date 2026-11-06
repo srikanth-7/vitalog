@@ -8,24 +8,119 @@
   "loadFailed": "Could not load family health. Please try again.",
   "tryAgain": "Try again",
   "noProfiles": "No family profiles yet.",
-  "emptyHomeTitle": "Start with the people you care for",
-  "emptyHomeMessage": "Add a profile to keep each person’s reports and results together.",
-  "emptyCategoriesTitle": "Results, thoughtfully sorted",
-  "emptyCategoriesMessage": "Once reports are added, results are grouped into health categories so they’re easy to find.",
-  "emptyReportsTitle": "A clear timeline starts here",
-  "emptyReportsMessage": "Add a family profile first. Then choose a lab report photo or PDF to begin a private timeline.",
+  "emptyHomeTitle": "Your family’s lab reports, in one place",
+  "emptyHomeMessage": "Results are read right on this phone and sorted into groups like these. Start by adding yourself or someone you look after.",
+  "emptyCategoriesTitle": "Your results get sorted here",
+  "emptyCategoriesMessage": "After you add a report, each test is placed in one of these groups.",
+  "emptyReportsTitle": "Your lab reports will show here",
+  "emptyReportsMessage": "Add a family member first. Then add a photo or PDF of their lab report.",
   "emptyFamilyTitle": "Set up your family space",
   "emptyFamilyMessage": "Add profiles to keep each person’s reports and results together. Your display and account settings are ready below.",
   "startWalkthrough": "Take a quick tour",
+  "greetingMorning": "Good morning",
+  "greetingAfternoon": "Good afternoon",
+  "greetingEvening": "Good evening",
+  "greetingWithName": "{greeting}, {name}",
+  "@greetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeVerdict": "{good} of {total, plural, =1{1 result is} other{{total} results are}} in range",
+  "@homeVerdict": {
+    "placeholders": {
+      "good": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeVerdictAll": "{total, plural, =1{Your 1 result is in range} other{All {total} results are in range}}",
+  "@homeVerdictAll": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeSnapshotFor": "Here’s {name}’s health snapshot",
+  "@homeSnapshotFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "lastTested": "Last tested {date}",
+  "@lastTested": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "periodAll": "All",
+  "periodYear": "1 year",
+  "periodSixMonths": "6 months",
+  "historySemantics": "{test}: {count, plural, =1{1 reading} other{{count} readings}} from {from} to {to}. Latest {value}.",
+  "@historySemantics": {
+    "placeholders": {
+      "test": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingTitle": "Here’s {name}’s latest",
+  "tourMemberTitle": "Start with a person",
+  "tourMemberBody": "Add yourself or someone you look after. Each person keeps their own reports.",
+  "tourCategoriesTitle": "Results, neatly grouped",
+  "tourCategoriesBody": "Every test lands in its group, like Blood, Thyroid or Vitamins.",
+  "tourReportsTitle": "Every report, by date",
+  "tourReportsBody": "Add a photo or PDF. It’s read on this phone, and nothing leaves it unless you tap Sync.",
+  "tourFamilyTitle": "Your family and settings",
+  "tourFamilyBody": "Switch between people, add more, sign in for a backup, and change how the app looks.",
+  "@homeGreetingTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "walkthroughBack": "Back",
   "walkthroughNext": "Next",
   "walkthroughSkip": "Skip tour",
   "walkthroughDone": "Done",
   "walkthroughStep": "Step {step} of {count}",
-  "@walkthroughStep": {"placeholders": {"step": {"type": "int"}, "count": {"type": "int"}}},
+  "@walkthroughStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cancel": "Cancel",
-  "homeEyebrow": "Family health",
-  "homeTitle": "A clearer picture,\ntogether.",
   "switchProfileTooltip": "Switch family profile",
   "viewingHealthFor": "Viewing health for",
   "latestReport": "Latest report",
@@ -71,8 +166,8 @@
       }
     }
   },
-  "toReviewCount": "{count} to review",
-  "@toReviewCount": {
+  "outsideRangeCount": "{count} outside range",
+  "@outsideRangeCount": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -97,8 +192,10 @@
       }
     }
   },
-  "noCategoriesTitle": "No categories yet",
-  "noCategoriesMessage": "Results will be grouped here after a report is read.",
+  "noCategoriesTitle": "Nothing to sort yet",
+  "noCategoriesMessage": "Add a report and each test lands in its group.",
+  "homeEmptyTitle": "No lab reports yet",
+  "homeEmptyMessage": "Add their first report with the + button. Results, trends and anything that needs attention will show here.",
   "latestValuesFirst": "Latest values first",
   "datePrintedNote": "Each date is the date printed on the report.",
   "noCategoryResultsTitle": "No results in this category",
@@ -135,7 +232,7 @@
   },
   "allSynced": "All reports synced",
   "reportsEmptyTitle": "No reports yet",
-  "reportsEmptyMessage": "Add a photo or PDF of a lab report. It's read on this phone and every test is filed into its category.",
+  "reportsEmptyMessage": "Tap Add a report below. Take a photo or choose a PDF; it's read on this phone only.",
   "uploadedOn": "Uploaded {date}",
   "@uploadedOn": {
     "placeholders": {
@@ -212,6 +309,23 @@
   },
   "noticeNothingToSync": "Everything is already synced.",
   "noticeSyncFailed": "Sync failed. Your reports are safe on this phone — try again later.",
+  "recoveryKeyTitle": "Save your recovery key",
+  "recoveryKeyBody": "Your backup is locked so only you can read it — not even Vitalog can. If you lose or reset this phone, this key unlocks your backup on the new one.",
+  "recoveryKeyICloud": "It's also kept in your iCloud Keychain, so an iPhone signed in to the same Apple ID gets it without asking.",
+  "recoveryKeySave": "Save to my passwords",
+  "recoveryKeyCopy": "Copy key",
+  "recoveryKeyCopied": "Recovery key copied. Paste it somewhere safe.",
+  "recoveryKeyDone": "I've saved it",
+  "recoveryKeyLater": "You can see this key again on the Family tab.",
+  "recoveryKeyAskTitle": "Enter your recovery key",
+  "recoveryKeyAskBody": "Your backup is locked with the key you saved when you first synced. Tap the box to fill it from your saved passwords, or paste it.",
+  "recoveryKeyHint": "ABCD-EFGH-…",
+  "recoveryKeyUse": "Unlock my backup",
+  "recoveryKeyNotNow": "Not now",
+  "recoveryKeyRow": "Recovery key",
+  "recoveryKeyRowDetail": "Unlocks your backup on a new phone.",
+  "noticeRecoveryKeyWrong": "That key doesn't unlock this account's backup. Check it and try again.",
+  "noticeRecoveryKeyAccepted": "Backup unlocked. Bringing your reports back…",
   "noticeSignInRequired": "Sign in to sync your reports.",
   "noticeBackendNotConfigured": "Cloud sync isn't set up in this build yet.",
   "foreignAccountTitle": "A different account signed in",
@@ -224,17 +338,117 @@
   "restoreFetching": "Fetching your account data…",
   "@restoreFetching": {},
   "memberRemoveNamed": "Remove “{name}”?",
-  "@memberRemoveNamed": { "placeholders": { "name": { "type": "String" } } },
+  "@memberRemoveNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "memberRemoveDetail": "Their profile is removed from this phone.",
   "@memberRemoveDetail": {},
-  "memberRemoveSyncedNote": "The account's cloud backup loses this profile too.",
+  "memberRemoveSyncedNote": "The account's cloud backup loses this profile too. If you share it with family, they keep it.",
   "@memberRemoveSyncedNote": {},
   "memberRemoveConfirm": "Remove",
   "@memberRemoveConfirm": {},
   "familyMemberRemoved": "{name} removed.",
-  "@familyMemberRemoved": { "placeholders": { "name": { "type": "String" } } },
+  "@familyMemberRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "memberRemoveBlocked": "{name} still has reports here. Move or delete them first.",
-  "@memberRemoveBlocked": { "placeholders": { "name": { "type": "String" } } },
+  "@memberRemoveBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberRemoveWithReports": "Remove {name} and {count, plural, =1{1 report} other{{count} reports}}?",
+  "@memberRemoveWithReports": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memberRemoveWithReportsDetail": "Their reports, results and original files are deleted from this phone. This can’t be undone.",
+  "memberRemoveWithReportsConfirm": "Remove with reports",
+  "noticeMemberUpdated": "Saved changes to {name}",
+  "@noticeMemberUpdated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "editMember": "Edit details",
+  "saveChanges": "Save changes",
+  "photoTake": "Take photo",
+  "photoChoose": "Choose photo",
+  "photoRemove": "Remove photo",
+  "remindersTitle": "Reminders",
+  "remindersSubtitle": "Nudges to get tested or add a report, set on this phone for you or anyone you look after.",
+  "remindersRowSubtitle": "Get tested and add reports on time",
+  "remindersEmptyTitle": "No reminders yet",
+  "remindersEmptyMessage": "Set one for the next blood test, a thyroid recheck, or adding the latest report.",
+  "addReminder": "Add reminder",
+  "editReminder": "Edit reminder",
+  "reminderTitleLabel": "What to remind",
+  "reminderTitleHint": "Shown on the lock screen",
+  "reminderTitleRequired": "Write what to remind",
+  "reminderPresetTest": "Get tested",
+  "reminderPresetReport": "Add the latest report",
+  "reminderForLabel": "For",
+  "reminderWhenLabel": "When",
+  "reminderRepeatLabel": "Repeat",
+  "repeatOnce": "Once",
+  "repeatMonthly": "Every month",
+  "repeatEvery3Months": "Every 3 months",
+  "repeatEvery6Months": "Every 6 months",
+  "repeatYearly": "Every year",
+  "saveReminder": "Save reminder",
+  "deleteReminder": "Delete reminder",
+  "deleteReminderDetail": "It won’t remind you again. Reports aren’t affected.",
+  "reminderNoMore": "No more reminders",
+  "reminderPrivacy": "Set on this phone only. Never synced.",
+  "remindersTooltip": "Reminders",
+  "remindersDueSoonTooltip": "Reminders, one due this week",
+  "@remindersDueSoonTooltip": {
+    "description": "Tooltip/screen-reader name of the Home bell when its dot shows a reminder due within 7 days."
+  },
+  "reminderInPast": "Pick a time that’s still ahead",
+  "remindersNotificationsOff": "Reminder saved. But Vitalog isn't allowed to show notifications, so it can't remind you. Tap Open Settings and turn on Notifications.",
+  "reminderBody": "Reminder for {name}",
+  "@reminderBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderNext": "Next: {when}",
+  "@reminderNext": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteReminderTitle": "Delete “{title}”?",
+  "@deleteReminderTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccountButton": "Delete account",
   "@deleteAccountButton": {},
   "deleteAccountTitle": "Delete this account?",
@@ -249,6 +463,8 @@
   "@accountDeleteFailedNotice": {},
   "familyEyebrow": "Your household",
   "familyTitle": "Family profiles",
+  "settingsTitle": "Settings",
+  "settingsSubtitle": "How the app looks, and your account.",
   "familySubtitle": "Choose whose health timeline you want to view.",
   "relationAge": "{relation} · {age} years",
   "@relationAge": {
@@ -273,6 +489,11 @@
   "sampleDataNote": "The first four profiles are sample data. Members you add and reports you upload stay on this phone.",
   "accountTitle": "Account",
   "signedInAs": "Signed in as {email}",
+  "signOutDetail": "Your reports stay on this phone.",
+  "deleteAccountDetail": "Removes your cloud backup for good.",
+  "accountStatMembers": "Members",
+  "accountStatReports": "Reports",
+  "accountStatUnsynced": "To sync",
   "@signedInAs": {
     "placeholders": {
       "email": {
@@ -299,7 +520,12 @@
   "confirmEmailSent": "Check your email to confirm your account.",
   "emailInvalid": "Enter a valid email",
   "passwordTooShort": "Use at least 8 characters",
-  "authFailed": "Could not sign in. Check your details and try again.",
+  "authFailed": "Couldn’t sign in. Please try again.",
+  "authWrongDetails": "Email or password is incorrect.",
+  "authTooManyTries": "Too many attempts. Wait a few minutes, then try again.",
+  "authOffline": "Can’t reach the server. Check your internet connection.",
+  "authWeakPassword": "Choose a stronger password: at least 8 characters, with letters and numbers.",
+  "authConfirmEmail": "Confirm your email first: open the link we sent you.",
   "categoryName": "{id, select, blood{Blood & CBC} glucose{Glucose} kidney{Kidney} liver{Liver} lipid{Lipid profile} thyroid{Thyroid} vitamins{Vitamins} iron{Iron} urine{Urine} heart{Heart} pancreas{Pancreas} immunity{Immunity & inflammation} cancer{Cancer markers} hormones{Hormones} infections{Infections} clotting{Clotting} other{Other}}",
   "@categoryName": {
     "placeholders": {
@@ -327,12 +553,27 @@
   "noticeResultEdited": "Saved. Status updated from the printed range.",
   "noticeResultChecked": "Marked as checked.",
   "noticeReportDuplicate": "You've already added this report.",
+  "noticeFileTooLarge": "That file is too big (over 50 MB), so it wasn't added.",
+  "originalsLockTitle": "Lock your original reports?",
+  "originalsLockBody": "Scanned reports show your name, address and phone number. With the lock on, opening them needs your face, fingerprint or screen-lock PIN. Your results stay visible as usual.",
+  "originalsLockNext": "Next, your phone will ask you to confirm it's you.",
+  "originalsLockTurnOn": "Turn on",
+  "originalsLockNotNow": "Not now",
+  "originalsLockLater": "You can change this anytime on the Family tab.",
+  "originalsLockSetting": "Lock original reports",
+  "originalsLockSettingHint": "Face, fingerprint or PIN to open scanned documents",
+  "noticeOriginalsLocked": "Original reports are now locked.",
+  "noticeOriginalsUnlocked": "Original reports no longer need unlocking.",
+  "noticeOriginalsLockUnchanged": "Nothing changed: the unlock was cancelled, or this phone has no screen lock.",
+  "vaultPromptTitle": "Open your original report",
+  "vaultPromptSubtitle": "Use your fingerprint, face or screen-lock PIN, so only you can see it",
   "viewReport": "View",
   "readingSecurely": "Reading on this phone",
+  "addingReport": "Adding your report…",
   "splashTagline": "A clearer picture, together.",
   "customizeHome": "Customize home",
   "customizeHomeHint": "Choose what shows on your Home screen. Hidden sections aren't loaded.",
-  "sectionLatestReport": "Latest report",
+  "sectionLatestReport": "Last tested date",
   "sectionCategories": "Health categories",
   "sectionRecentResults": "Recent results",
   "sectionRangeNote": "Lab range note",
@@ -384,6 +625,7 @@
   "languageTitle": "Language",
   "languageSystem": "Device language",
   "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
   "languageTelugu": "తెలుగు",
   "accentTitle": "Accent colour",
   "accentVitalog": "Vitalog",
@@ -393,69 +635,204 @@
   "accentGraphite": "Graphite",
   "chooseFile": "Choose a file (PDF, Word, Excel…)",
   "unsupportedFileLine": "This file type can't be read",
-  "noticeReportUnsupported": "That file type can't be read. Try a photo, PDF, Word, Excel, CSV or text file.",
+  "noticeReportUnsupported": "That file type can't be read, so it wasn't added. Try a photo, PDF, Word, Excel, CSV or text file.",
+  "noticeNotLabReport": "That doesn't look like a lab report: no test results in it, so it wasn't added.",
   "sectionOverview": "Health at a glance",
   "sectionTrends": "Trends",
   "overviewTitle": "At a glance",
   "overviewOfTotal": "{total, plural, =1{of 1 latest result within range} other{of {total} latest results within range}}",
-  "@overviewOfTotal": {"placeholders": {"total": {"type": "int"}}},
+  "@overviewOfTotal": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "overviewNote": "Counts each test's most recent value once.",
   "legendWithinRange": "Within range",
   "legendNeedsReview": "Needs review",
   "legendOutsideRange": "Outside range",
   "overviewSemantics": "{good} within range, {review} need review, {outside} outside range",
-  "@overviewSemantics": {"placeholders": {"good": {"type": "int"}, "review": {"type": "int"}, "outside": {"type": "int"}}},
+  "@overviewSemantics": {
+    "placeholders": {
+      "good": {
+        "type": "int"
+      },
+      "review": {
+        "type": "int"
+      },
+      "outside": {
+        "type": "int"
+      }
+    }
+  },
   "trendsTitle": "Trends",
   "trendsSubtitle": "Tests with more than one result. Shaded band = the lab's printed range.",
   "trendSince": "since {date}",
-  "@trendSince": {"placeholders": {"date": {"type": "String"}}},
+  "@trendSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "trendNoChange": "No change",
   "trendSemantics": "{name}, latest {value}, {change}, {status}",
-  "@trendSemantics": {"placeholders": {"name": {"type": "String"}, "value": {"type": "String"}, "change": {"type": "String"}, "status": {"type": "String"}}},
+  "@trendSemantics": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      },
+      "change": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
   "shortHigh": "High",
   "shortLow": "Low",
   "moreActions": "More actions",
   "deleteReportNamed": "Delete “{name}”?",
-  "@deleteReportNamed": {"placeholders": {"name": {"type": "String"}}},
+  "@deleteReportNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deleteReportDetail": "{count, plural, =0{The original document will be removed from this phone. This can't be undone.} =1{The original document and its 1 result will be removed from this phone. This can't be undone.} other{The original document and its {count} results will be removed from this phone. This can't be undone.}}",
-  "@deleteReportDetail": {"placeholders": {"count": {"type": "int"}}},
+  "@deleteReportDetail": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "deleteReportSyncedNote": "Deleting also removes it from this account's cloud backup.",
   "deleteReportConfirm": "Delete Report",
   "statusWithinUsual": "Within usual range",
   "statusHighUsual": "High · usual range",
   "statusLowUsual": "Low · usual range",
   "usualRangeUsed": "No range was printed, so the usual range was used: {range} ({source}).",
-  "@usualRangeUsed": {"placeholders": {"range": {"type": "String"}, "source": {"type": "String"}}},
+  "@usualRangeUsed": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      }
+    }
+  },
   "usualRangeDiffers": "Your lab's range differs from the usual range ({range}). Your lab's range is used.",
-  "@usualRangeDiffers": {"placeholders": {"range": {"type": "String"}}},
+  "@usualRangeDiffers": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "attentionTitle": "Needs attention",
   "attentionSubtitle": "Outside the lab's range or the usual range. Not a diagnosis — talk to your doctor.",
   "attentionBelow": "{value} is below the range ({range})",
-  "@attentionBelow": {"placeholders": {"value": {"type": "String"}, "range": {"type": "String"}}},
+  "@attentionBelow": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "attentionAbove": "{value} is above the range ({range})",
-  "@attentionAbove": {"placeholders": {"value": {"type": "String"}, "range": {"type": "String"}}},
+  "@attentionAbove": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "attentionUsualTag": "usual range",
   "noticeReportAttention": "{count, plural, =1{1 test added} other{{count} tests added}} · {attention, plural, =1{1 needs attention} other{{attention} need attention}}",
-  "@noticeReportAttention": {"placeholders": {"count": {"type": "int"}, "attention": {"type": "int"}}},
+  "@noticeReportAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "attention": {
+        "type": "int"
+      }
+    }
+  },
   "noticeReportTimedOut": "That report took too long to read. Try a clearer photo or fewer pages.",
   "noticeReportOtherPerson": "This report says {name}. Check who it's filed under.",
-  "@noticeReportOtherPerson": {"placeholders": {"name": {"type": "String"}}},
+  "@noticeReportOtherPerson": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "noticeReportCancelled": "Reading cancelled. Nothing was kept.",
   "noticeMemberAdded": "{name} added to your family.",
-  "@noticeMemberAdded": {"placeholders": {"name": {"type": "String"}}},
+  "@noticeMemberAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "reviewAction": "Review",
   "cancelReading": "Cancel reading",
   "timedOutLine": "Took too long to read. Try a clearer photo or fewer pages.",
   "nameMismatchLine": "Name on this report: {name}. It's filed under {member}.",
-  "@nameMismatchLine": {"placeholders": {"name": {"type": "String"}, "member": {"type": "String"}}},
+  "@nameMismatchLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "member": {
+        "type": "String"
+      }
+    }
+  },
   "keepHere": "Keep here",
   "moveToMember": "Move to {name}",
-  "@moveToMember": {"placeholders": {"name": {"type": "String"}}},
+  "@moveToMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "moveReport": "Move to…",
   "moveReportTitle": "Whose report is this?",
+  "noticeReportMoved": "Moved to {name}.",
+  "@noticeReportMoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "nameMatchesBadge": "Name matches",
   "readingsCount": "{count, plural, =1{1 reading} other{{count} readings}}",
-  "@readingsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@readingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "addMemberTitle": "Add family member",
   "memberNameLabel": "Full name, as on lab reports",
   "memberNameRequired": "Enter a name",
@@ -494,13 +871,192 @@
   "statusPlainLow": "Lower than range",
   "statusPlainReview": "Please check",
   "onboardingPage": "Page {page} of {count}",
-  "@onboardingPage": {"placeholders": {"page": {"type": "int"}, "count": {"type": "int"}}},
+  "@onboardingPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notNow": "Not now",
   "createPasswordHint": "At least 8 characters",
   "welcomeBack": "Welcome back",
   "nameCheckNote": "This name is checked against the patient name printed on every report, so a report filed under the wrong person gets flagged.",
   "nameMustInclude": "Reports must include “{name}” to match.",
-  "@nameMustInclude": {"placeholders": {"name": {"type": "String"}}},
+  "@nameMustInclude": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "nameLooksLikeNickname": "“{name}” looks like a nickname. Labs print the real name, so their reports won't match.",
-  "@nameLooksLikeNickname": {"placeholders": {"name": {"type": "String"}}}
+  "@nameLooksLikeNickname": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dateNotDetected": "Date not found",
+  "pickerFailed": "Vitalog isn't allowed to use the camera or your photos. To allow it, tap Open Settings and turn on Camera and Photos.",
+  "openSettings": "Open Settings",
+  "notifyAskTitle": "Allow reminders?",
+  "notifyAskBody": "To remind you on time, Vitalog needs to show notifications on this phone. They show only the reminder you wrote and the person's name, never test results.",
+  "notifyAskNext": "Your phone will ask next. Tap “Allow”.",
+  "notifyAskContinue": "Continue",
+  "notifyAskNotNow": "Not now",
+  "notifyAskLater": "You can change this anytime in your phone's Settings.",
+  "shareMember": "Share {name}'s reports",
+  "@shareMember": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareIntro": "Family you invite can see {name}'s reports and add new ones from their own phone. It's end-to-end encrypted: only your family can read it, not even Vitalog.",
+  "@shareIntro": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareUploadNote": "Inviting backs up {name}'s profile and reports to your account first, sealed.",
+  "@shareUploadNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareInvite": "Invite someone",
+  "sharePeople": "Who can see these reports",
+  "shareYou": "{name} (you)",
+  "@shareYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareYouPlain": "You",
+  "shareSomeone": "Someone in your family",
+  "sharePending": "Invite waiting",
+  "sharePendingUntil": "Link works until {date}",
+  "@sharePendingUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "shareCancelInvite": "Cancel invite",
+  "shareRemove": "Remove",
+  "shareRemoveTitle": "Stop sharing {name}'s reports with {person}?",
+  "@shareRemoveTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRemoveMessage": "{person} won't get new reports. Reports already on their phone stay there.",
+  "@shareRemoveMessage": {
+    "placeholders": {
+      "person": {
+        "type": "String"
+      }
+    }
+  },
+  "shareRemoveConfirm": "Stop sharing",
+  "shareMessage": "I've shared {name}'s health reports with you on Vitalog. Open this link on your phone to see them. It works once, for 7 days.\n{link}",
+  "@shareMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "shareSubject": "{name}'s health reports",
+  "@shareSubject": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareSignIn": "Sign in to share. Your family see the reports on their own phones, through your account.",
+  "shareFailed": "Couldn't reach your account. Check your connection and try again.",
+  "shareSample": "Sample people can't be shared. Add your own family member first.",
+  "claimTitle": "Family invite",
+  "claimShared": "{from} shared {name}'s reports with you",
+  "@claimShared": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claimSharedNoFrom": "{name}'s reports were shared with you",
+  "@claimSharedNoFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claimWho": "Who is {name} to you?",
+  "@claimWho": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claimAccept": "Add to my family",
+  "claimNotNow": "Not now",
+  "claimPrivacy": "The reports come to this phone, end-to-end encrypted. You can add reports for {name} too, and everyone sharing them sees them.",
+  "@claimPrivacy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "claimSignIn": "Sign in to accept. The reports come to your account, sealed so only your family can read them.",
+  "claimAlready": "You already have these reports.",
+  "claimOpen": "Open",
+  "claimInvalid": "This isn't a Vitalog invite link. Check that you copied all of it.",
+  "claimGone": "This invite doesn't work any more. Ask for a new link.",
+  "claimUsed": "Someone already used this invite. Each link works once, so ask for a new one.",
+  "claimExpired": "This invite has expired. Links work for 7 days, so ask for a new one.",
+  "claimLimited": "Too many tries. Wait an hour, then open the link again.",
+  "claimFailed": "Couldn't reach Vitalog. Check your connection and try again.",
+  "claimRecoveryKey": "Enter your recovery key first, then open the link again.",
+  "openInviteRow": "Open an invite link",
+  "openInviteRowDetail": "Family sent you a link? Paste it here.",
+  "pasteInviteTitle": "Paste the invite link",
+  "pasteInviteOpen": "Open",
+  "noticeInviteAccepted": "{name}'s reports are on your phone now",
+  "@noticeInviteAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

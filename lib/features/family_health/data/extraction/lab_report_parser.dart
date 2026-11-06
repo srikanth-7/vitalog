@@ -1,4 +1,5 @@
 import '../../domain/entities/lab_result.dart';
+import '../../domain/reference/reference_range.dart' show Sex;
 import '../privacy/redactor.dart';
 import 'alias_trie.dart';
 import 'lab_test_catalog.dart';
@@ -222,14 +223,35 @@ class LabReportParser {
       word, () => RegExp('(?<![a-z0-9])${RegExp.escape(word)}(?![a-z0-9])'));
 
   /// Status for a value the user typed in, judged against the printed range
-  /// the same way a parsed row is.
-  ResultStatus statusFor(String value, String referenceRange) {
+  /// the same way a parsed row is. With ranges printed per sex, the
+  /// member's [sex] picks the band; unknown sex leaves it for review.
+  ResultStatus statusFor(String value, String referenceRange, {Sex? sex}) {
     final word = value.trim().toLowerCase();
     if (_normalWords.contains(word)) return ResultStatus.withinRange;
-    if (_sexBand.allMatches(referenceRange).length > 1) {
-      return ResultStatus.needsReview;
+    if (hasSexBands(referenceRange)) {
+      final band = sex == null ? null : _bandFor(referenceRange, sex);
+      if (band == null) return ResultStatus.needsReview;
+      return _status(value.trim(), _parseRange(band), null);
     }
     return _status(value.trim(), _parseRange(referenceRange), null);
+  }
+
+  /// True for a printed range with separate bands per sex.
+  static bool hasSexBands(String referenceRange) =>
+      _sexBand.allMatches(referenceRange).length > 1;
+
+  /// The text of the band for [sex] ("M: 13-17 F: 12-15.5", female →
+  /// "12-15.5"), or null if that sex has no band.
+  static String? _bandFor(String range, Sex sex) {
+    final marks = _sexBand.allMatches(range).toList();
+    for (var i = 0; i < marks.length; i++) {
+      final label = marks[i].group(0)!.trim().toLowerCase();
+      final female = label.startsWith('f') || label.startsWith('w');
+      if (female != (sex == Sex.female)) continue;
+      final end = i + 1 < marks.length ? marks[i + 1].start : range.length;
+      return range.substring(marks[i].end, end);
+    }
+    return null;
   }
 
   ResultStatus _status(String value, _Range? range, String? flag) {

@@ -4,14 +4,15 @@
 // function with its session token. The function verifies that token, then
 // deletes the auth user with the service role seat (SUPABASE_SERVICE_ROLE_KEY,
 // injected by the platform). Deleting the auth row cascades, by the FKs
-// in schema.sql / schema_restore.sql, to every row the account owns:
-// reports, lab_results and family_members. Nothing outside the account is
-// in scope or reachable.
+// in schema.sql, to the account's key and its access rows (profile_keys).
+// A profile nobody else shares then goes with its sealed reports (trigger
+// drop_orphan_profile); one shared with family stays theirs.
 //
 // Deploy once per project (dashboard → Edge Functions → create
 // "delete-account", paste this, or `supabase functions deploy delete-account`).
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4'
+// Pinned exactly (security audit #10): bump on purpose, after reading the changelog.
 
 Deno.serve(async (req) => {
   const supabase = createClient(
@@ -31,7 +32,11 @@ Deno.serve(async (req) => {
   if (error || !data.user) return new Response('Unauthorized', { status: 401 })
 
   const { error: delError } = await supabase.auth.admin.deleteUser(data.user.id)
-  if (delError) return new Response(delError.message, { status: 500 })
+  if (delError) {
+    // Details stay in the function logs; the caller learns only that it failed.
+    console.error('delete-account', data.user.id, delError)
+    return new Response('Could not delete the account', { status: 500 })
+  }
 
   return new Response('deleted', { status: 200 })
 })

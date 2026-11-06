@@ -65,4 +65,47 @@ void main() {
     expect(InviteLink.parse('https://evil.example/i/abc#AAAA'), isNull);
     expect(InviteLink.parse('not a link'), isNull);
   });
+
+  test('links are found in a pasted message and via the app scheme',
+      () async {
+    final invite = await SharingCrypto.newInvite(
+        await SharingCrypto.newProfileKey());
+    final web = invite.link.toUri().toString();
+    final app = web.replaceFirst(
+        'https://${InviteLink.host}/i/', '${InviteLink.appScheme}://invite/');
+    for (final text in [web, 'Join me on Vitalog: $web.', app]) {
+      final link = InviteLink.parse(text)!;
+      expect(link.id, invite.link.id);
+      expect(link.secret, invite.link.secret);
+    }
+    // A truncated secret is refused, not half-used.
+    expect(InviteLink.parse(web.substring(0, web.length - 5)), isNull);
+  });
+
+  test('the claim token hashes to the stored claim hash; previews seal',
+      () async {
+    final invite = await SharingCrypto.newInvite(
+        await SharingCrypto.newProfileKey());
+    final token = await SharingCrypto.claimTokenFor(invite.link);
+    expect(token, matches(RegExp(r'^[0-9a-f]{64}$')));
+    // What open_invite() does: base64url(sha256(hex-decoded token)).
+    final bytes = [
+      for (var i = 0; i < token.length; i += 2)
+        int.parse(token.substring(i, i + 2), radix: 16)
+    ];
+    expect(
+        base64Url
+            .encode((await Sha256().hash(bytes)).bytes)
+            .replaceAll('=', ''),
+        invite.claimHash);
+
+    final box = await SharingCrypto.sealPreview(
+        invite.link, utf8.encode('Ramesh Kumar'));
+    expect(utf8.decode(await SharingCrypto.openPreview(invite.link, box)),
+        'Ramesh Kumar');
+    final other = await SharingCrypto.newInvite(
+        await SharingCrypto.newProfileKey());
+    await expectLater(SharingCrypto.openPreview(other.link, box),
+        throwsA(isA<SecretBoxAuthenticationError>()));
+  });
 }

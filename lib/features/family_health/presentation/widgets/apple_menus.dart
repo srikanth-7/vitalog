@@ -10,14 +10,15 @@ import '../../../../core/theme/app_theme.dart';
 
 /// Critically damped spring (no overshoot) as a [Curve]: Apple's default UI
 /// motion. [response] is the spring's response in seconds; the curve should
-/// run for about [response] × 1.1.
+/// run for about [response] × 1.1. A [ratio] below 1 lets it overshoot a
+/// little (keep it ≥ .8: a settle, not a bounce).
 class SpringCurve extends Curve {
-  SpringCurve({this.response = .3, this.duration = .33})
+  SpringCurve({this.response = .3, this.duration = .33, double ratio = 1})
       : _sim = SpringSimulation(
             SpringDescription.withDampingRatio(
                 mass: 1,
                 stiffness: math.pow(2 * math.pi / response, 2).toDouble(),
-                ratio: 1),
+                ratio: ratio),
             0,
             1,
             0);
@@ -27,7 +28,7 @@ class SpringCurve extends Curve {
 
   @override
   double transformInternal(double t) =>
-      t >= 1 ? 1 : _sim.x(t * duration).clamp(0.0, 1.0);
+      t >= 1 ? 1 : _sim.x(t * duration).clamp(0.0, 1.1);
 }
 
 bool _reduceMotion(BuildContext context) =>
@@ -221,8 +222,8 @@ class _MenuRow<T> extends StatelessWidget {
     final c = context.colors;
     final color = item.destructive ? c.danger : c.textPrimary;
     return Semantics(
+      container: true,
       button: true,
-      label: item.label,
       child: _PressRow(
         onTap: () => Navigator.of(context).pop(item.value),
         child: Padding(
@@ -413,8 +414,8 @@ class _DestructiveSheet extends StatelessWidget {
                     ),
                     _hairline(context),
                     Semantics(
+                      container: true,
                       button: true,
-                      label: confirmLabel,
                       child: _PressRow(
                         height: 56,
                         onTap: () {
@@ -436,8 +437,8 @@ class _DestructiveSheet extends StatelessWidget {
                 FrostedSurface(
                   radius: outer,
                   child: Semantics(
+                    container: true,
                     button: true,
-                    label: cancelLabel,
                     child: _PressRow(
                       height: 56,
                       onTap: () => Navigator.of(context).pop(false),

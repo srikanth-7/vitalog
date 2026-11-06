@@ -38,9 +38,25 @@ class DeleteReport extends HealthEvent {
 
 /// Removes a family member's profile from this phone. The repository
 /// refuses while local reports are filed under them (see MemberHasReports).
-class DeleteFamilyMember extends HealthEvent {
-  DeleteFamilyMember(this.member);
+/// Sets a member's photo from a picked image file, or removes it (null).
+class SetMemberPhoto extends HealthEvent {
+  SetMemberPhoto(this.memberId, this.sourcePath);
+  final String memberId;
+  final String? sourcePath;
+}
+
+/// Saves an edited member (name, relation, age, sex).
+class UpdateFamilyMember extends HealthEvent {
+  UpdateFamilyMember(this.member);
   final FamilyMember member;
+}
+
+class DeleteFamilyMember extends HealthEvent {
+  DeleteFamilyMember(this.member, {this.withReports = false});
+  final FamilyMember member;
+
+  /// Their reports go too (confirmed in the sheet that names how many).
+  final bool withReports;
 }
 
 /// Deletes the signed-in account (its server rows cascade) and clears this
@@ -69,6 +85,15 @@ class SignInDetected extends HealthEvent {
 
 /// The foreign-account prompt's answer: keep what this phone holds (the new
 /// account's data merges in on top) or clear the phone first.
+/// The user typed or autofilled their recovery key on a new phone.
+class UseRecoveryKey extends HealthEvent {
+  UseRecoveryKey(this.text);
+  final String text;
+}
+
+/// Show this account's recovery key again (Family tab).
+class ShowRecoveryKey extends HealthEvent {}
+
 class ForeignAccountDecision extends HealthEvent {
   ForeignAccountDecision({required this.clearPhone});
   final bool clearPhone;
@@ -103,4 +128,12 @@ class AddFamilyMember extends HealthEvent {
   final String relation;
   final int age;
   final Sex? sex;
+}
+
+/// Turn the lock on original documents on or off. [quiet]: no snackbar
+/// (the user just said "Not now" to the explanation).
+class SetOriginalsLock extends HealthEvent {
+  SetOriginalsLock(this.on, {this.quiet = false});
+  final bool on;
+  final bool quiet;
 }

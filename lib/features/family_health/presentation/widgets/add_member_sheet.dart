@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../health_presentation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'health_widgets.dart';
+import '../bloc/health_state.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_shape.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../domain/entities/family_member.dart';
 import '../../domain/reference/reference_range.dart';
 import '../bloc/health_bloc.dart';
 import '../bloc/health_event.dart';
+import 'permission_help.dart';
 
 /// Name, relation, age and sex: what the app needs to file reports and pick
-/// usual ranges. Saved on this phone only.
-Future<void> showAddMemberSheet(BuildContext context) {
+/// usual ranges. Saved on this phone only. With [editing], the same sheet
+/// opens filled in and saves the changes.
+Future<void> showAddMemberSheet(BuildContext context, {FamilyMember? editing}) {
   final bloc = context.read<HealthBloc>();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => BlocProvider.value(value: bloc, child: const _AddMember()),
+    builder: (_) =>
+        BlocProvider.value(value: bloc, child: _AddMember(editing: editing)),
   );
 }
 
 class _AddMember extends StatefulWidget {
-  const _AddMember();
+  const _AddMember({this.editing});
+  final FamilyMember? editing;
   @override
   State<_AddMember> createState() => _AddMemberState();
 }
@@ -34,30 +43,48 @@ class _AddMemberState extends State<_AddMember> {
   Sex? _sex;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final m = widget.editing;
+    if (m == null || _name.text.isNotEmpty) return;
+    _name.text = m.name;
+    _age.text = '${m.age}';
+    _sex = m.sex;
+    // Saved as a fixed key; older saves hold the label in the language of
+    // the day, so match that too. Anything unknown is "Other".
+    var i = relationKeys.indexOf(m.relation);
+    if (i < 0) {
+      i = [for (final k in relationKeys) relationName(context.l10n, k)]
+          .indexOf(m.relation);
+    }
+    _relation = i < 0 ? relationKeys.length - 1 : i;
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _age.dispose();
     super.dispose();
   }
 
-  List<String> _relations(BuildContext context) {
-    final l10n = context.l10n;
-    return [
-      l10n.relationSelf,
-      l10n.relationPartner,
-      l10n.relationChild,
-      l10n.relationParent,
-      l10n.relationSibling,
-      l10n.relationGrandparent,
-      l10n.relationOther,
-    ];
-  }
-
   void _save() {
     if (!_form.currentState!.validate()) return;
+    final m = widget.editing;
+    if (m != null) {
+      context.read<HealthBloc>().add(UpdateFamilyMember(FamilyMember(
+          id: m.id,
+          name: _name.text.trim(),
+          relation: relationKeys[_relation],
+          initials: m.initials,
+          colorValue: m.colorValue,
+          age: int.parse(_age.text.trim()),
+          sex: _sex)));
+      Navigator.pop(context);
+      return;
+    }
     context.read<HealthBloc>().add(AddFamilyMember(
         name: _name.text.trim(),
-        relation: _relations(context)[_relation],
+        relation: relationKeys[_relation],
         age: int.parse(_age.text.trim()),
         sex: _sex));
     Navigator.pop(context);
@@ -78,14 +105,21 @@ class _AddMemberState extends State<_AddMember> {
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               children: [
-                Text(l10n.addMemberTitle,
+                Text(
+                    widget.editing == null
+                        ? l10n.addMemberTitle
+                        : l10n.editMember,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700, color: c.textPrimary)),
                 const SizedBox(height: 16),
+                if (widget.editing != null) ...[
+                  _PhotoRow(memberId: widget.editing!.id),
+                  const SizedBox(height: 16),
+                ],
                 TextFormField(
                   key: const ValueKey('member-name'),
                   controller: _name,
-                  autofocus: true,
+                  autofocus: widget.editing == null,
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(labelText: l10n.memberNameLabel),
@@ -98,7 +132,9 @@ class _AddMemberState extends State<_AddMember> {
                 Text(l10n.relationLabel, style: label),
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 8, children: [
-                  for (final (i, r) in _relations(context).indexed)
+                  for (final (i, r) in [
+                    for (final k in relationKeys) relationName(l10n, k)
+                  ].indexed)
                     ChoiceChip(
                         label: Text(r),
                         selected: _relation == i,
@@ -138,7 +174,9 @@ class _AddMemberState extends State<_AddMember> {
                 FilledButton(
                     key: const ValueKey('save-member'),
                     onPressed: _save,
-                    child: Text(l10n.saveMember)),
+                    child: Text(widget.editing == null
+                        ? l10n.saveMember
+                        : l10n.saveChanges)),
                 const SizedBox(height: 10),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(Icons.lock_outline, size: 14, color: c.textMuted),
@@ -149,6 +187,72 @@ class _AddMemberState extends State<_AddMember> {
               ]),
         ),
       ),
+    );
+  }
+}
+
+/// The member's picture with Take / Choose / Remove. Saved (encrypted, on
+/// this phone) as soon as it's picked; the avatar here follows the bloc.
+class _PhotoRow extends StatelessWidget {
+  const _PhotoRow({required this.memberId});
+  final String memberId;
+
+  Future<void> _pick(BuildContext context, ImageSource source) async {
+    final bloc = context.read<HealthBloc>();
+    // Avatar-sized is plenty, and keeps the encrypted copy small.
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(
+          source: source, maxWidth: 600, maxHeight: 600, imageQuality: 85);
+    } on PlatformException {
+      // Camera / Photos access denied, or no camera here.
+      if (context.mounted) {
+        showPermissionOff(ScaffoldMessenger.maybeOf(context), context.l10n,
+            context.l10n.pickerFailed);
+      }
+      return;
+    }
+    if (picked != null) bloc.add(SetMemberPhoto(memberId, picked.path));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return BlocBuilder<HealthBloc, HealthState>(
+      builder: (context, state) {
+        final member = state is HealthLoaded
+            ? state.data.members.where((m) => m.id == memberId).firstOrNull
+            : null;
+        if (member == null) return const SizedBox.shrink();
+        return Row(children: [
+          MemberAvatar(member: member, size: 64),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Wrap(spacing: 4, runSpacing: 0, children: [
+              TextButton.icon(
+                  key: const ValueKey('photo-camera'),
+                  onPressed: () => _pick(context, ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                  label: Text(l10n.photoTake)),
+              TextButton.icon(
+                  key: const ValueKey('photo-library'),
+                  onPressed: () => _pick(context, ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: Text(l10n.photoChoose)),
+              if (member.photo != null)
+                TextButton.icon(
+                    key: const ValueKey('photo-remove'),
+                    onPressed: () => context
+                        .read<HealthBloc>()
+                        .add(SetMemberPhoto(memberId, null)),
+                    icon: Icon(Icons.delete_outline,
+                        size: 18, color: context.colors.danger),
+                    label: Text(l10n.photoRemove,
+                        style: TextStyle(color: context.colors.danger))),
+            ]),
+          ),
+        ]);
+      },
     );
   }
 }

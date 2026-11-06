@@ -2,6 +2,8 @@
 ///
 /// Feature code should import domain entities and presentation helpers from
 /// `features/family_health` directly. Mock records live in its data layer.
+library;
+
 export 'features/family_health/domain/entities/family_member.dart';
 export 'features/family_health/domain/entities/health_category.dart';
 export 'features/family_health/domain/entities/health_report.dart';

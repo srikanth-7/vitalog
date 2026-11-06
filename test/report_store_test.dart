@@ -1,3 +1,4 @@
+import 'package:vitalog/features/reminders/reminder.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -29,6 +30,21 @@ void main() {
   setUp(
       () async => dir = await Directory.systemTemp.createTemp('vitalog_store'));
   tearDown(() => dir.delete(recursive: true));
+
+  test('a file over the size cap is refused before it is read or stored',
+      () async {
+    final store = LocalReportStore(
+        directory: () async => dir, cipher: cipher, vault: vault);
+    final big = File('${dir.path}/big.pdf');
+    // Sparse: one byte past the cap, no real 50 MB written.
+    final raf = big.openSync(mode: FileMode.write)
+      ..setPositionSync(FileTooLarge.maxBytes)
+      ..writeByteSync(0);
+    raf.closeSync();
+    await expectLater(
+        store.keepOriginal(big.path, 'r1'), throwsA(isA<FileTooLarge>()));
+    expect(Directory('${dir.path}/reports').existsSync(), isFalse);
+  });
 
   test('reports and originals are unreadable on disk, readable in the app',
       () async {
@@ -115,14 +131,15 @@ void main() {
 
   test('an unknown test goes to Other, and the chosen category is learned',
       () async {
+    final ocr = _Lines([
+      'Reported On: 11/10/2026',
+      'Cystatin C  0.9  mg/L  0.6 - 1.0',
+      'Call us 98450 12345 for home collection'
+    ]);
     final repo = FamilyHealthRepositoryImpl(MockFamilyHealthDataSource(),
         store: LocalReportStore(
             directory: () async => dir, cipher: cipher, vault: vault),
-        recognizer: _Lines([
-          'Reported On: 11/10/2026',
-          'Cystatin C  0.9  mg/L  0.6 - 1.0',
-          'Call us 98450 12345 for home collection'
-        ]),
+        recognizer: ocr,
         sync: ReportSyncService());
     var n = 0;
     Future<LabResult> upload() async {
@@ -146,6 +163,8 @@ void main() {
         await repo.updateResult(first.copyWith(categoryIds: ['kidney']));
     expect(filed.status, ResultStatus.withinRange);
 
+    // A later report (same text would be caught as a duplicate).
+    ocr.lines = ['Reported On: 11/04/2027', 'Cystatin C  0.8  mg/L  0.6 - 1.0'];
     final second = await upload();
     expect(second.categoryIds, ['kidney']);
     expect(second.status, ResultStatus.withinRange);
@@ -222,11 +241,29 @@ void main() {
         fileName: 'c.jpg');
     expect((await store.load()).reports, hasLength(3));
   });
+
+  test('reminders are stored encrypted and wiped with the phone data',
+      () async {
+    final store = LocalReportStore(
+        directory: () async => dir, cipher: cipher, vault: vault);
+    final r = Reminder(
+        id: 'r1',
+        memberId: 'maya',
+        title: 'Thyroid recheck',
+        firstAt: DateTime(2026, 12, 1, 8),
+        repeat: ReminderRepeat.every3Months);
+    await store.saveReminders([r]);
+    final raw = File('${dir.path}/reminders.json').readAsBytesSync();
+    expect(String.fromCharCodes(raw), isNot(contains('Thyroid')));
+    expect((await store.loadReminders()).single.toJson(), r.toJson());
+    await store.clearAll();
+    expect(await store.loadReminders(), isEmpty);
+  });
 }
 
 class _Lines extends ReportTextRecognizer {
   _Lines(this.lines);
-  final List<String> lines;
+  List<String> lines;
   @override
   Future<List<String>> recognize(Uint8List bytes,
           {required bool isPdf}) async =>

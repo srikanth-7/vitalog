@@ -18,6 +18,32 @@ extension FamilyMemberPresentation on FamilyMember {
   Color get color => Color(colorValue);
 }
 
+/// Relations are saved as these fixed English keys, never as the label in
+/// the current language, so switching language can't lose them.
+const relationKeys = [
+  'You',
+  'Partner',
+  'Child',
+  'Parent',
+  'Sibling',
+  'Grandparent',
+  'Other'
+];
+
+/// A saved relation in the current language; anything else (older saves,
+/// sample "Daughter") is shown as saved.
+String relationName(AppLocalizations l10n, String relation) =>
+    switch (relation) {
+      'You' => l10n.relationSelf,
+      'Partner' => l10n.relationPartner,
+      'Child' => l10n.relationChild,
+      'Parent' => l10n.relationParent,
+      'Sibling' => l10n.relationSibling,
+      'Grandparent' => l10n.relationGrandparent,
+      'Other' => l10n.relationOther,
+      _ => relation,
+    };
+
 extension HealthCategoryPresentation on HealthCategory {
   Color get color => Color(colorValue);
 
@@ -52,6 +78,32 @@ const _categoryIcons = <String, IconData>{
 /// Medium date in the active locale (e.g. "Sep 18, 2026" / "18 Sept 2026").
 /// `Intl.defaultLocale` is kept in sync with the app locale in main.dart.
 String formatDate(DateTime date) => DateFormat.yMMMd().format(date);
+
+/// "Good morning / afternoon / evening" by the phone's clock.
+String timeGreeting(AppLocalizations l10n, [DateTime? now]) {
+  final hour = (now ?? DateTime.now()).hour;
+  if (hour < 12) return l10n.greetingMorning;
+  return hour < 17 ? l10n.greetingAfternoon : l10n.greetingEvening;
+}
+
+/// A category's soft card background: its colour washed over the surface.
+/// Decoration only (status colours keep meaning status), so text on it
+/// stays at full contrast.
+Color categorySoft(Color category, AppColors c, {required bool dark}) =>
+    Color.alphaBlend(category.withValues(alpha: dark ? .2 : .14), c.surface);
+
+/// A category's colour for icons on a surface chip: nudged toward the text
+/// colour so it reads in both themes.
+Color categoryInk(Color category, AppColors c, {required bool dark}) =>
+    Color.lerp(category, c.textPrimary, dark ? .4 : .2)!;
+
+/// The first name to greet the signed-in person by, or null when the
+/// account has no real name (an email isn't one).
+String? greetingName(String? displayName) {
+  final name = displayName?.trim() ?? '';
+  if (name.isEmpty || name.contains('@')) return null;
+  return name.split(RegExp(r'\s+')).first;
+}
 
 /// [usual]: judged against the app's built-in usual range because the
 /// report printed none — never claim "per report" for those.

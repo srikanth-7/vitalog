@@ -1,6 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+
+import '../../../../core/layout/readable_width.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,6 +13,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../health_presentation.dart';
 import '../widgets/add_member_sheet.dart';
 import '../widgets/apple_menus.dart';
+import '../widgets/header_wash.dart';
 import '../widgets/health_widgets.dart';
 import '../../../auth/sign_in_screen.dart';
 import 'health_subscreens.dart';
@@ -17,9 +21,12 @@ import 'home_screen.dart';
 import 'empty_family_experience.dart';
 import 'navigation.dart';
 import 'profile_screen.dart';
+import 'report_dashboard_screen.dart';
 import 'reports_screen.dart';
+import '../widgets/side_layout.dart';
 import '../widgets/vitalog_nav_bar.dart';
 import '../widgets/motion.dart';
+import '../widgets/recovery_key_sheets.dart';
 import '../bloc/health_bloc.dart';
 import '../bloc/health_event.dart';
 import '../bloc/health_state.dart';
@@ -87,70 +94,143 @@ class DashBoardScreen extends StatelessWidget {
           context.read<HealthBloc>().add(SelectNavigationTab(index));
         }
 
-        void openCat(category) => openCategory(context,
-            scoped: full, full: full, profile: profile, category: category);
-
-        final pages = <Widget>[
-          HomeScreen(
+        // Taps open from where they happen ([at]), so on wide screens they
+        // land in that tab's right pane instead of a new screen.
+        void openCat(BuildContext at, HealthCategory? category) =>
+            openCategory(at,
+                scoped: full, full: full, profile: profile, category: category);
+        Widget home(BuildContext at, [HomePart part = HomePart.all]) =>
+            HomeScreen(
+              snapshot: full,
+              profile: profile,
+              part: part,
+              onProfileTap: () => selectTab(3),
+              onCategoryTap: (category) => openCat(at, category),
+              onResultTap: (result) => openResult(at, full, profile, result),
+              onSeeAllCategories: () => selectTab(1),
+              onAllResultsTap: () => openCat(at, null),
+            );
+        Widget categories(BuildContext at) => CategoriesScreen(
             snapshot: full,
             profile: profile,
-            onProfileTap: () => selectTab(3),
-            onCategoryTap: openCat,
-            onResultTap: (result) => openResult(context, full, profile, result),
-            onReportsTap: () => selectTab(2),
-            onSeeAllCategories: () => selectTab(1),
-          ),
-          CategoriesScreen(
-              snapshot: full, profile: profile, onCategoryTap: openCat),
-          ReportsScreen(
-              profile: profile, snapshot: full, isSyncing: loaded.isSyncing),
-          ProfileScreen(
+            onCategoryTap: (category) => openCat(at, category));
+        Widget family([FamilyPart part = FamilyPart.all]) => ProfileScreen(
+              snapshot: full,
+              selectedProfileId: profile.id,
+              part: part,
+              onSelect: (id) =>
+                  context.read<HealthBloc>().add(SelectFamilyMember(id)),
+            );
+        final reports = ReportsScreen(
+            profile: profile,
             snapshot: full,
-            selectedProfileId: profile.id,
-            onSelect: (id) =>
-                context.read<HealthBloc>().add(SelectFamilyMember(id)),
-          ),
-        ];
+            isSyncing: loaded.isSyncing,
+            adding: loaded.adding);
 
-        return Scaffold(
-          // Switching person cross-fades the whole view, so the change is
-          // seen, not missed.
-          body: Column(
-            children: [
-              _FetchBanner(visible: loaded.restoring),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : const Duration(milliseconds: 220),
-                  child: KeyedSubtree(
-                    key: ValueKey(profile.id),
-                    child: _TabFade(
-                        index: loaded.selectedTab,
-                        child: IndexedStack(
-                            index: loaded.selectedTab, children: pages)),
-                  ),
+        final side = isSideLayout(context);
+        final List<Widget> pages;
+        if (side) {
+          // Two panes per tab: the list on the left, what it opens on the
+          // right. A tab with nothing to open yet stays one pane.
+          final groups = full.resultsByCategory(profile.id);
+          final firstCategory = full.categories
+              .where((c) => groups.containsKey(c.id))
+              .firstOrNull;
+          // Same order as the timeline: newest report date first.
+          final newest = full.reportsFor(profile.id).firstOrNull;
+          pages = [
+            firstCategory == null
+                ? home(context)
+                : DetailPane(
+                    list: Builder(builder: (at) => home(at, HomePart.status)),
+                    detail: (at) => home(at, HomePart.history)),
+            firstCategory == null
+                ? categories(context)
+                : DetailPane(
+                    list: Builder(builder: categories),
+                    detail: (at) => CategoryResultsScreen(
+                        snapshot: full,
+                        profile: profile,
+                        category: firstCategory,
+                        onResultTap: (result) =>
+                            openResult(at, full, profile, result))),
+            newest == null
+                ? reports
+                : DetailPane(
+                    list: reports,
+                    detail: (_) => ReportDashboardScreen(reportId: newest.id)),
+            DetailPane(
+                list: family(FamilyPart.people),
+                detail: (_) => family(FamilyPart.settings)),
+          ];
+        } else {
+          pages = [home(context), categories(context), reports, family()];
+        }
+
+        final navItems = [
+          VitalogNavItem(TabGlyph.home, l10n.navHome),
+          VitalogNavItem(TabGlyph.categories, l10n.navCategories),
+          VitalogNavItem(TabGlyph.reports, l10n.navReports),
+          VitalogNavItem(TabGlyph.family, l10n.navFamily),
+        ];
+        final tabs = IndexedStack(index: loaded.selectedTab, children: pages);
+        // Switching person cross-fades the whole view, so the change is
+        // seen, not missed.
+        final body = Column(
+          children: [
+            _FetchBanner(visible: loaded.restoring),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 220),
+                child: KeyedSubtree(
+                  key: ValueKey(profile.id),
+                  child: _TabFade(
+                      index: loaded.selectedTab,
+                      child: side
+                          ? tabs
+                          // Wide screens: the wash also fills the sides
+                          // of the centred column, so no bars.
+                          : HeaderWash(child: ReadableWidth(child: tabs))),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        );
+
+        if (side) {
+          // Held sideways on a wide screen: the same tray, stood on its side
+          // along the left edge (person, tabs, then Add report by the thumb).
+          return Scaffold(
+            body: SideTrayFrame(
+              content: body,
+              tray: _SideTray(
+                  profile: profile,
+                  members: full.members,
+                  selectedTab: loaded.selectedTab,
+                  onSelected: selectTab,
+                  items: navItems,
+                  showSync: loaded.selectedTab == 2 && full.reports.isNotEmpty,
+                  unsynced: full.unsyncedCount,
+                  isSyncing: loaded.isSyncing),
+            ),
+          );
+        }
+
+        return Scaffold(
+          body: body,
+          // Content scrolls on under the frosted tray (MediaQuery's bottom
+          // padding grows by the tray, so SafeArea pages still clear it).
+          extendBody: true,
           // One floating tray, inset from the edges like iOS: dock row on
           // top, tabs below. Corners are concentric: tray xl (26) minus the
           // 6 px inset = lg (20) for everything inside it.
-          bottomNavigationBar: Padding(
+          bottomNavigationBar: ReadableWidth(
+              child: Padding(
             padding: EdgeInsets.fromLTRB(
                 12, 0, 12, math.max(MediaQuery.paddingOf(context).bottom, 12)),
-            child: DecoratedBox(
-              decoration: AppShape.decoration(
-                  radius: AppRadius.xl,
-                  color: context.colors.surface,
-                  side: BorderSide(color: context.colors.border),
-                  shadows: const [
-                    BoxShadow(
-                        color: Color(0x1F000000),
-                        blurRadius: 24,
-                        offset: Offset(0, 8))
-                  ]),
+            child: _FrostedTray(
               child: Padding(
                 padding: const EdgeInsets.all(_trayInset),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -164,28 +244,20 @@ class DashBoardScreen extends StatelessWidget {
                         : _ActionDock(
                             profile: profile,
                             members: full.members,
-                            showSync: loaded.selectedTab == 2,
+                            showSync: loaded.selectedTab == 2 &&
+                                full.reports.isNotEmpty,
                             unsynced: full.unsyncedCount,
                             isSyncing: loaded.isSyncing),
                   ),
                   VitalogNavBar(
                     selectedIndex: loaded.selectedTab,
                     onSelected: selectTab,
-                    items: [
-                      VitalogNavItem(Icons.home_outlined, Icons.home_rounded,
-                          l10n.navHome),
-                      VitalogNavItem(Icons.grid_view_outlined,
-                          Icons.grid_view_rounded, l10n.navCategories),
-                      VitalogNavItem(Icons.folder_open_outlined,
-                          Icons.folder_rounded, l10n.navReports),
-                      VitalogNavItem(Icons.people_outline,
-                          Icons.people_alt_rounded, l10n.navFamily),
-                    ],
+                    items: navItems,
                   ),
                 ]),
               ),
             ),
-          ),
+          )),
         );
       },
     );
@@ -195,6 +267,12 @@ class DashBoardScreen extends StatelessWidget {
     switch (notice.kind) {
       case HealthNoticeKind.foreignAccount:
         _askForeignAccount(context);
+        return;
+      case HealthNoticeKind.recoveryKeyNew:
+        showRecoveryKeySheet(context, notice.secret!);
+        return;
+      case HealthNoticeKind.recoveryKeyNeeded:
+        askRecoveryKey(context);
         return;
       default:
         break;
@@ -223,31 +301,28 @@ class DashBoardScreen extends StatelessWidget {
             .where((r) => r.id == notice.reportId)
             .firstOrNull;
     final simple = context.read<SettingsCubit>().state.simpleMode;
-    messenger.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      // Simple mode: time to read it and reach "View".
-      duration: Duration(seconds: simple ? 10 : 4),
-      content: Text(text),
-      action: notice.kind == HealthNoticeKind.signInRequired
-          ? SnackBarAction(
-              label: l10n.signIn,
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                      builder: (_) => const SignInScreen())))
-          // Filed under the wrong person? The fix is on the timeline.
-          : notice.kind == HealthNoticeKind.reportOtherPerson
-              ? SnackBarAction(
-                  label: l10n.reviewAction,
-                  onPressed: () =>
-                      context.read<HealthBloc>().add(SelectNavigationTab(2)))
-              : report != null &&
-                      notice.kind != HealthNoticeKind.reportFailed &&
-                      notice.kind != HealthNoticeKind.reportTimedOut
-                  ? SnackBarAction(
-                      label: l10n.viewReport,
-                      onPressed: () => openReport(context, report))
-                  : null,
-    ));
+    messenger.showSnackBar(noticeSnackBar(text,
+        simple: simple,
+        screenReader: MediaQuery.accessibleNavigationOf(context),
+        action: notice.kind == HealthNoticeKind.signInRequired
+            ? SnackBarAction(
+                label: l10n.signIn,
+                onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                        builder: (_) => const SignInScreen())))
+            // Filed under the wrong person? The fix is on the timeline.
+            : notice.kind == HealthNoticeKind.reportOtherPerson
+                ? SnackBarAction(
+                    label: l10n.reviewAction,
+                    onPressed: () =>
+                        context.read<HealthBloc>().add(SelectNavigationTab(2)))
+                : report != null &&
+                        notice.kind != HealthNoticeKind.reportFailed &&
+                        notice.kind != HealthNoticeKind.reportTimedOut
+                    ? SnackBarAction(
+                        label: l10n.viewReport,
+                        onPressed: () => openReport(context, report))
+                    : null));
   }
 
   static String _noticeText(AppLocalizations l10n, HealthNotice n) =>
@@ -260,27 +335,44 @@ class DashBoardScreen extends StatelessWidget {
           l10n.noticeReportNeedsReview(n.count),
         HealthNoticeKind.reportFailed => l10n.noticeReportFailed,
         HealthNoticeKind.reportUnsupported => l10n.noticeReportUnsupported,
+        HealthNoticeKind.notLabReport => l10n.noticeNotLabReport,
         HealthNoticeKind.reportTimedOut => l10n.noticeReportTimedOut,
         HealthNoticeKind.reportOtherPerson =>
           l10n.noticeReportOtherPerson(n.name ?? ''),
         HealthNoticeKind.reportCancelled => l10n.noticeReportCancelled,
+        HealthNoticeKind.reportMoved => l10n.noticeReportMoved(n.name ?? ''),
         HealthNoticeKind.memberAdded => l10n.noticeMemberAdded(n.name ?? ''),
         HealthNoticeKind.memberRemoved =>
           l10n.familyMemberRemoved(n.name ?? ''),
+        HealthNoticeKind.memberUpdated =>
+          l10n.noticeMemberUpdated(n.name ?? ''),
         HealthNoticeKind.memberRemoveBlocked =>
           l10n.memberRemoveBlocked(n.name ?? ''),
         HealthNoticeKind.accountDeleted => l10n.accountDeletedNotice,
-        HealthNoticeKind.accountDeleteFailed =>
-          l10n.accountDeleteFailedNotice,
+        HealthNoticeKind.accountDeleteFailed => l10n.accountDeleteFailedNotice,
         HealthNoticeKind.synced => l10n.noticeSynced(n.count),
         HealthNoticeKind.syncRestored => n.count > 0
-            ? l10n.noticeSyncRestoredSent(n.restored, n.membersRestored, n.count)
+            ? l10n.noticeSyncRestoredSent(
+                n.restored, n.membersRestored, n.count)
             : l10n.noticeSyncRestored(n.restored, n.membersRestored),
         HealthNoticeKind.nothingToSync => l10n.noticeNothingToSync,
         HealthNoticeKind.syncFailed => l10n.noticeSyncFailed,
+        HealthNoticeKind.recoveryKeyWrong => l10n.noticeRecoveryKeyWrong,
+        HealthNoticeKind.recoveryKeyAccepted => l10n.noticeRecoveryKeyAccepted,
+        HealthNoticeKind.inviteAccepted =>
+          l10n.noticeInviteAccepted(n.name ?? ''),
+        // Sheets, not snackbars (handled above).
+        HealthNoticeKind.recoveryKeyNew ||
+        HealthNoticeKind.recoveryKeyNeeded =>
+          l10n.recoveryKeyAskTitle,
         HealthNoticeKind.resultEdited => l10n.noticeResultEdited,
         HealthNoticeKind.resultChecked => l10n.noticeResultChecked,
         HealthNoticeKind.reportDuplicate => l10n.noticeReportDuplicate,
+        HealthNoticeKind.fileTooLarge => l10n.noticeFileTooLarge,
+        HealthNoticeKind.originalsLocked => l10n.noticeOriginalsLocked,
+        HealthNoticeKind.originalsUnlocked => l10n.noticeOriginalsUnlocked,
+        HealthNoticeKind.originalsLockUnchanged =>
+          l10n.noticeOriginalsLockUnchanged,
         HealthNoticeKind.signInRequired => l10n.noticeSignInRequired,
         HealthNoticeKind.backendNotConfigured =>
           l10n.noticeBackendNotConfigured,
@@ -402,6 +494,125 @@ class _TabFadeState extends State<_TabFade>
       );
 }
 
+ShapeDecoration _trayDecoration(BuildContext context) => AppShape.decoration(
+        radius: AppRadius.xl,
+        color: context.colors.surface,
+        side: BorderSide(color: context.colors.border),
+        shadows: const [
+          BoxShadow(
+              color: Color(0x1F000000), blurRadius: 24, offset: Offset(0, 8))
+        ]);
+
+/// The floating tray as frosted glass: it blurs the page scrolling beneath
+/// it (functional layer only, per the HIG; content stays solid). High
+/// contrast gets the opaque tray, since Flutter has no reduce-transparency
+/// signal.
+class _FrostedTray extends StatelessWidget {
+  const _FrostedTray({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    if (MediaQuery.highContrastOf(context)) {
+      return DecoratedBox(decoration: _trayDecoration(context), child: child);
+    }
+    return DecoratedBox(
+      decoration: AppShape.decoration(radius: AppRadius.xl, shadows: const [
+        BoxShadow(
+            color: Color(0x14000000), blurRadius: 24, offset: Offset(0, 8))
+      ]),
+      child: ClipRSuperellipse(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: DecoratedBox(
+            decoration: AppShape.decoration(
+                radius: AppRadius.xl,
+                color: c.surface.withValues(alpha: .72),
+                side: BorderSide(color: c.surface.withValues(alpha: .6))),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The phone tray stood on its side (wide screens, iPhone Duo open): who
+/// you're viewing on top, the tabs, then Sync on Reports and Add report at
+/// the bottom, where the left thumb rests. Same card, corners and
+/// springing highlight as the bottom tray.
+class _SideTray extends StatelessWidget {
+  const _SideTray(
+      {required this.profile,
+      required this.members,
+      required this.selectedTab,
+      required this.onSelected,
+      required this.items,
+      required this.showSync,
+      required this.unsynced,
+      required this.isSyncing});
+  final FamilyMember profile;
+  final List<FamilyMember> members;
+  final int selectedTab;
+  final ValueChanged<int> onSelected;
+  final List<VitalogNavItem> items;
+  final bool showSync;
+  final int unsynced;
+  final bool isSyncing;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final simple = context.select((SettingsCubit s) => s.state.simpleMode);
+    // The Family tab is the member list itself: no person or Add there,
+    // as on the phone tray.
+    final dock = selectedTab != 3;
+    return DecoratedBox(
+      decoration: _trayDecoration(context),
+      child: Padding(
+        padding: const EdgeInsets.all(_trayInset),
+        child: Column(children: [
+          if (dock) ...[
+            _MemberSwitch(profile: profile, members: members, compact: true),
+            const SizedBox(height: _trayInset),
+          ],
+          Expanded(
+            child: VitalogNavBar(
+                vertical: true,
+                selectedIndex: selectedTab,
+                onSelected: onSelected,
+                items: items),
+          ),
+          if (showSync) ...[
+            const SizedBox(height: _trayInset),
+            SyncChip(unsynced: unsynced, isSyncing: isSyncing),
+          ],
+          if (dock) ...[
+            const SizedBox(height: _trayInset),
+            Tooltip(
+              message: l10n.addReport,
+              child: PressScale(
+                child: FilledButton(
+                  key: ValueKey(simple ? 'simple-add-report' : 'add-report'),
+                  onPressed: () => showAddReportSheet(context),
+                  style: FilledButton.styleFrom(
+                      // Concentric with the tray (see _trayInset).
+                      shape: AppShape.of(AppRadius.lg),
+                      minimumSize: Size.fromHeight(simple ? 68 : 60),
+                      padding: EdgeInsets.zero),
+                  child: Icon(Icons.add_rounded,
+                      size: 28, semanticLabel: l10n.addReport),
+                ),
+              ),
+            ),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
 /// Who you're looking at (tap to switch), Sync on Reports, and Add report.
 class _ActionDock extends StatelessWidget {
   const _ActionDock(
@@ -420,80 +631,156 @@ class _ActionDock extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final simple = context.select((SettingsCubit s) => s.state.simpleMode);
+    // Small phones, Simple mode, long languages: when the labelled button
+    // would squeeze the switcher below its avatar, Add report keeps only its
+    // "+" (tooltip and semantics still name it).
+    const labelStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w700);
+    final label = TextPainter(
+        text: TextSpan(text: l10n.addReport, style: labelStyle),
+        textScaler: MediaQuery.textScalerOf(context),
+        textDirection: Directionality.of(context),
+        maxLines: 1)
+      ..layout();
+    // Padding 20+20, icon, gap; the switcher needs its avatar (40 + 18).
+    final labelled = label.width + 40 + 18 + 8 + 4;
+    label.dispose();
+    final height = simple ? 60.0 : 52.0;
     return Padding(
       padding: const EdgeInsets.only(bottom: _trayInset),
-      child: Row(children: [
-        Expanded(child: _MemberSwitch(profile: profile, members: members)),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          child: showSync
-              ? Padding(
-                  padding: const EdgeInsets.only(left: _trayInset),
-                  child: SyncChip(unsynced: unsynced, isSyncing: isSyncing))
-              : const SizedBox.shrink(),
-        ),
-        const SizedBox(width: _trayInset),
-        PressScale(
-          child: FilledButton.icon(
-            key: ValueKey(simple ? 'simple-add-report' : 'add-report'),
-            onPressed: () => showAddReportSheet(context),
-            icon: const Icon(Icons.add_rounded),
-            label: Text(l10n.addReport),
-            style: FilledButton.styleFrom(
-                // Concentric with the tray (see _trayInset).
-                shape: AppShape.of(AppRadius.lg),
-                minimumSize: Size(0, simple ? 60 : 52),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                textStyle:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+      child: LayoutBuilder(builder: (context, box) {
+        final fits = box.maxWidth -
+                (showSync ? 52 + _trayInset : 0) -
+                _trayInset -
+                labelled >=
+            58;
+        return Row(children: [
+          Expanded(child: _MemberSwitch(profile: profile, members: members)),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            child: showSync
+                ? Padding(
+                    padding: const EdgeInsets.only(left: _trayInset),
+                    child: SyncChip(unsynced: unsynced, isSyncing: isSyncing))
+                : const SizedBox.shrink(),
           ),
-        ),
-      ]),
+          const SizedBox(width: _trayInset),
+          PressScale(
+            child: fits
+                ? FilledButton.icon(
+                    key: ValueKey(simple ? 'simple-add-report' : 'add-report'),
+                    onPressed: () => showAddReportSheet(context),
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text(l10n.addReport),
+                    style: FilledButton.styleFrom(
+                        // Concentric with the tray (see _trayInset).
+                        shape: AppShape.of(AppRadius.lg),
+                        minimumSize: Size(0, height),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        textStyle: labelStyle),
+                  )
+                : Tooltip(
+                    message: l10n.addReport,
+                    child: FilledButton(
+                      key:
+                          ValueKey(simple ? 'simple-add-report' : 'add-report'),
+                      onPressed: () => showAddReportSheet(context),
+                      style: FilledButton.styleFrom(
+                          shape: AppShape.of(AppRadius.lg),
+                          minimumSize: Size.square(height),
+                          padding: EdgeInsets.zero),
+                      child: Icon(Icons.add_rounded,
+                          size: 28, semanticLabel: l10n.addReport),
+                    ),
+                  ),
+          ),
+        ]);
+      }),
     );
   }
 }
 
 class _MemberSwitch extends StatelessWidget {
-  const _MemberSwitch({required this.profile, required this.members});
+  const _MemberSwitch(
+      {required this.profile, required this.members, this.compact = false});
   final FamilyMember profile;
   final List<FamilyMember> members;
+
+  /// Side tray: the avatar over the first name, no chevron.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return PressScale(
-      child: Material(
-        color: c.canvas,
-        shape: AppShape.of(AppRadius.lg),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: const ValueKey('member-switch'),
-          onTap: () => _pick(context),
-          child: SizedBox(
-            height: 52,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                transitionBuilder: (child, a) => FadeTransition(
-                    opacity: a,
-                    child: SlideTransition(
-                        position:
-                            Tween(begin: const Offset(0, .4), end: Offset.zero)
-                                .animate(a),
-                        child: child)),
-                child: Row(key: ValueKey(profile.id), children: [
-                  MemberAvatar(member: profile, size: 40),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(profile.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: c.textPrimary, fontWeight: FontWeight.w700)),
-                  ),
-                  Icon(Icons.unfold_more_rounded, color: c.textMuted),
-                ]),
+    // Narrow docks show only the avatar: name it, and say what a tap does.
+    return Semantics(
+      button: true,
+      label: profile.name,
+      hint: context.l10n.switchProfileTooltip,
+      excludeSemantics: true,
+      onTap: () => _pick(context),
+      child: PressScale(
+        child: Material(
+          color: c.canvas,
+          shape: AppShape.of(AppRadius.lg),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: const ValueKey('member-switch'),
+            onTap: () => _pick(context),
+            child: SizedBox(
+              height: compact ? 64 : 52,
+              child: Padding(
+                padding: compact
+                    ? const EdgeInsets.all(4)
+                    : const EdgeInsets.fromLTRB(6, 6, 12, 6),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, a) => FadeTransition(
+                      opacity: a,
+                      child: SlideTransition(
+                          position: Tween(
+                                  begin: const Offset(0, .4), end: Offset.zero)
+                              .animate(a),
+                          child: child)),
+                  // Long "Add a report" labels (other languages, Simple mode)
+                  // leave little room: then the avatar alone says who it is.
+                  child: compact
+                      ? Column(
+                          key: ValueKey(profile.id),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                              MemberAvatar(member: profile, size: 32),
+                              const SizedBox(height: 2),
+                              // Large text shrinks into the slot, not spills.
+                              Flexible(
+                                child: Text(profile.name.split(' ').first,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: c.textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                            ])
+                      : LayoutBuilder(
+                          key: ValueKey(profile.id),
+                          builder: (context, box) => Row(children: [
+                            MemberAvatar(member: profile, size: 40),
+                            if (box.maxWidth >= 100) ...[
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(profile.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: c.textPrimary,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                              Icon(Icons.unfold_more_rounded,
+                                  color: c.textMuted),
+                            ],
+                          ]),
+                        ),
+                ),
               ),
             ),
           ),
@@ -518,7 +805,7 @@ class _MemberSwitch extends StatelessWidget {
               ListTile(
                 leading: MemberAvatar(member: m, size: 40),
                 title: Text(m.name),
-                subtitle: Text(m.relation),
+                subtitle: Text(relationName(sheet.l10n, m.relation)),
                 trailing: m.id == profile.id
                     ? Icon(Icons.check_circle, color: sheet.colors.brand)
                     : null,
@@ -542,3 +829,19 @@ class _MemberSwitch extends StatelessWidget {
     }
   }
 }
+
+/// A notice's snackbar. It always closes by itself: Simple mode leaves time
+/// to read it and reach "View".
+SnackBar noticeSnackBar(String text,
+        {SnackBarAction? action,
+        required bool simple,
+        bool screenReader = false}) =>
+    SnackBar(
+      behavior: SnackBarBehavior.floating,
+      duration: Duration(seconds: simple ? 10 : 4),
+      content: Text(text),
+      action: action,
+      // Flutter keeps snackbars with an action until tapped; ours time out,
+      // except for screen-reader users, who need time to reach it.
+      persist: screenReader,
+    );

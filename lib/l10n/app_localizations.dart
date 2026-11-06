@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_hi.dart';
 import 'app_localizations_te.dart';
 
 // ignore_for_file: type=lint
@@ -95,6 +96,7 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('hi'),
     Locale('te')
   ];
 
@@ -149,37 +151,37 @@ abstract class AppLocalizations {
   /// No description provided for @emptyHomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Start with the people you care for'**
+  /// **'Your family’s lab reports, in one place'**
   String get emptyHomeTitle;
 
   /// No description provided for @emptyHomeMessage.
   ///
   /// In en, this message translates to:
-  /// **'Add a profile to keep each person’s reports and results together.'**
+  /// **'Results are read right on this phone and sorted into groups like these. Start by adding yourself or someone you look after.'**
   String get emptyHomeMessage;
 
   /// No description provided for @emptyCategoriesTitle.
   ///
   /// In en, this message translates to:
-  /// **'Results, thoughtfully sorted'**
+  /// **'Your results get sorted here'**
   String get emptyCategoriesTitle;
 
   /// No description provided for @emptyCategoriesMessage.
   ///
   /// In en, this message translates to:
-  /// **'Once reports are added, results are grouped into health categories so they’re easy to find.'**
+  /// **'After you add a report, each test is placed in one of these groups.'**
   String get emptyCategoriesMessage;
 
   /// No description provided for @emptyReportsTitle.
   ///
   /// In en, this message translates to:
-  /// **'A clear timeline starts here'**
+  /// **'Your lab reports will show here'**
   String get emptyReportsTitle;
 
   /// No description provided for @emptyReportsMessage.
   ///
   /// In en, this message translates to:
-  /// **'Add a family profile first. Then choose a lab report photo or PDF to begin a private timeline.'**
+  /// **'Add a family member first. Then add a photo or PDF of their lab report.'**
   String get emptyReportsMessage;
 
   /// No description provided for @emptyFamilyTitle.
@@ -199,6 +201,133 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take a quick tour'**
   String get startWalkthrough;
+
+  /// No description provided for @greetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get greetingMorning;
+
+  /// No description provided for @greetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get greetingAfternoon;
+
+  /// No description provided for @greetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get greetingEvening;
+
+  /// No description provided for @greetingWithName.
+  ///
+  /// In en, this message translates to:
+  /// **'{greeting}, {name}'**
+  String greetingWithName(String greeting, String name);
+
+  /// No description provided for @homeVerdict.
+  ///
+  /// In en, this message translates to:
+  /// **'{good} of {total, plural, =1{1 result is} other{{total} results are}} in range'**
+  String homeVerdict(int good, int total);
+
+  /// No description provided for @homeVerdictAll.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{Your 1 result is in range} other{All {total} results are in range}}'**
+  String homeVerdictAll(int total);
+
+  /// No description provided for @homeSnapshotFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Here’s {name}’s health snapshot'**
+  String homeSnapshotFor(String name);
+
+  /// No description provided for @lastTested.
+  ///
+  /// In en, this message translates to:
+  /// **'Last tested {date}'**
+  String lastTested(String date);
+
+  /// No description provided for @periodAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get periodAll;
+
+  /// No description provided for @periodYear.
+  ///
+  /// In en, this message translates to:
+  /// **'1 year'**
+  String get periodYear;
+
+  /// No description provided for @periodSixMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'6 months'**
+  String get periodSixMonths;
+
+  /// No description provided for @historySemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{test}: {count, plural, =1{1 reading} other{{count} readings}} from {from} to {to}. Latest {value}.'**
+  String historySemantics(
+      String test, int count, String from, String to, String value);
+
+  /// No description provided for @homeGreetingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Here’s {name}’s latest'**
+  String homeGreetingTitle(String name);
+
+  /// No description provided for @tourMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with a person'**
+  String get tourMemberTitle;
+
+  /// No description provided for @tourMemberBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add yourself or someone you look after. Each person keeps their own reports.'**
+  String get tourMemberBody;
+
+  /// No description provided for @tourCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results, neatly grouped'**
+  String get tourCategoriesTitle;
+
+  /// No description provided for @tourCategoriesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every test lands in its group, like Blood, Thyroid or Vitamins.'**
+  String get tourCategoriesBody;
+
+  /// No description provided for @tourReportsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Every report, by date'**
+  String get tourReportsTitle;
+
+  /// No description provided for @tourReportsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo or PDF. It’s read on this phone, and nothing leaves it unless you tap Sync.'**
+  String get tourReportsBody;
+
+  /// No description provided for @tourFamilyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your family and settings'**
+  String get tourFamilyTitle;
+
+  /// No description provided for @tourFamilyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between people, add more, sign in for a backup, and change how the app looks.'**
+  String get tourFamilyBody;
 
   /// No description provided for @walkthroughBack.
   ///
@@ -235,18 +364,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
-
-  /// No description provided for @homeEyebrow.
-  ///
-  /// In en, this message translates to:
-  /// **'Family health'**
-  String get homeEyebrow;
-
-  /// No description provided for @homeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'A clearer picture,\ntogether.'**
-  String get homeTitle;
 
   /// No description provided for @switchProfileTooltip.
   ///
@@ -350,11 +467,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 test} other{{count} tests}}'**
   String testsCount(int count);
 
-  /// No description provided for @toReviewCount.
+  /// No description provided for @outsideRangeCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} to review'**
-  String toReviewCount(int count);
+  /// **'{count} outside range'**
+  String outsideRangeCount(int count);
 
   /// No description provided for @reportResultsHeading.
   ///
@@ -407,14 +524,26 @@ abstract class AppLocalizations {
   /// No description provided for @noCategoriesTitle.
   ///
   /// In en, this message translates to:
-  /// **'No categories yet'**
+  /// **'Nothing to sort yet'**
   String get noCategoriesTitle;
 
   /// No description provided for @noCategoriesMessage.
   ///
   /// In en, this message translates to:
-  /// **'Results will be grouped here after a report is read.'**
+  /// **'Add a report and each test lands in its group.'**
   String get noCategoriesMessage;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No lab reports yet'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add their first report with the + button. Results, trends and anything that needs attention will show here.'**
+  String get homeEmptyMessage;
 
   /// No description provided for @latestValuesFirst.
   ///
@@ -551,7 +680,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportsEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Add a photo or PDF of a lab report. It\'s read on this phone and every test is filed into its category.'**
+  /// **'Tap Add a report below. Take a photo or choose a PDF; it\'s read on this phone only.'**
   String get reportsEmptyMessage;
 
   /// No description provided for @uploadedOn.
@@ -704,6 +833,108 @@ abstract class AppLocalizations {
   /// **'Sync failed. Your reports are safe on this phone — try again later.'**
   String get noticeSyncFailed;
 
+  /// No description provided for @recoveryKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your recovery key'**
+  String get recoveryKeyTitle;
+
+  /// No description provided for @recoveryKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your backup is locked so only you can read it — not even Vitalog can. If you lose or reset this phone, this key unlocks your backup on the new one.'**
+  String get recoveryKeyBody;
+
+  /// No description provided for @recoveryKeyICloud.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s also kept in your iCloud Keychain, so an iPhone signed in to the same Apple ID gets it without asking.'**
+  String get recoveryKeyICloud;
+
+  /// No description provided for @recoveryKeySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to my passwords'**
+  String get recoveryKeySave;
+
+  /// No description provided for @recoveryKeyCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy key'**
+  String get recoveryKeyCopy;
+
+  /// No description provided for @recoveryKeyCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery key copied. Paste it somewhere safe.'**
+  String get recoveryKeyCopied;
+
+  /// No description provided for @recoveryKeyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve saved it'**
+  String get recoveryKeyDone;
+
+  /// No description provided for @recoveryKeyLater.
+  ///
+  /// In en, this message translates to:
+  /// **'You can see this key again on the Family tab.'**
+  String get recoveryKeyLater;
+
+  /// No description provided for @recoveryKeyAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your recovery key'**
+  String get recoveryKeyAskTitle;
+
+  /// No description provided for @recoveryKeyAskBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your backup is locked with the key you saved when you first synced. Tap the box to fill it from your saved passwords, or paste it.'**
+  String get recoveryKeyAskBody;
+
+  /// No description provided for @recoveryKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'ABCD-EFGH-…'**
+  String get recoveryKeyHint;
+
+  /// No description provided for @recoveryKeyUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock my backup'**
+  String get recoveryKeyUse;
+
+  /// No description provided for @recoveryKeyNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get recoveryKeyNotNow;
+
+  /// No description provided for @recoveryKeyRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery key'**
+  String get recoveryKeyRow;
+
+  /// No description provided for @recoveryKeyRowDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocks your backup on a new phone.'**
+  String get recoveryKeyRowDetail;
+
+  /// No description provided for @noticeRecoveryKeyWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That key doesn\'t unlock this account\'s backup. Check it and try again.'**
+  String get noticeRecoveryKeyWrong;
+
+  /// No description provided for @noticeRecoveryKeyAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup unlocked. Bringing your reports back…'**
+  String get noticeRecoveryKeyAccepted;
+
   /// No description provided for @noticeSignInRequired.
   ///
   /// In en, this message translates to:
@@ -761,7 +992,7 @@ abstract class AppLocalizations {
   /// No description provided for @memberRemoveSyncedNote.
   ///
   /// In en, this message translates to:
-  /// **'The account\'s cloud backup loses this profile too.'**
+  /// **'The account\'s cloud backup loses this profile too. If you share it with family, they keep it.'**
   String get memberRemoveSyncedNote;
 
   /// No description provided for @memberRemoveConfirm.
@@ -781,6 +1012,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} still has reports here. Move or delete them first.'**
   String memberRemoveBlocked(String name);
+
+  /// No description provided for @memberRemoveWithReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} and {count, plural, =1{1 report} other{{count} reports}}?'**
+  String memberRemoveWithReports(String name, int count);
+
+  /// No description provided for @memberRemoveWithReportsDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Their reports, results and original files are deleted from this phone. This can’t be undone.'**
+  String get memberRemoveWithReportsDetail;
+
+  /// No description provided for @memberRemoveWithReportsConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove with reports'**
+  String get memberRemoveWithReportsConfirm;
+
+  /// No description provided for @noticeMemberUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved changes to {name}'**
+  String noticeMemberUpdated(String name);
+
+  /// No description provided for @editMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit details'**
+  String get editMember;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get saveChanges;
+
+  /// No description provided for @photoTake.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get photoTake;
+
+  /// No description provided for @photoChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get photoChoose;
+
+  /// No description provided for @photoRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get photoRemove;
+
+  /// No description provided for @remindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get remindersTitle;
+
+  /// No description provided for @remindersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudges to get tested or add a report, set on this phone for you or anyone you look after.'**
+  String get remindersSubtitle;
+
+  /// No description provided for @remindersRowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get tested and add reports on time'**
+  String get remindersRowSubtitle;
+
+  /// No description provided for @remindersEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders yet'**
+  String get remindersEmptyTitle;
+
+  /// No description provided for @remindersEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set one for the next blood test, a thyroid recheck, or adding the latest report.'**
+  String get remindersEmptyMessage;
+
+  /// No description provided for @addReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get addReminder;
+
+  /// No description provided for @editReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reminder'**
+  String get editReminder;
+
+  /// No description provided for @reminderTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What to remind'**
+  String get reminderTitleLabel;
+
+  /// No description provided for @reminderTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown on the lock screen'**
+  String get reminderTitleHint;
+
+  /// No description provided for @reminderTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Write what to remind'**
+  String get reminderTitleRequired;
+
+  /// No description provided for @reminderPresetTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Get tested'**
+  String get reminderPresetTest;
+
+  /// No description provided for @reminderPresetReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the latest report'**
+  String get reminderPresetReport;
+
+  /// No description provided for @reminderForLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'For'**
+  String get reminderForLabel;
+
+  /// No description provided for @reminderWhenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get reminderWhenLabel;
+
+  /// No description provided for @reminderRepeatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get reminderRepeatLabel;
+
+  /// No description provided for @repeatOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Once'**
+  String get repeatOnce;
+
+  /// No description provided for @repeatMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get repeatMonthly;
+
+  /// No description provided for @repeatEvery3Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 3 months'**
+  String get repeatEvery3Months;
+
+  /// No description provided for @repeatEvery6Months.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 6 months'**
+  String get repeatEvery6Months;
+
+  /// No description provided for @repeatYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every year'**
+  String get repeatYearly;
+
+  /// No description provided for @saveReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Save reminder'**
+  String get saveReminder;
+
+  /// No description provided for @deleteReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete reminder'**
+  String get deleteReminder;
+
+  /// No description provided for @deleteReminderDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'It won’t remind you again. Reports aren’t affected.'**
+  String get deleteReminderDetail;
+
+  /// No description provided for @reminderNoMore.
+  ///
+  /// In en, this message translates to:
+  /// **'No more reminders'**
+  String get reminderNoMore;
+
+  /// No description provided for @reminderPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Set on this phone only. Never synced.'**
+  String get reminderPrivacy;
+
+  /// No description provided for @remindersTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get remindersTooltip;
+
+  /// Tooltip/screen-reader name of the Home bell when its dot shows a reminder due within 7 days.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders, one due this week'**
+  String get remindersDueSoonTooltip;
+
+  /// No description provided for @reminderInPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a time that’s still ahead'**
+  String get reminderInPast;
+
+  /// No description provided for @remindersNotificationsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder saved. But Vitalog isn\'t allowed to show notifications, so it can\'t remind you. Tap Open Settings and turn on Notifications.'**
+  String get remindersNotificationsOff;
+
+  /// No description provided for @reminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder for {name}'**
+  String reminderBody(String name);
+
+  /// No description provided for @reminderNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {when}'**
+  String reminderNext(String when);
+
+  /// No description provided for @deleteReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{title}”?'**
+  String deleteReminderTitle(String title);
 
   /// No description provided for @deleteAccountButton.
   ///
@@ -830,6 +1307,18 @@ abstract class AppLocalizations {
   /// **'Family profiles'**
   String get familyTitle;
 
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How the app looks, and your account.'**
+  String get settingsSubtitle;
+
   /// No description provided for @familySubtitle.
   ///
   /// In en, this message translates to:
@@ -871,6 +1360,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signed in as {email}'**
   String signedInAs(String email);
+
+  /// No description provided for @signOutDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reports stay on this phone.'**
+  String get signOutDetail;
+
+  /// No description provided for @deleteAccountDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes your cloud backup for good.'**
+  String get deleteAccountDetail;
+
+  /// No description provided for @accountStatMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get accountStatMembers;
+
+  /// No description provided for @accountStatReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get accountStatReports;
+
+  /// No description provided for @accountStatUnsynced.
+  ///
+  /// In en, this message translates to:
+  /// **'To sync'**
+  String get accountStatUnsynced;
 
   /// No description provided for @signedOutMessage.
   ///
@@ -989,8 +1508,38 @@ abstract class AppLocalizations {
   /// No description provided for @authFailed.
   ///
   /// In en, this message translates to:
-  /// **'Could not sign in. Check your details and try again.'**
+  /// **'Couldn’t sign in. Please try again.'**
   String get authFailed;
+
+  /// No description provided for @authWrongDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or password is incorrect.'**
+  String get authWrongDetails;
+
+  /// No description provided for @authTooManyTries.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a few minutes, then try again.'**
+  String get authTooManyTries;
+
+  /// No description provided for @authOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Can’t reach the server. Check your internet connection.'**
+  String get authOffline;
+
+  /// No description provided for @authWeakPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a stronger password: at least 8 characters, with letters and numbers.'**
+  String get authWeakPassword;
+
+  /// No description provided for @authConfirmEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your email first: open the link we sent you.'**
+  String get authConfirmEmail;
 
   /// No description provided for @categoryName.
   ///
@@ -1112,6 +1661,90 @@ abstract class AppLocalizations {
   /// **'You\'ve already added this report.'**
   String get noticeReportDuplicate;
 
+  /// No description provided for @noticeFileTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'That file is too big (over 50 MB), so it wasn\'t added.'**
+  String get noticeFileTooLarge;
+
+  /// No description provided for @originalsLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock your original reports?'**
+  String get originalsLockTitle;
+
+  /// No description provided for @originalsLockBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned reports show your name, address and phone number. With the lock on, opening them needs your face, fingerprint or screen-lock PIN. Your results stay visible as usual.'**
+  String get originalsLockBody;
+
+  /// No description provided for @originalsLockNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next, your phone will ask you to confirm it\'s you.'**
+  String get originalsLockNext;
+
+  /// No description provided for @originalsLockTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get originalsLockTurnOn;
+
+  /// No description provided for @originalsLockNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get originalsLockNotNow;
+
+  /// No description provided for @originalsLockLater.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change this anytime on the Family tab.'**
+  String get originalsLockLater;
+
+  /// No description provided for @originalsLockSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock original reports'**
+  String get originalsLockSetting;
+
+  /// No description provided for @originalsLockSettingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Face, fingerprint or PIN to open scanned documents'**
+  String get originalsLockSettingHint;
+
+  /// No description provided for @noticeOriginalsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Original reports are now locked.'**
+  String get noticeOriginalsLocked;
+
+  /// No description provided for @noticeOriginalsUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Original reports no longer need unlocking.'**
+  String get noticeOriginalsUnlocked;
+
+  /// No description provided for @noticeOriginalsLockUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing changed: the unlock was cancelled, or this phone has no screen lock.'**
+  String get noticeOriginalsLockUnchanged;
+
+  /// No description provided for @vaultPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your original report'**
+  String get vaultPromptTitle;
+
+  /// No description provided for @vaultPromptSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use your fingerprint, face or screen-lock PIN, so only you can see it'**
+  String get vaultPromptSubtitle;
+
   /// No description provided for @viewReport.
   ///
   /// In en, this message translates to:
@@ -1123,6 +1756,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading on this phone'**
   String get readingSecurely;
+
+  /// No description provided for @addingReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding your report…'**
+  String get addingReport;
 
   /// No description provided for @splashTagline.
   ///
@@ -1145,7 +1784,7 @@ abstract class AppLocalizations {
   /// No description provided for @sectionLatestReport.
   ///
   /// In en, this message translates to:
-  /// **'Latest report'**
+  /// **'Last tested date'**
   String get sectionLatestReport;
 
   /// No description provided for @sectionCategories.
@@ -1286,6 +1925,12 @@ abstract class AppLocalizations {
   /// **'English'**
   String get languageEnglish;
 
+  /// No description provided for @languageHindi.
+  ///
+  /// In en, this message translates to:
+  /// **'हिन्दी'**
+  String get languageHindi;
+
   /// No description provided for @languageTelugu.
   ///
   /// In en, this message translates to:
@@ -1343,8 +1988,14 @@ abstract class AppLocalizations {
   /// No description provided for @noticeReportUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'That file type can\'t be read. Try a photo, PDF, Word, Excel, CSV or text file.'**
+  /// **'That file type can\'t be read, so it wasn\'t added. Try a photo, PDF, Word, Excel, CSV or text file.'**
   String get noticeReportUnsupported;
+
+  /// No description provided for @noticeNotLabReport.
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a lab report: no test results in it, so it wasn\'t added.'**
+  String get noticeNotLabReport;
 
   /// No description provided for @sectionOverview.
   ///
@@ -1610,6 +2261,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Whose report is this?'**
   String get moveReportTitle;
+
+  /// No description provided for @noticeReportMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to {name}.'**
+  String noticeReportMoved(String name);
 
   /// No description provided for @nameMatchesBadge.
   ///
@@ -1886,6 +2543,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'“{name}” looks like a nickname. Labs print the real name, so their reports won\'t match.'**
   String nameLooksLikeNickname(String name);
+
+  /// No description provided for @dateNotDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Date not found'**
+  String get dateNotDetected;
+
+  /// No description provided for @pickerFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitalog isn\'t allowed to use the camera or your photos. To allow it, tap Open Settings and turn on Camera and Photos.'**
+  String get pickerFailed;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// No description provided for @notifyAskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow reminders?'**
+  String get notifyAskTitle;
+
+  /// No description provided for @notifyAskBody.
+  ///
+  /// In en, this message translates to:
+  /// **'To remind you on time, Vitalog needs to show notifications on this phone. They show only the reminder you wrote and the person\'s name, never test results.'**
+  String get notifyAskBody;
+
+  /// No description provided for @notifyAskNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone will ask next. Tap “Allow”.'**
+  String get notifyAskNext;
+
+  /// No description provided for @notifyAskContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get notifyAskContinue;
+
+  /// No description provided for @notifyAskNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notifyAskNotNow;
+
+  /// No description provided for @notifyAskLater.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change this anytime in your phone\'s Settings.'**
+  String get notifyAskLater;
+
+  /// No description provided for @shareMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Share {name}\'s reports'**
+  String shareMember(String name);
+
+  /// No description provided for @shareIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Family you invite can see {name}\'s reports and add new ones from their own phone. It\'s end-to-end encrypted: only your family can read it, not even Vitalog.'**
+  String shareIntro(String name);
+
+  /// No description provided for @shareUploadNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Inviting backs up {name}\'s profile and reports to your account first, sealed.'**
+  String shareUploadNote(String name);
+
+  /// No description provided for @shareInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite someone'**
+  String get shareInvite;
+
+  /// No description provided for @sharePeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see these reports'**
+  String get sharePeople;
+
+  /// No description provided for @shareYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (you)'**
+  String shareYou(String name);
+
+  /// No description provided for @shareYouPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get shareYouPlain;
+
+  /// No description provided for @shareSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone in your family'**
+  String get shareSomeone;
+
+  /// No description provided for @sharePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite waiting'**
+  String get sharePending;
+
+  /// No description provided for @sharePendingUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Link works until {date}'**
+  String sharePendingUntil(String date);
+
+  /// No description provided for @shareCancelInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel invite'**
+  String get shareCancelInvite;
+
+  /// No description provided for @shareRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get shareRemove;
+
+  /// No description provided for @shareRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing {name}\'s reports with {person}?'**
+  String shareRemoveTitle(String name, String person);
+
+  /// No description provided for @shareRemoveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{person} won\'t get new reports. Reports already on their phone stay there.'**
+  String shareRemoveMessage(String person);
+
+  /// No description provided for @shareRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing'**
+  String get shareRemoveConfirm;
+
+  /// No description provided for @shareMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ve shared {name}\'s health reports with you on Vitalog. Open this link on your phone to see them. It works once, for 7 days.\n{link}'**
+  String shareMessage(String name, String link);
+
+  /// No description provided for @shareSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s health reports'**
+  String shareSubject(String name);
+
+  /// No description provided for @shareSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to share. Your family see the reports on their own phones, through your account.'**
+  String get shareSignIn;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach your account. Check your connection and try again.'**
+  String get shareFailed;
+
+  /// No description provided for @shareSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample people can\'t be shared. Add your own family member first.'**
+  String get shareSample;
+
+  /// No description provided for @claimTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Family invite'**
+  String get claimTitle;
+
+  /// No description provided for @claimShared.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} shared {name}\'s reports with you'**
+  String claimShared(String from, String name);
+
+  /// No description provided for @claimSharedNoFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s reports were shared with you'**
+  String claimSharedNoFrom(String name);
+
+  /// No description provided for @claimWho.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is {name} to you?'**
+  String claimWho(String name);
+
+  /// No description provided for @claimAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my family'**
+  String get claimAccept;
+
+  /// No description provided for @claimNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get claimNotNow;
+
+  /// No description provided for @claimPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'The reports come to this phone, end-to-end encrypted. You can add reports for {name} too, and everyone sharing them sees them.'**
+  String claimPrivacy(String name);
+
+  /// No description provided for @claimSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to accept. The reports come to your account, sealed so only your family can read them.'**
+  String get claimSignIn;
+
+  /// No description provided for @claimAlready.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have these reports.'**
+  String get claimAlready;
+
+  /// No description provided for @claimOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get claimOpen;
+
+  /// No description provided for @claimInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a Vitalog invite link. Check that you copied all of it.'**
+  String get claimInvalid;
+
+  /// No description provided for @claimGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite doesn\'t work any more. Ask for a new link.'**
+  String get claimGone;
+
+  /// No description provided for @claimUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone already used this invite. Each link works once, so ask for a new one.'**
+  String get claimUsed;
+
+  /// No description provided for @claimExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This invite has expired. Links work for 7 days, so ask for a new one.'**
+  String get claimExpired;
+
+  /// No description provided for @claimLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many tries. Wait an hour, then open the link again.'**
+  String get claimLimited;
+
+  /// No description provided for @claimFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Vitalog. Check your connection and try again.'**
+  String get claimFailed;
+
+  /// No description provided for @claimRecoveryKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your recovery key first, then open the link again.'**
+  String get claimRecoveryKey;
+
+  /// No description provided for @openInviteRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open an invite link'**
+  String get openInviteRow;
+
+  /// No description provided for @openInviteRowDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Family sent you a link? Paste it here.'**
+  String get openInviteRowDetail;
+
+  /// No description provided for @pasteInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the invite link'**
+  String get pasteInviteTitle;
+
+  /// No description provided for @pasteInviteOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get pasteInviteOpen;
+
+  /// No description provided for @noticeInviteAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s reports are on your phone now'**
+  String noticeInviteAccepted(String name);
 }
 
 class _AppLocalizationsDelegate
@@ -1899,7 +2862,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'te'].contains(locale.languageCode);
+      <String>['en', 'hi', 'te'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1910,6 +2873,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'hi':
+      return AppLocalizationsHi();
     case 'te':
       return AppLocalizationsTe();
   }

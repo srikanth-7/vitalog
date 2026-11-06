@@ -79,7 +79,9 @@ class CountUpText extends StatelessWidget {
       tween: Tween(begin: 0, end: target),
       duration: const Duration(milliseconds: 900),
       curve: Curves.easeOutExpo,
+      // Screen readers hear the real value, never a moving one.
       builder: (context, v, _) => Text(v.toStringAsFixed(decimals),
+          semanticsLabel: value,
           style: style?.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()]) ??
               const TextStyle(fontFeatures: [FontFeature.tabularFigures()])),

@@ -34,6 +34,30 @@ void main() {
   Future<List<String>> read(List<int> bytes, [String name = 'f']) =>
       reader.read(Uint8List.fromList(bytes), fileName: name);
 
+  test('a zip bomb is refused before anything is unpacked', () async {
+    final archive = Archive()
+      ..addFile(ArchiveFile('word/document.xml', 101 * 1024 * 1024,
+          Uint8List(101 * 1024 * 1024)));
+    final bomb = ZipEncoder().encode(archive);
+    expect(bomb.length, lessThan(1024 * 1024)); // tiny on disk
+    await expectLater(read(bomb), throwsA(isA<UnsupportedDocument>()));
+  });
+
+  test('an entry that lies about its size is refused, not over-unpacked',
+      () async {
+    const real = 20 * 1024 * 1024;
+    final bytes = Uint8List.fromList(ZipEncoder().encode(Archive()
+      ..addFile(ArchiveFile('word/document.xml', real, Uint8List(real)))));
+    // Forge the uncompressed size (local header +22, central dir +24).
+    final data = ByteData.sublistView(bytes);
+    for (var i = 0; i + 4 <= bytes.length; i++) {
+      final sig = data.getUint32(i, Endian.little);
+      if (sig == 0x04034b50) data.setUint32(i + 22, 100, Endian.little);
+      if (sig == 0x02014b50) data.setUint32(i + 24, 100, Endian.little);
+    }
+    await expectLater(read(bytes), throwsA(isA<UnsupportedDocument>()));
+  });
+
   test('photos and PDFs go to OCR, by content not file name', () async {
     expect(await read([0xFF, 0xD8, 0xFF, 0xE0], 'report.pdf'), ['OCR']);
     expect(ocr.sawPdf, isFalse);

@@ -45,7 +45,10 @@ class FamilyHealthSnapshot {
 
   List<HealthReport> reportsFor(String memberId) =>
       reports.where((report) => report.profileId == memberId).toList()
-        ..sort((a, b) => b.reportDate.compareTo(a.reportDate));
+        ..sort((a, b) {
+          final byDate = b.reportDate.compareTo(a.reportDate);
+          return byDate != 0 ? byDate : b.uploadDate.compareTo(a.uploadDate);
+        });
 
   /// Results that came from [report]. Sample results carry no reportId, so
   /// they're matched by profile, lab and report date instead.

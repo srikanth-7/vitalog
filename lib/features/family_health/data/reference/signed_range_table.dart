@@ -12,9 +12,13 @@ import '../../domain/reference/reference_range.dart';
 /// Anything unsigned, altered, signed with another key, or older than the
 /// built-in edition is rejected and the built-in table stays in use.
 ///
-/// Generate the key pair once, offline (see docs/REFERENCE_RANGES.md), and
-/// paste the 32-byte public key here. Empty = updates disabled (fail closed).
-const List<int> rangeSigningPublicKey = [];
+/// Generated 2026-11-04. The private seed is in the product owner's macOS
+/// login Keychain (service `vitalog-range-signing`, see
+/// docs/REFERENCE_RANGES.md); move it to the server's secret store.
+const List<int> rangeSigningPublicKey = [
+  61, 238, 82, 220, 151, 57, 122, 48, 44, 159, 139, 229, 72, 110, 154, 127, //
+  253, 50, 203, 36, 17, 218, 126, 171, 174, 172, 233, 145, 70, 164, 242, 29,
+];
 
 /// Canonical bytes the server signs: `{"edition": ..., "ranges": [...]}`.
 Uint8List encodeRangeTable(String edition, List<ReferenceRange> ranges) =>

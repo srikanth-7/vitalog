@@ -21,12 +21,13 @@ enum HomeSection {
 }
 
 /// App language preference. [system] follows the device when supported.
-enum AppLanguage { system, english, telugu }
+enum AppLanguage { system, english, hindi, telugu }
 
 extension AppLanguageLocale on AppLanguage {
   Locale? get locale => switch (this) {
         AppLanguage.system => null,
         AppLanguage.english => const Locale('en'),
+        AppLanguage.hindi => const Locale('hi'),
         AppLanguage.telugu => const Locale('te'),
       };
 }
@@ -39,6 +40,7 @@ class AppSettings {
       this.language = AppLanguage.system,
       this.accent = ThemeAccent.vitalog,
       this.onboarded = false,
+      this.toured = false,
       this.loaded = false});
 
   /// Larger text and buttons, fewer things on screen, plain-language
@@ -54,6 +56,9 @@ class AppSettings {
   /// The welcome screens (and first sign-in offer) have been seen.
   final bool onboarded;
 
+  /// The first-run tour has been played (or skipped).
+  final bool toured;
+
   /// settings.json has been read (or found missing). Not saved.
   final bool loaded;
 
@@ -66,6 +71,7 @@ class AppSettings {
           AppLanguage? language,
           ThemeAccent? accent,
           bool? onboarded,
+          bool? toured,
           bool? loaded}) =>
       AppSettings(
           simpleMode: simpleMode ?? this.simpleMode,
@@ -74,6 +80,7 @@ class AppSettings {
           language: language ?? this.language,
           accent: accent ?? this.accent,
           onboarded: onboarded ?? this.onboarded,
+          toured: toured ?? this.toured,
           loaded: loaded ?? this.loaded);
 
   Map<String, dynamic> toJson() => {
@@ -83,6 +90,7 @@ class AppSettings {
         'language': language.name,
         'accent': accent.name,
         'onboarded': onboarded,
+        'toured': toured,
       };
 
   static AppSettings fromJson(Map<String, dynamic> j) => AppSettings(
@@ -107,6 +115,7 @@ class AppSettings {
                 .firstOrNull ??
             ThemeAccent.vitalog,
         onboarded: j['onboarded'] == true,
+        toured: j['toured'] == true,
       );
 }
 
@@ -138,6 +147,8 @@ class SettingsCubit extends Cubit<AppSettings> {
   }
 
   void completeOnboarding() => _update(state.copyWith(onboarded: true));
+
+  void completeTour() => _update(state.copyWith(toured: true));
 
   void setSimpleMode(bool on) => _update(state.copyWith(simpleMode: on));
 

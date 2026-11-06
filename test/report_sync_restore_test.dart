@@ -23,7 +23,7 @@ class _NeverRecognizer extends ReportTextRecognizer {
 
 void main() {
   final nowYear = DateTime.now().year;
-  const tints = FamilyHealthRepositoryImpl.avatarTints;
+  const tints = FamilyMember.avatarTints;
 
   FamilyMember member(String id, {String name = 'Test Person One'}) =>
       FamilyMember(
@@ -48,7 +48,8 @@ void main() {
       };
 
   group('sync restore: pull → merge', () {
-    test('usual ranges are re-judged from the member pulled back; dates and '
+    test(
+        'usual ranges are re-judged from the member pulled back; dates and '
         'lab ride the report, the result count is recomputed', () {
       final merge = FamilyHealthRepositoryImpl.mergeRestore(
         localReports: const [],
@@ -161,9 +162,19 @@ void main() {
           },
         ],
         memberRows: [
-          {'id': 'm1', 'name': 'Test Person', 'relation': 'You', 'birth_year': nowYear - 30},
+          {
+            'id': 'm1',
+            'name': 'Test Person',
+            'relation': 'You',
+            'birth_year': nowYear - 30
+          },
           // A member this phone doesn't have yet comes through:
-          {'id': 'm2', 'name': 'New Member', 'relation': 'Dad', 'birth_year': nowYear - 60},
+          {
+            'id': 'm2',
+            'name': 'New Member',
+            'relation': 'Dad',
+            'birth_year': nowYear - 60
+          },
         ],
       );
 
@@ -200,12 +211,12 @@ void main() {
       );
 
       expect(merge.restoredMembers, 6);
-      expect(
-          [for (final m in merge.members) m.colorValue],
-          [
-            tints.first, // the local member keeps the first tint
-            for (var i = 1; i <= 6; i++) tints[i % tints.length],
-          ]);
+      expect([
+        for (final m in merge.members) m.colorValue
+      ], [
+        tints.first, // the local member keeps the first tint
+        for (var i = 1; i <= 6; i++) tints[i % tints.length],
+      ]);
       // No sex in the row → stays unknown rather than guessed.
       expect(merge.members.last.sex, isNull);
       expect(merge.members.last.age, 20);

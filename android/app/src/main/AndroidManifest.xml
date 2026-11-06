@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Reminders set on this phone (flutter_local_notifications): show
+         them (Android 13+ asks), and put them back after a restart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Hardening (opencode/plans/2026-10-24-security-hardening.md 1.2):
          allowBackup=false stops backups (adb backup, cloud backup/restore,
          device-to-device) from copying app data. The session now lives in
@@ -10,7 +14,9 @@
         android:label="Vitalog"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -40,7 +46,38 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="com.vitalog.app" android:host="login-callback"/>
             </intent-filter>
+            <!-- Family invites (docs/SHARING.md). The https link opens the app
+                 directly once the host serves .well-known/assetlinks.json
+                 (invite_site/); until then its web page hands over with
+                 com.vitalog.app://invite/<id>#<secret>. Host must match
+                 InviteLink.host. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="vitalog.app" android:pathPrefix="/i/"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.vitalog.app" android:host="invite"/>
+            </intent-filter>
+            <!-- Links go to app_links (sign-in callback, invites), not to
+                 Flutter's router, which has no routes for them. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

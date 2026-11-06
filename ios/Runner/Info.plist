@@ -17,6 +17,7 @@
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
+		<string>hi</string>
 		<string>te</string>
 	</array>
 	<key>CFBundleName</key>
@@ -27,6 +28,8 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -55,11 +58,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Take a photo of a lab report so its results can be read on this phone.</string>
+	<string>Vitalog uses the camera only when you tap to scan a lab report or take a family member's photo. The picture stays on this phone.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Vitalog uses Face ID to unlock your original report documents, which can contain your name, phone number and address.</string>
+	<string>Vitalog uses Face ID so only you can open your original report papers. They can show your name, phone number and address.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo of a lab report so its results can be read on this phone.</string>
+	<string>Vitalog opens your photos only when you choose a lab report or a family member's photo. Only the photo you pick is used, and it stays on this phone.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

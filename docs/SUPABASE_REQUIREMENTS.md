@@ -51,83 +51,85 @@ It must match `Backend.authRedirect` in `lib/core/backend/backend.dart` and
 `CFBundleURLSchemes` in `ios/Runner/Info.plist`. If the scheme changes, change
 all three.
 
+### Abuse protection (Auth → Rate Limits, Attack Protection)
+
+- **Rate limits are per IP** and on by default. Keep sign-in/sign-up at or
+  below **30 per 5 minutes per IP**, and email sends low (password reset and
+  confirm mails are the spam vector).
+- **Password strength:** min length 8, and turn on *letters and digits*
+  required. Turn on *leaked password protection* (HaveIBeenPwned) if the plan
+  offers it.
+- **Per-account lockout:** `supabase/hardening.sql` adds the *Password
+  verification attempt* hook (5 wrong passwords in 15 min → locked 15 min,
+  HTTP 429). Enable it under Auth → Hooks. Needs a plan that has that hook.
+- **CAPTCHA** (Turnstile/hCaptcha) is the next step against bots; it needs a
+  small app change to send the token. Not done yet.
+- The app shows one message for a wrong email *or* wrong password, so sign-in
+  never confirms that an account exists.
+
 ### Email templates
 
 Default templates are fine to start. Branding them as *Vitalog* is a nice-to-have.
 
 ## 3. Database
 
-Run **`supabase/schema.sql`**. It creates:
+Run **`supabase/schema.sql`**, then **`supabase/hardening.sql`**. Sync v2
+(2026-11-03, security audit #5): the server holds only sealed data. The
+schema drops the old plaintext `reports` / `lab_results` / `family_members`
+tables (test data only).
 
-### `public.reports`
+Family sharing (2026-11-04) made profile and report ids **global**: everyone
+with access reads and writes the same rows. Re-running `schema.sql` on an
+older owner-scoped database migrates it in place (dev ids that clash across
+accounts, i.e. sample members, are dropped; phones push them again).
 
-| column | type | notes |
+| table | key | holds |
 |---|---|---|
-| `user_id` | uuid, PK part | `default auth.uid()`, FK → `auth.users` (cascade delete) |
-| `id` | text, PK part | generated on the device |
-| `profile_id` | text | family member id (device-side id for now) |
-| `file_name` | text | original file name |
-| `lab` | text | detected lab name, `''` if not found |
-| `report_date` | date | printed report date |
-| `collection_date` | date, null | printed sample collection date |
-| `uploaded_at` | timestamptz | when the user added it on the phone |
-| `status` | text | `processing` \| `ready` \| `needsReview` \| `failed` |
-| `created_at` / `updated_at` | timestamptz | `updated_at` maintained by trigger |
+| `account_keys` | `user_id` | the account's X25519 public key (base64). Insert + own select only: never replaced |
+| `profile_keys` | `(user_id, profile_id)` | **access**: the profile's AES-256 key wrapped for that account, plus `sealed_meta` (that account's relation and own name, sealed with the profile key) |
+| `sealed_profiles` | `id` | AES-GCM box of name, relation, sex, birth year |
+| `sealed_reports` | `id` | AES-GCM box of the report + all its results; `profile_id` says which key opens it |
+| `invites` | `id` (link id) | profile key sealed with the link's secret, `claim_hash`, sealed `preview`, expiry (7 days), one use |
+| `invite_failures` | — | wrong claim tokens per account (limit 10/hour); no policies |
 
-### `public.lab_results`
+Boxes are `base64(nonce ‖ ciphertext ‖ mac)` with AAD `report:<id>` /
+`profile:<id>` / `meta:<profile>:<user>`, so the server can't move one to
+another row. The server sees opaque ids, who shares which profile id,
+counts, sizes and times only.
 
-| column | type | notes |
-|---|---|---|
-| `user_id` | uuid, PK part | as above |
-| `id` | text, PK part | `<reportId>-<index>` |
-| `report_id` | text | FK `(user_id, report_id)` → `reports` (cascade delete) |
-| `profile_id` | text | |
-| `name` | text | canonical test name, e.g. `HbA1c` |
-| `category_ids` | text[] | from `blood, glucose, kidney, liver, lipid, thyroid, vitamins, iron, urine` |
-| `value` | text | as printed (`12.8`, `Nil`, `<0.5`) |
-| `unit` | text | `''` if not printed |
-| `reference_range` | text | as printed, `''` if not printed |
-| `status` | text | `withinRange` \| `high` \| `low` \| `needsReview` |
-| `report_date` | date | |
-
-### `public.family_members`
-
-Added for Sync restore (2026-10-24): run **`supabase/schema_restore.sql`**
-after `schema.sql` (same columns/RLS shape; it reuses `touch_updated_at`).
-Names DO leave the phone now — restoring a reinstall brings the family back
-(owner decision 2026-10-24; supersedes the 2026-10-22 "names stay on the
-phone" note for signed-in, synced accounts).
-
-| column | type | notes |
-|---|---|---|
-| `user_id` | uuid, PK part | `default auth.uid()`, FK → `auth.users` (cascade delete) |
-| `id` | text, PK part | generated on the device |
-| `name` | text | |
-| `relation` | text | `You`, `Dad`, … |
-| `sex` | text, null | `male` \| `female` |
-| `birth_year` | integer | the client derives the age from it |
-| `created_at` / `updated_at` | timestamptz | `updated_at` maintained by trigger |
-
-Initials and avatar colours stay device-side (assigned locally on restore).
+Keys: the private account key stays on phones (Keychain/Keystore; iCloud
+Keychain on iPhone) and in the user's recovery key. Losing every copy
+means the backup can't be opened — by design.
 
 ### Write pattern the app uses
 
 ```dart
-supabase.from('reports').upsert(rows, onConflict: 'user_id,id');
-supabase.from('lab_results').upsert(rows, onConflict: 'user_id,id');
-supabase.from('family_members').upsert(rows, onConflict: 'user_id,id');
+supabase.from('profile_keys').insert(row);        // new profile, or after claiming
+supabase.from('sealed_reports').upsert(rows, onConflict: 'id');
+supabase.from('sealed_profiles').upsert(rows, onConflict: 'id');
+supabase.from('invites').insert(row);             // Share → Invite someone
+supabase.rpc('open_invite', params: {...});       // preview / claim
 ```
 
-So the composite primary keys `(user_id, id)` **must** exist exactly as in
-the schema, otherwise upserts fail. The Sync tap also **pulls** all three
-tables with plain `select()` before pushing — that's what restores a
-reinstall; other users' rows stay invisible (RLS).
+The Sync tap pulls first, opens what it can, merges, then pushes.
+Restore-on-sign-in only pulls.
 
 ### Security (RLS) — required
 
-- RLS **enabled** on both tables.
-- One policy per table: `for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id)`.
-- No `anon` access at all.
+- RLS **enabled** on every table. Access = `has_profile(profile_id)` (a
+  security-definer check of the caller's own `profile_keys` row).
+- `profile_keys` insert only for yourself, and only for a new profile or one
+  whose invite you claimed in the last 10 minutes (`may_take_profile`).
+  Update only `wrapped_key` / `sealed_meta` of your own row (column grants).
+  Delete: anyone sharing the profile (equal access; leaving = deleting your
+  own). The last delete drops the profile's data (`drop_orphan_profile`).
+- `invites`: insert/select/delete by people sharing the profile; only the
+  five client columns are insertable. Claiming only via `open_invite()`,
+  which checks the token hash, expiry, single use, 5 wrong tries per invite
+  and 10 per account per hour.
+- No `anon` grants at all.
+- `supabase/hardening.sql`: base64 + size checks on every sealed column,
+  id format checks; every function has `set search_path = ''`.
 
 ## 4. What is NOT needed yet (but planned)
 
@@ -154,6 +156,8 @@ updating this doc:
 
 - [ ] Create project (region chosen), copy URL + publishable key.
 - [ ] Run `supabase/schema.sql`.
+- [ ] Run `supabase/schema_restore.sql`, then `supabase/hardening.sql`.
+- [ ] Auth → Rate Limits and Attack Protection as above; Auth → Hooks → password verification hook.
 - [ ] Auth → enable Email (confirm email on, min length 8).
 - [ ] Auth → enable Google with a Google Cloud *Web* OAuth client.
 - [ ] Auth → URL configuration → add `com.vitalog.app://login-callback`.

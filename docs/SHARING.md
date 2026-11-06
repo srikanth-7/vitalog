@@ -137,12 +137,51 @@ SUPABASE_REQUIREMENTS.md before any real data is synced.
 ## Build order
 
 1. ✅ Crypto core + tests (`sharing_crypto.dart`).
-2. Account key pair: create on first sign-in, private key in secure storage,
-   upload public key; recovery key export/import.
-3. Sync v2: seal profiles/reports with profile keys, push + pull, tombstones.
-4. Invite: create, share sheet, app links for the invite host, claim screen,
-   combine duplicates.
-5. Family card: who has access, invite pending/cancel, leave, remove.
+2. 🟡 Account key pair + recovery key (`account_key.dart`).
+3. 🟡 Sync v2: sealed push + pull (real deletes, not tombstones).
+4. 🟡 Invites (2026-11-04): global profile ids, `invites` + `open_invite()`
+   (supabase/schema.sql), long-press a member → *Share {name}'s reports* →
+   *Invite someone* (uploads that member, opens the share sheet), claim
+   screen (`claim_invite_screen.dart`), links via app_links, Family tab →
+   *Open an invite link* (paste).
+5. 🟡 Family card (`share_profile_sheet.dart`): who can see it, pending
+   invites with Cancel, Remove someone. Leaving = removing the member from
+   your phone (your access row goes; the data stays for the others).
 
-Open: the real invite domain (`InviteLink.host`, needs Android App Links and
-iOS Universal Links on it).
+### How it was built (differences from the flows above)
+
+- **Claim screen** asks "Who is Ramesh to you?" with the relation chips
+  (You, Parent, …) instead of a separate *This is me / Not me* step.
+- **Relation is per account**: stored in your own `profile_keys.sealed_meta`
+  (sealed with the profile key, with the name you go by — that's what the
+  family card shows). It overrides the relation inside the shared profile box.
+- **Invite preview** (who shared whom, report count) is sealed with the
+  link's secret, so the claim screen can show it before anything is used up.
+- **The claim token** is HKDF(secret, id, "vitalog/claim/v1"), sent as hex;
+  the server stores `base64url(sha256(token))`.
+- **Removing a member from your phone** never deletes the shared reports on
+  the server; deleting one *report* deletes it for everyone (equal access).
+
+### Not built yet
+
+- **Combine duplicates** (Dad already made his own profile): accepting as
+  "You" next to an existing "You" leaves two profiles. ⏳
+- **Key rotation after a removal**: RLS already stops the removed account
+  reading new rows; rotation only matters against a server breach plus an
+  old key. ⏳ (`ponytail:` note in `report_sync_service.dart`)
+- **Notifications** to the others on remove/combine. ⏳
+- **Edits by others** to a report you already have don't replace your copy
+  (the merge keeps the local row); new reports do arrive. ⏳
+- **iOS Universal Links** need an Associated Domains entitlement, which a
+  free (personal) Apple team can't use. Until then iPhones open the link's
+  web page, whose button hands over via `com.vitalog.app://invite/…`.
+
+### The invite domain (👤 open)
+
+`InviteLink.host` (placeholder `vitalog.app`) and the `https` intent filter in
+`AndroidManifest.xml` must name the same host, which serves `invite_site/`:
+`invite.html` for `/i/*` and `.well-known/assetlinks.json` (+ the Apple file
+once there's a paid team: replace `TEAMID`). `assetlinks.json` lists this
+Mac's **debug** key; add the release key's SHA-256 before shipping.
+`firebase.json` is ready for Firebase Hosting (`firebase deploy --only
+hosting` from `invite_site/`); any static host with the same rewrite works.

@@ -145,8 +145,8 @@ class _EditResultSheetState extends State<_EditResultSheet> {
                 TextFormField(
                     key: const ValueKey('edit-range'),
                     controller: _range,
-                    decoration:
-                        field(l10n.fieldRange).copyWith(hintText: l10n.fieldRangeHint)),
+                    decoration: field(l10n.fieldRange)
+                        .copyWith(hintText: l10n.fieldRangeHint)),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   key: const ValueKey('edit-category'),
@@ -186,9 +186,10 @@ class _EditResultSheetState extends State<_EditResultSheet> {
   /// Decrypts the photo in memory and shows it zoomable, for side-by-side
   /// checking. Nothing is written to disk.
   Future<void> _showOriginal(BuildContext context, HealthReport report) async {
-    final bytes =
-        await context.read<FamilyHealthRepository>().readOriginal(report);
-    if (!context.mounted) return;
+    // The viewer opens on the tap; decrypting (and Face ID) happens inside.
+    final bytes = context.read<FamilyHealthRepository>().readOriginal(report)
+      ..ignore(); // closed before it arrived: nothing to report
+    final ink = context.colors.onHeroMuted;
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog.fullscreen(
@@ -197,7 +198,17 @@ class _EditResultSheetState extends State<_EditResultSheet> {
           Positioned.fill(
               child: InteractiveViewer(
                   maxScale: 6,
-                  child: Image.memory(bytes, fit: BoxFit.contain))),
+                  child: FutureBuilder<Uint8List>(
+                      future: bytes,
+                      builder: (context, snap) => switch (snap) {
+                            AsyncSnapshot(:final data?) =>
+                              Image.memory(data, fit: BoxFit.contain),
+                            AsyncSnapshot(hasError: true) => Center(
+                                child: Icon(Icons.broken_image_outlined,
+                                    color: ink, size: 48)),
+                            _ => Center(
+                                child: CircularProgressIndicator(color: ink)),
+                          }))),
           SafeArea(
             child: Align(
               alignment: Alignment.topRight,

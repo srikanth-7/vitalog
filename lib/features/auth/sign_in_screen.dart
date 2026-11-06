@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/backend/backend.dart';
+import '../../core/layout/readable_width.dart';
 import '../../core/brand/vitalog_mark.dart';
 import '../../core/theme/app_shape.dart';
 import '../../core/theme/app_theme.dart';
@@ -109,7 +110,14 @@ class _SignInScreenState extends State<SignInScreen>
       await action();
     } catch (e) {
       _nudge();
-      _toast(l10n.authFailed);
+      _toast(switch (Backend.problemOf(e)) {
+        AuthProblem.wrongDetails => l10n.authWrongDetails,
+        AuthProblem.tooManyTries => l10n.authTooManyTries,
+        AuthProblem.offline => l10n.authOffline,
+        AuthProblem.weakPassword => l10n.authWeakPassword,
+        AuthProblem.confirmEmail => l10n.authConfirmEmail,
+        AuthProblem.other => l10n.authFailed,
+      });
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -215,78 +223,90 @@ class _SignInScreenState extends State<SignInScreen>
               // space above, the panel with every control sits on the
               // bottom edge where the thumb already is. With the keyboard
               // up the welcome shrinks and the panel rides above it.
-              CustomScrollView(slivers: [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Column(children: [
-                    SafeArea(
-                      bottom: false,
-                      child: SizedBox(
-                        height: 48,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: embedded
-                              ? null
-                              : const BackButton(color: VitalogBrand.chalk),
+              // Short screens (iPhone SE, a folded Duo) fit with no scroll:
+              // no logo, tighter gaps. Only the keyboard makes it scroll.
+              ReadableWidth(child: LayoutBuilder(builder: (context, box) {
+                final compact = box.maxHeight < 740;
+                final side = headerClearance(context);
+                // Centred text keeps clear of a side status column.
+                final inset = math.max(side.left, side.right);
+                return CustomScrollView(slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(children: [
+                      SafeArea(
+                        bottom: false,
+                        child: SizedBox(
+                          height: embedded && compact ? 8 : 48,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: embedded
+                                ? null
+                                : const BackButton(color: VitalogBrand.chalk),
+                          ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-                          child:
-                              Column(mainAxisSize: MainAxisSize.min, children: [
-                            _rise(0, _logo(still)),
-                            const SizedBox(height: 22),
-                            _rise(
-                              .1,
-                              AnimatedSwitcher(
-                                duration: fast,
-                                child: Text(title,
-                                    key: ValueKey(title),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: VitalogBrand.chalk,
-                                        fontSize: 30,
-                                        height: 1.1,
-                                        letterSpacing: -.7,
-                                        fontWeight: FontWeight.w800)),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _rise(
-                              .2,
-                              Text(l10n.signInSubtitle,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      color: VitalogBrand.mint
-                                          .withValues(alpha: .9),
-                                      fontSize: 14.5,
-                                      height: 1.4)),
-                            ),
-                          ]),
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                                28 + inset, 8, 28 + inset, compact ? 16 : 24),
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!compact) ...[
+                                    _rise(0, _logo(still)),
+                                    const SizedBox(height: 22),
+                                  ],
+                                  _rise(
+                                    .1,
+                                    AnimatedSwitcher(
+                                      duration: fast,
+                                      child: Text(title,
+                                          key: ValueKey(title),
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              color: VitalogBrand.chalk,
+                                              fontSize: compact ? 26 : 30,
+                                              height: 1.1,
+                                              letterSpacing: -.7,
+                                              fontWeight: FontWeight.w800)),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _rise(
+                                    .2,
+                                    Text(l10n.signInSubtitle,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: VitalogBrand.mint
+                                                .withValues(alpha: .9),
+                                            fontSize: 14.5,
+                                            height: 1.4)),
+                                  ),
+                                ]),
+                          ),
                         ),
                       ),
-                    ),
-                    // The panel rises from the bottom edge, like a sheet.
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_enter, _shake]),
-                      builder: (context, child) {
-                        final rise = Curves.easeOutCubic.transform(
-                            ((_enter.value - .1) / .9).clamp(0.0, 1.0));
-                        final shake = math.sin(_shake.value * math.pi * 6) *
-                            10 *
-                            (1 - _shake.value);
-                        return Transform.translate(
-                            offset: Offset(shake, 120 * (1 - rise)),
-                            child: Opacity(opacity: rise, child: child));
-                      },
-                      child: _panel(context, l10n, fast),
-                    ),
-                  ]),
-                ),
-              ]),
+                      // The panel rises from the bottom edge, like a sheet.
+                      AnimatedBuilder(
+                        animation: Listenable.merge([_enter, _shake]),
+                        builder: (context, child) {
+                          final rise = Curves.easeOutCubic.transform(
+                              ((_enter.value - .1) / .9).clamp(0.0, 1.0));
+                          final shake = math.sin(_shake.value * math.pi * 6) *
+                              10 *
+                              (1 - _shake.value);
+                          return Transform.translate(
+                              offset: Offset(shake, 120 * (1 - rise)),
+                              child: Opacity(opacity: rise, child: child));
+                        },
+                        child: _panel(context, l10n, fast, compact: compact),
+                      ),
+                    ]),
+                  ),
+                ]);
+              })),
             ]),
           ),
         ),
@@ -315,8 +335,10 @@ class _SignInScreenState extends State<SignInScreen>
   /// Frosted panel on the bottom edge. Order follows importance and reach:
   /// fields, the one primary button, Google, then the quiet links (switch
   /// to sign-up, Not now) right by the thumb.
-  Widget _panel(BuildContext context, AppLocalizations l10n, Duration fast) {
+  Widget _panel(BuildContext context, AppLocalizations l10n, Duration fast,
+      {required bool compact}) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final gap = compact ? 8.0 : 14.0;
     return ClipRSuperellipse(
       borderRadius:
           const BorderRadius.vertical(top: Radius.circular(AppRadius.sheet)),
@@ -355,7 +377,7 @@ class _SignInScreenState extends State<SignInScreen>
                               color: VitalogBrand.chalk.withValues(alpha: .35)),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      SizedBox(height: compact ? 12 : 18),
                       if (!Backend.configured) ...[
                         Row(children: [
                           const Icon(Icons.cloud_off_rounded,
@@ -367,7 +389,7 @@ class _SignInScreenState extends State<SignInScreen>
                                     color: VitalogBrand.coral, fontSize: 12)),
                           ),
                         ]),
-                        const SizedBox(height: 14),
+                        SizedBox(height: gap),
                       ],
                       TextFormField(
                         controller: _email,
@@ -464,9 +486,9 @@ class _SignInScreenState extends State<SignInScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      SizedBox(height: gap),
                       _orLine(l10n),
-                      const SizedBox(height: 14),
+                      SizedBox(height: gap),
                       _googlePill(l10n),
                       const SizedBox(height: 6),
                       Row(children: [

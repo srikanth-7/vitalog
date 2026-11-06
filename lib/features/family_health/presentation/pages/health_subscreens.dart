@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
+import '../widgets/empty_art.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../health_presentation.dart';
 import '../widgets/health_charts.dart';
@@ -10,6 +14,7 @@ import '../../domain/reference/reference_range.dart';
 import '../widgets/edit_result_sheet.dart';
 import '../bloc/health_bloc.dart';
 import '../bloc/health_event.dart';
+import '../widgets/header_wash.dart';
 import '../widgets/health_widgets.dart';
 import '../widgets/motion.dart';
 import '../../domain/entities/family_health_snapshot.dart';
@@ -45,54 +50,68 @@ class CategoriesScreen extends StatelessWidget {
     }
     var reveal = 0;
     return Scaffold(
-        body: SafeArea(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      PageTitle(
-          eyebrow: profile.name,
-          title: l10n.categoriesTitle,
-          subtitle: l10n.categoriesSubtitle),
-      Expanded(
-          child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-              children: [
-            _GroupHeading(
-                title: l10n.testedHeading,
-                count: tested.length,
-                color: c.textPrimary),
-            if (tested.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: EmptyMessage(
-                    title: l10n.noCategoriesTitle,
-                    message: l10n.noCategoriesMessage),
-              ),
-            for (final (category, items) in tested)
-              Reveal(
-                  index: reveal++,
-                  child: _TestedCategoryCard(
-                      category: category,
-                      items: items,
-                      onTap: () => onCategoryTap(category))),
-            if (untested.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              _GroupHeading(
-                  title: l10n.yetToTestHeading,
-                  count: untested.length,
-                  color: c.textMuted),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(l10n.yetToTestNote,
-                    style: TextStyle(
-                        color: c.textMuted, fontSize: 12, height: 1.4)),
-              ),
-              for (final category in untested)
-                Reveal(
-                    index: reveal++,
-                    child: _UntestedCategoryCard(category: category)),
-            ],
-          ])),
-    ])));
+        body: HeaderWash(
+            child: SafeArea(
+                bottom: false, // scrolls on under the frosted tray
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PageTitle(
+                          eyebrow: profile.name,
+                          title: l10n.categoriesTitle,
+                          subtitle: l10n.categoriesSubtitle),
+                      Expanded(
+                          child: ScrollCut(
+                              child: ListView(
+                                  padding: EdgeInsets.fromLTRB(
+                                      20,
+                                      4,
+                                      20,
+                                      24 +
+                                          MediaQuery.paddingOf(context).bottom),
+                                  children: [
+                            if (tested.isNotEmpty)
+                              _GroupHeading(
+                                  title: l10n.testedHeading,
+                                  count: tested.length,
+                                  color: c.textPrimary),
+                            if (tested.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: EmptyState(
+                                    scene: EmptyScene.sorting,
+                                    title: l10n.noCategoriesTitle,
+                                    message: l10n.noCategoriesMessage),
+                              ),
+                            for (final (category, items) in tested)
+                              Reveal(
+                                  index: reveal++,
+                                  child: _TestedCategoryCard(
+                                      category: category,
+                                      items: items,
+                                      onTap: () => onCategoryTap(category))),
+                            if (untested.isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              _GroupHeading(
+                                  title: l10n.yetToTestHeading,
+                                  count: untested.length,
+                                  color: c.textMuted),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(l10n.yetToTestNote,
+                                    style: TextStyle(
+                                        color: c.textMuted,
+                                        fontSize: 12,
+                                        height: 1.4)),
+                              ),
+                              for (final category in untested)
+                                Reveal(
+                                    index: reveal++,
+                                    child: _UntestedCategoryCard(
+                                        category: category)),
+                            ],
+                          ]))),
+                    ]))));
   }
 }
 
@@ -115,7 +134,7 @@ class _GroupHeading extends StatelessWidget {
           const SizedBox(width: 8),
           Text('$count',
               style: TextStyle(
-                  color: context.colors.textMuted,
+                  color: context.colors.onWash,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   fontFeatures: const [FontFeature.tabularFigures()])),
@@ -143,6 +162,8 @@ class _TestedCategoryCard extends StatelessWidget {
         child: TapCard(
             onTap: onTap,
             padding: const EdgeInsets.all(16),
+            color: categorySoft(category.color, c,
+                dark: Theme.of(context).brightness == Brightness.dark),
             child: Row(children: [
               CategoryIcon(category: category),
               const SizedBox(width: 13),
@@ -158,7 +179,7 @@ class _TestedCategoryCard extends StatelessWidget {
                         l10n.resultsLatest(
                             l10n.testsCount(latestPerTest(items).length),
                             formatDate(latest.reportDate)),
-                        style: TextStyle(fontSize: 11, color: c.textMuted)),
+                        style: TextStyle(fontSize: 11, color: c.textSecondary)),
                     if (missing.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(children: [
@@ -177,10 +198,15 @@ class _TestedCategoryCard extends StatelessWidget {
                       ]),
                     ],
                   ])),
-              Text(
-                  '${latest.value}${latest.unit.isEmpty ? '' : ' ${latest.unit}'}',
-                  style: TextStyle(
-                      color: c.textPrimary, fontWeight: FontWeight.w700)),
+              // Narrow panes, big text: the value gives way, never the name.
+              Flexible(
+                child: Text(
+                    '${latest.value}${latest.unit.isEmpty ? '' : ' ${latest.unit}'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: c.textPrimary, fontWeight: FontWeight.w700)),
+              ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right, color: c.textMuted)
             ])));
@@ -249,7 +275,9 @@ class CategoryResultsScreen extends StatelessWidget {
       required this.onResultTap});
   final FamilyHealthSnapshot snapshot;
   final FamilyMember profile;
-  final HealthCategory category;
+
+  /// Null: every test for [profile] ("All results").
+  final HealthCategory? category;
   final ValueChanged<LabResult> onResultTap;
 
   @override
@@ -258,7 +286,7 @@ class CategoryResultsScreen extends StatelessWidget {
     final l10n = context.l10n;
     final all = snapshot
         .resultsFor(profile.id)
-        .where((r) => r.categoryIds.contains(category.id))
+        .where((r) => category == null || r.categoryIds.contains(category!.id))
         .toList();
     // One tile per test, showing its latest value; the test's page lists
     // every dated reading.
@@ -268,10 +296,11 @@ class CategoryResultsScreen extends StatelessWidget {
       readings.update(r.name.toLowerCase(), (n) => n + 1, ifAbsent: () => 1);
     }
     return Scaffold(
-        appBar: AppBar(title: Text(category.label(l10n))),
-        body: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 30),
-            children: [
+        appBar: AppBar(title: Text(category?.label(l10n) ?? l10n.allResults)),
+        body: ScrollCut(
+            child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 30),
+                children: [
               Text(profile.name,
                   style: TextStyle(color: c.textMuted, fontSize: 13)),
               const SizedBox(height: 5),
@@ -294,7 +323,7 @@ class CategoryResultsScreen extends StatelessWidget {
                 EmptyMessage(
                     title: l10n.noCategoryResultsTitle,
                     message: l10n.noCategoryResultsMessage),
-            ]));
+            ])));
   }
 }
 
@@ -347,151 +376,136 @@ class TestDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-        body: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
-            children: [
-              Text(result.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700, color: c.textPrimary)),
-              const SizedBox(height: 5),
-              Text(
-                  '${profile.name} · ${result.unit.isEmpty ? l10n.unitNotPrinted : result.unit}',
-                  style: TextStyle(color: c.textMuted)),
-              const SizedBox(height: 20),
-              if (report != null && result.awaitingReview) ...[
-                _ReviewBanner(
-                    onFix: edit,
-                    // Unfiled tests need a category, which only Edit sets.
-                    onConfirm: result.categoryIds.contains('other')
-                        ? null
-                        : () {
-                            HapticFeedback.lightImpact();
-                            context.read<HealthBloc>().add(EditResult(result));
-                          }),
-                const SizedBox(height: 14),
-              ],
-              TapCard(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Eyebrow(l10n.latestResult),
-                        const SizedBox(height: 8),
-                        Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              CountUpText(result.value,
-                                  style: TextStyle(
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.textPrimary)),
-                              const SizedBox(width: 8),
-                              if (result.unit.isNotEmpty)
-                                Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: Text(result.unit,
-                                        style: TextStyle(color: c.textMuted)))
+        body: ScrollCut(
+            bottom: report != null,
+            child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 30),
+                children: [
+                  Text(result.name,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineSmall
+                          ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: c.textPrimary)),
+                  const SizedBox(height: 5),
+                  Text(
+                      '${profile.name} · ${result.unit.isEmpty ? l10n.unitNotPrinted : result.unit}',
+                      style: TextStyle(color: c.textMuted)),
+                  const SizedBox(height: 20),
+                  if (report != null && result.awaitingReview) ...[
+                    _ReviewBanner(
+                        onFix: edit,
+                        // Unfiled tests need a category, which only Edit sets.
+                        onConfirm: result.categoryIds.contains('other')
+                            ? null
+                            : () {
+                                HapticFeedback.lightImpact();
+                                context
+                                    .read<HealthBloc>()
+                                    .add(EditResult(result));
+                              }),
+                    const SizedBox(height: 14),
+                  ],
+                  TapCard(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Eyebrow(l10n.latestResult),
+                            const SizedBox(height: 8),
+                            Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  CountUpText(result.value,
+                                      style: TextStyle(
+                                          fontSize: 34,
+                                          fontWeight: FontWeight.w700,
+                                          color: c.textPrimary)),
+                                  const SizedBox(width: 8),
+                                  if (result.unit.isNotEmpty)
+                                    Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 6),
+                                        child: Text(result.unit,
+                                            style:
+                                                TextStyle(color: c.textMuted)))
+                                ]),
+                            const SizedBox(height: 10),
+                            Wrap(spacing: 6, runSpacing: 6, children: [
+                              StatusPill(
+                                  status: result.status,
+                                  usual: result.judgedByUsualRange,
+                                  reviewed: result.reviewed),
+                              if (result.edited)
+                                Pill(
+                                    icon: Icons.edit_outlined,
+                                    label: l10n.editedBadge,
+                                    color: c.brand,
+                                    background: c.brandSoft),
                             ]),
-                        const SizedBox(height: 10),
-                        Wrap(spacing: 6, runSpacing: 6, children: [
-                          StatusPill(
-                              status: result.status,
-                              usual: result.judgedByUsualRange,
-                              reviewed: result.reviewed),
-                          if (result.edited)
-                            Pill(
-                                icon: Icons.edit_outlined,
-                                label: l10n.editedBadge,
-                                color: c.brand,
-                                background: c.brandSoft),
-                        ]),
-                        const SizedBox(height: 12),
-                        Text(
-                            l10n.referenceRangePrinted(
-                                result.referenceRange.isEmpty
-                                    ? l10n.rangeNotPrinted
-                                    : result.referenceRange),
-                            style: detail),
-                        ..._usualRangeLines(context, result, profile),
-                        Text(
-                            l10n.reportDateValue(formatDate(result.reportDate)),
-                            style: detail),
-                        if (result.collectionDate != null)
-                          Text(
-                              l10n.collectionDateValue(
-                                  formatDate(result.collectionDate!)),
-                              style: detail)
-                      ])),
-              const SizedBox(height: 22),
-              SectionHeading(title: l10n.history),
-              const SizedBox(height: 5),
-              if (chartable)
-                TapCard(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 12, 12),
-                    child: Column(children: [
-                      SizedBox(
-                          height: 160,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0, end: 1),
-                            duration: MediaQuery.disableAnimationsOf(context)
-                                ? Duration.zero
-                                : const Duration(milliseconds: 1100),
-                            curve: Curves.easeInOutCubic,
-                            builder: (context, progress, _) => CustomPaint(
-                                painter: _HistoryPainter(
-                                    progress: progress,
-                                    values: numeric.cast<double>(),
-                                    dates: history
-                                        .map((r) => r.reportDate)
-                                        .toList(),
-                                    line: c.success,
-                                    grid: c.border,
-                                    label: c.textMuted,
-                                    dot: c.surface),
-                                child: const SizedBox.expand()),
-                          )),
-                      const SizedBox(height: 8),
-                      Text(l10n.chartNote,
-                          style: TextStyle(color: c.textMuted, fontSize: 11))
-                    ]))
-              else
-                EmptyMessage(
-                    title: l10n.trendEmptyTitle,
-                    message: l10n.trendEmptyMessage),
-              const SizedBox(height: 10),
-              ...history.reversed.map((entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: TapCard(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(children: [
-                          Expanded(
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                Text(formatDate(entry.reportDate),
-                                    style: TextStyle(
-                                        color: c.textPrimary,
-                                        fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 4),
-                                Text(
-                                    entry.lab.isEmpty
-                                        ? l10n.labNotDetected
-                                        : entry.lab,
-                                    style: TextStyle(
-                                        color: c.textMuted, fontSize: 11))
-                              ])),
-                          Text(
-                              '${entry.value}${entry.unit.isEmpty ? '' : ' ${entry.unit}'}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: c.textPrimary))
-                        ])),
-                  )),
-              const SizedBox(height: 12),
-              Text(l10n.notDiagnosis,
-                  style:
-                      TextStyle(color: c.textMuted, fontSize: 11, height: 1.4)),
-            ]));
+                            const SizedBox(height: 12),
+                            Text(
+                                l10n.referenceRangePrinted(
+                                    result.referenceRange.isEmpty
+                                        ? l10n.rangeNotPrinted
+                                        : result.referenceRange),
+                                style: detail),
+                            ..._usualRangeLines(context, result, profile),
+                            Text(
+                                l10n.reportDateValue(
+                                    formatDate(result.reportDate)),
+                                style: detail),
+                            if (result.collectionDate != null)
+                              Text(
+                                  l10n.collectionDateValue(
+                                      formatDate(result.collectionDate!)),
+                                  style: detail)
+                          ])),
+                  const SizedBox(height: 22),
+                  SectionHeading(title: l10n.history),
+                  const SizedBox(height: 5),
+                  if (chartable)
+                    _HistoryChart(history: history)
+                  else
+                    EmptyMessage(
+                        title: l10n.trendEmptyTitle,
+                        message: l10n.trendEmptyMessage),
+                  const SizedBox(height: 10),
+                  ...history.reversed.map((entry) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: TapCard(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(children: [
+                              Expanded(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                    Text(formatDate(entry.reportDate),
+                                        style: TextStyle(
+                                            color: c.textPrimary,
+                                            fontWeight: FontWeight.w700)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                        entry.lab.isEmpty
+                                            ? l10n.labNotDetected
+                                            : entry.lab,
+                                        style: TextStyle(
+                                            color: c.textMuted, fontSize: 11))
+                                  ])),
+                              Text(
+                                  '${entry.value}${entry.unit.isEmpty ? '' : ' ${entry.unit}'}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: c.textPrimary))
+                            ])),
+                      )),
+                  const SizedBox(height: 12),
+                  Text(l10n.notDiagnosis,
+                      style: TextStyle(
+                          color: c.textMuted, fontSize: 11, height: 1.4)),
+                ])));
   }
 }
 
@@ -527,79 +541,194 @@ class _ReviewBanner extends StatelessWidget {
   }
 }
 
+/// One bar per reading (latest in brand, earlier ones soft) over the
+/// printed range band, with period chips when the history is long.
+class _HistoryChart extends StatefulWidget {
+  const _HistoryChart({required this.history});
+
+  /// Same test, same unit, all numeric; oldest first.
+  final List<LabResult> history;
+  @override
+  State<_HistoryChart> createState() => _HistoryChartState();
+}
+
+class _HistoryChartState extends State<_HistoryChart> {
+  var _period = HistoryPeriod.all;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    final shown = withinPeriod(widget.history, _period);
+    final latest = widget.history.last;
+    final (low, high) = parseRange(latest.referenceRange.isNotEmpty
+        ? latest.referenceRange
+        : (latest.usualRange ?? ''));
+    // Chips only help when there's more than a year to narrow down.
+    final long = widget.history.last.reportDate
+            .difference(widget.history.first.reportDate)
+            .inDays >
+        200;
+    return TapCard(
+        padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (long) ...[
+            Wrap(spacing: 8, children: [
+              for (final (p, label) in [
+                (HistoryPeriod.all, l10n.periodAll),
+                (HistoryPeriod.year, l10n.periodYear),
+                (HistoryPeriod.sixMonths, l10n.periodSixMonths),
+              ])
+                ChoiceChip(
+                    label: Text(label),
+                    selected: _period == p,
+                    showCheckmark: false,
+                    onSelected: (_) => setState(() => _period = p)),
+            ]),
+            const SizedBox(height: 12),
+          ],
+          // Spoken as one summary; the drawn labels are for the eye.
+          Semantics(
+            label: l10n.historySemantics(
+                latest.name,
+                shown.length,
+                formatDate(shown.first.reportDate),
+                formatDate(shown.last.reportDate),
+                '${latest.value} ${latest.unit}'.trim()),
+            excludeSemantics: true,
+            child: SizedBox(
+                height: 180,
+                child: TweenAnimationBuilder<double>(
+                  key: ValueKey(_period),
+                  tween: Tween(begin: 0, end: 1),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, progress, _) => CustomPaint(
+                      painter: _HistoryPainter(
+                          progress: progress,
+                          values: [
+                            for (final r in shown) double.parse(r.value)
+                          ],
+                          dates: [for (final r in shown) r.reportDate],
+                          low: low,
+                          high: high,
+                          latest: c.brand,
+                          earlier: c.brand.withValues(alpha: .28),
+                          band: c.chartGood.withValues(alpha: .14),
+                          label: c.textMuted,
+                          value: c.textPrimary,
+                          locale: Localizations.localeOf(context).toString()),
+                      child: const SizedBox.expand()),
+                )),
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.chartNote,
+              style: TextStyle(color: c.textMuted, fontSize: 11))
+        ]));
+  }
+}
+
 class _HistoryPainter extends CustomPainter {
   _HistoryPainter(
       {this.progress = 1,
       required this.values,
       required this.dates,
-      required this.line,
-      required this.grid,
+      required this.low,
+      required this.high,
+      required this.latest,
+      required this.earlier,
+      required this.band,
       required this.label,
-      required this.dot});
+      required this.value,
+      required this.locale});
 
-  /// 0→1: how much of the line is drawn; dots pop in as it reaches them.
+  /// 0→1: bars grow up together.
   final double progress;
   final List<double> values;
   final List<DateTime> dates;
-  final Color line;
-  final Color grid;
-  final Color label;
-  final Color dot;
+  final double? low, high;
+  final Color latest, earlier, band, label, value;
+  final String locale;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (values.isEmpty) return;
-    const pad = 22.0;
-    final min = values.reduce((a, b) => a < b ? a : b);
-    final max = values.reduce((a, b) => a > b ? a : b);
-    final span = max == min ? 1.0 : max - min;
-    final gridPaint = Paint()
-      ..color = grid
-      ..strokeWidth = 1;
-    for (var i = 0; i < 4; i++) {
-      final y = pad + i * (size.height - 2 * pad) / 3;
-      canvas.drawLine(Offset(pad, y), Offset(size.width - pad, y), gridPaint);
+    const top = 18.0, bottom = 18.0;
+    final plot = size.height - top - bottom;
+    // Bars start at zero; the range edges stay in view when near the data.
+    var max = values.reduce(math.max);
+    if (high != null && high! <= max * 2) max = math.max(max, high!);
+    if (max <= 0) max = 1;
+    double y(double v) => top + plot * (1 - v / (max * 1.08));
+
+    if (low != null || high != null) {
+      final from = y(high ?? max * 1.08).clamp(top, top + plot);
+      final to = y(low ?? 0).clamp(top, top + plot);
+      canvas.drawRect(
+          Rect.fromLTRB(0, from, size.width, to), Paint()..color = band);
     }
-    final points = List.generate(
-        values.length,
-        (i) => Offset(
-            pad + i * (size.width - 2 * pad) / (values.length - 1),
-            size.height -
-                pad -
-                (values[i] - min) / span * (size.height - 2 * pad)));
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (final point in points.skip(1)) {
-      path.lineTo(point.dx, point.dy);
+
+    final n = values.length;
+    final slot = size.width / n;
+    final w = math.min(36.0, slot * .55);
+    final dateFormat = DateFormat.MMMd(locale);
+    // Labels go newest first; one that would touch the label already drawn
+    // to its right is skipped, so the latest always shows and none overlap.
+    double? valueEdge, dateEdge;
+    for (var i = n - 1; i >= 0; i--) {
+      final cx = slot * (i + .5);
+      final barTop = top + plot - (top + plot - y(values[i])) * progress;
+      canvas.drawRRect(
+          RRect.fromLTRBAndCorners(cx - w / 2, barTop, cx + w / 2, top + plot,
+              topLeft: Radius.circular(w / 2.5),
+              topRight: Radius.circular(w / 2.5)),
+          Paint()..color = i == n - 1 ? latest : earlier);
+      valueEdge = _text(
+          canvas,
+          _number(values[i]),
+          Offset(cx, barTop - 15),
+          TextStyle(
+              fontSize: 11,
+              fontWeight: i == n - 1 ? FontWeight.w700 : FontWeight.w500,
+              color: value.withValues(alpha: progress)),
+          size.width,
+          valueEdge);
+      dateEdge = _text(
+          canvas,
+          dateFormat.format(dates[i]),
+          Offset(cx, size.height - 13),
+          TextStyle(fontSize: 11, color: label),
+          size.width,
+          dateEdge);
     }
-    final metric = path.computeMetrics().first;
-    canvas.drawPath(
-        metric.extractPath(0, metric.length * progress),
-        Paint()
-          ..color = line
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
-          ..strokeCap = StrokeCap.round);
-    for (var i = 0; i < points.length; i++) {
-      final reached = (progress * (points.length - 1) - i + 1).clamp(0.0, 1.0);
-      canvas.drawCircle(points[i], 5 * reached, Paint()..color = dot);
-      canvas.drawCircle(points[i], 3.5 * reached, Paint()..color = line);
-      final text = TextPainter(
-          text: TextSpan(
-              text: '${dates[i].day}/${dates[i].month}',
-              style: TextStyle(fontSize: 9, color: label)),
-          textDirection: TextDirection.ltr)
-        ..layout();
-      text.paint(
-          canvas, Offset(points[i].dx - text.width / 2, size.height - 13));
-    }
+  }
+
+  static String _number(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  /// Paints [s] centred on [center] (kept inside the chart) unless it would
+  /// come within 4 px of [rightEdge]. Returns the new left edge to keep clear.
+  static double? _text(Canvas canvas, String s, Offset center, TextStyle style,
+      double width, double? rightEdge) {
+    final tp = TextPainter(
+        text: TextSpan(text: s, style: style), textDirection: TextDirection.ltr)
+      ..layout();
+    final left = (center.dx - tp.width / 2)
+        .clamp(0.0, math.max(0.0, width - tp.width))
+        .toDouble();
+    if (rightEdge != null && left + tp.width > rightEdge - 4) return rightEdge;
+    tp.paint(canvas, Offset(left, center.dy));
+    return left;
   }
 
   @override
   bool shouldRepaint(covariant _HistoryPainter old) =>
       old.progress != progress ||
       old.values != values ||
-      old.dates != dates ||
-      old.line != line;
+      old.latest != latest ||
+      old.locale != locale;
 }
 
 /// Explains which range judged [result]: the usual range when the report

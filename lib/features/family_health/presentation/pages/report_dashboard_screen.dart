@@ -6,6 +6,7 @@ import '../bloc/health_bloc.dart';
 import '../bloc/health_event.dart';
 import '../bloc/health_state.dart';
 import '../health_presentation.dart';
+import '../widgets/health_widgets.dart' show ScrollCut;
 import 'home_screen.dart';
 import 'navigation.dart';
 import 'reports_screen.dart';
@@ -38,14 +39,17 @@ class ReportDashboardScreen extends StatelessWidget {
                     if (await confirmDeleteReport(context, report) &&
                         context.mounted) {
                       context.read<HealthBloc>().add(DeleteReport(report.id));
-                      Navigator.of(context).pop();
+                      // As a pane's first page there is nothing to go back
+                      // to: the pane shows the next report by itself.
+                      Navigator.of(context).maybePop();
                     }
                   }),
           ],
         ),
         body: report.status == ReportStatus.processing
             ? const Center(child: CircularProgressIndicator())
-            : HomeScreen(
+            : ScrollCut(
+                child: HomeScreen(
                 snapshot: scoped,
                 profile: profile,
                 report: report,
@@ -56,7 +60,7 @@ class ReportDashboardScreen extends StatelessWidget {
                     category: category),
                 onResultTap: (result) =>
                     openResult(context, full, profile, result),
-              ),
+              )),
       );
     });
   }

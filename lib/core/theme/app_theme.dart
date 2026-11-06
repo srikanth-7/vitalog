@@ -27,9 +27,11 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.warning,
     required this.warningSoft,
     required this.onAvatar,
+    required this.onWash,
     required this.chartGood,
     required this.chartReview,
     required this.chartOut,
+    required this.reading,
   });
 
   final Color canvas;
@@ -52,6 +54,11 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color warningSoft;
   final Color onAvatar;
 
+  /// Secondary text on the green header wash (see HeaderWash): a deep,
+  /// green-tinted grey so small text stays ≥4.5:1 where the wash is
+  /// strongest. Plain textSecondary/textMuted would fall below that.
+  final Color onWash;
+
   /// Status colours for charts (within range / needs review / outside range).
   /// Brighter than the text-grade success/warning/danger so adjacent segments
   /// stay distinct, incl. for colour-blind readers (dataviz validator:
@@ -61,13 +68,17 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color chartReview;
   final Color chartOut;
 
+  /// The coral "latest reading" dot from the logo, a small accent on
+  /// selected tab glyphs. Decoration only, never the sole carrier of meaning.
+  final Color reading;
+
   static const light = AppColors(
     canvas: Color(0xFFF5F7F5),
     surface: Colors.white,
     border: Color(0xFFE5EAE6),
     textPrimary: Color(0xFF18231F),
     textSecondary: Color(0xFF53645C),
-    textMuted: Color(0xFF718078),
+    textMuted: Color(0xFF606F67), // ≥4.5:1 on surface, canvas, brandSoft
     textDisabled: Color(0xFFBBC5BE),
     brand: Color(0xFF247A68),
     brandSoft: Color(0xFFE6F1EC),
@@ -81,9 +92,11 @@ class AppColors extends ThemeExtension<AppColors> {
     warning: Color(0xFF8B6B2E),
     warningSoft: Color(0xFFFFF4DB),
     onAvatar: Color(0xFF263B33),
+    onWash: Color(0xFF35524A),
     chartGood: Color(0xFF1F8A68),
     chartReview: Color(0xFFE8A317),
     chartOut: Color(0xFFC9423A),
+    reading: Color(0xFFE8876A),
   );
 
   static const dark = AppColors(
@@ -106,9 +119,11 @@ class AppColors extends ThemeExtension<AppColors> {
     warning: Color(0xFFE5C07A),
     warningSoft: Color(0xFF372D17),
     onAvatar: Color(0xFF263B33),
+    onWash: Color(0xFFC6D6CF),
     chartGood: Color(0xFF3DAA84),
     chartReview: Color(0xFFD9A030),
     chartOut: Color(0xFFE0604F),
+    reading: Color(0xFFF4A98B),
   );
 
   @override
@@ -135,21 +150,28 @@ class AppColors extends ThemeExtension<AppColors> {
         warning: warning,
         warningSoft: warningSoft,
         onAvatar: onAvatar,
+        onWash: onWash,
         chartGood: chartGood,
         chartReview: chartReview,
         chartOut: chartOut,
+        reading: reading,
       );
 
   AppColors withAccent((Color, Color, Color, Color) accent) {
     final (brand, brandSoft, hero, onHeroMuted) = accent;
+    // The near-greys carry a faint brand tint; give them the accent's hue so
+    // a plum app isn't plum buttons on green-grey. Lightness and saturation
+    // stay, so contrast doesn't move.
+    final hue = HSLColor.fromColor(brand).hue;
+    Color tint(Color c) => HSLColor.fromColor(c).withHue(hue).toColor();
     return AppColors(
-      canvas: canvas,
-      surface: surface,
-      border: border,
-      textPrimary: textPrimary,
-      textSecondary: textSecondary,
-      textMuted: textMuted,
-      textDisabled: textDisabled,
+      canvas: tint(canvas),
+      surface: tint(surface),
+      border: tint(border),
+      textPrimary: tint(textPrimary),
+      textSecondary: tint(textSecondary),
+      textMuted: tint(textMuted),
+      textDisabled: tint(textDisabled),
       brand: brand,
       brandSoft: brandSoft,
       hero: hero,
@@ -162,9 +184,11 @@ class AppColors extends ThemeExtension<AppColors> {
       warning: warning,
       warningSoft: warningSoft,
       onAvatar: onAvatar,
+      onWash: tint(onWash),
       chartGood: chartGood,
       chartReview: chartReview,
       chartOut: chartOut,
+      reading: reading,
     );
   }
 
@@ -192,16 +216,19 @@ class AppColors extends ThemeExtension<AppColors> {
       warning: l(warning, other.warning),
       warningSoft: l(warningSoft, other.warningSoft),
       onAvatar: l(onAvatar, other.onAvatar),
+      onWash: l(onWash, other.onWash),
       chartGood: l(chartGood, other.chartGood),
       chartReview: l(chartReview, other.chartReview),
       chartOut: l(chartOut, other.chartOut),
+      reading: l(reading, other.reading),
     );
   }
 }
 
 /// Accent presets the user can pick. Each recolours the brand tokens (buttons,
-/// links, hero cards) for both themes; neutrals and status colours stay, so
-/// contrast and "high / low" meaning never change.
+/// links, hero cards) for both themes and re-hues the near-grey neutrals to
+/// match; status colours stay, so contrast and "high / low" meaning never
+/// change.
 enum ThemeAccent {
   vitalog(light: (
     Color(0xFF247A68),

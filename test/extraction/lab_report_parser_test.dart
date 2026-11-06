@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vitalog/features/family_health/domain/reference/reference_range.dart';
 import 'package:vitalog/features/family_health/data/extraction/lab_report_parser.dart';
 import 'package:vitalog/features/family_health/domain/entities/lab_result.dart';
 
@@ -75,13 +76,12 @@ void main() {
     expect(report.tests[0].status, ResultStatus.withinRange);
     expect(report.tests[1].referenceRange, '1,50,000 - 4,50,000 /cumm');
     expect(report.tests[1].status, ResultStatus.withinRange);
-    final high = parser
-        .parse(['Platelet Count  5,10,000  /cumm  1,50,000 - 4,50,000']);
+    final high =
+        parser.parse(['Platelet Count  5,10,000  /cumm  1,50,000 - 4,50,000']);
     expect(high.tests.single.status, ResultStatus.high);
   });
 
-  test('cell counts printed as a span are the value, judged by their ends',
-      () {
+  test('cell counts printed as a span are the value, judged by their ends', () {
     final report = parser.parse([
       'URINE ROUTINE',
       'Pus Cells  2-3  /hpf  0 - 5',
@@ -123,6 +123,17 @@ void main() {
     expect(report.tests[1].status, ResultStatus.withinRange);
     expect(parser.statusFor('11', 'Male 13-17 Female 12-15.5'),
         ResultStatus.needsReview);
+    // Once the member's sex is known, their band decides.
+    expect(parser.statusFor('11', 'Male 13-17 Female 12-15.5', sex: Sex.male),
+        ResultStatus.low);
+    expect(
+        parser.statusFor('13.5', 'M: 13.0 - 17.0 F: 12.0 - 15.5',
+            sex: Sex.female),
+        ResultStatus.withinRange);
+    expect(
+        parser.statusFor('16', 'Men - 0.7-1.3 Women - 0.6-1.1',
+            sex: Sex.female),
+        ResultStatus.high);
   });
 
   test('two tests printed side by side in one row are both read', () {

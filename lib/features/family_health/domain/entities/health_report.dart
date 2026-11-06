@@ -52,6 +52,14 @@ class HealthReport {
   /// confirm it's stored there.
   final String? fileHash;
 
+  /// No date was printed: [reportDate] then falls back to the upload time
+  /// (set to the same instant), which must never be shown as a test date.
+  bool get undated => reportDate == uploadDate;
+
+  /// A built-in sample: no original here and never synced. Restored reports
+  /// have no original either, but are real.
+  bool get isSample => filePath == null && !synced;
+
   HealthReport copyWith({
     String? profileId,
     String? lab,

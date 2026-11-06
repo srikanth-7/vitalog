@@ -6,6 +6,10 @@ import '../../../../core/settings/settings_cubit.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_shape.dart';
+import '../../domain/repositories/family_health_repository.dart';
+import '../bloc/health_bloc.dart';
+import '../bloc/health_event.dart';
+import '../bloc/health_state.dart';
 
 String sectionLabel(AppLocalizations l10n, HomeSection s) => switch (s) {
       HomeSection.latestReport => l10n.sectionLatestReport,
@@ -20,6 +24,7 @@ String languageLabel(AppLocalizations l10n, AppLanguage language) =>
     switch (language) {
       AppLanguage.system => l10n.languageSystem,
       AppLanguage.english => l10n.languageEnglish,
+      AppLanguage.hindi => l10n.languageHindi,
       AppLanguage.telugu => l10n.languageTelugu,
     };
 
@@ -47,9 +52,9 @@ Future<void> showLanguageSheet(BuildContext context) {
                     child: Text(
                       l10n.languageTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: context.colors.textPrimary,
-                      ),
+                            fontWeight: FontWeight.w700,
+                            color: context.colors.textPrimary,
+                          ),
                     ),
                   ),
                   RadioGroup<AppLanguage>(
@@ -150,6 +155,10 @@ class DisplaySettingsCard extends StatelessWidget {
     final c = context.colors;
     final simple = context.select((SettingsCubit s) => s.state.simpleMode);
     final language = context.select((SettingsCubit s) => s.state.language);
+    final originalsLocked = context.select((HealthBloc b) {
+      final s = b.state;
+      return s is HealthLoaded && s.originalsLock == OriginalsLock.on;
+    });
     return Container(
       clipBehavior: Clip.antiAlias, // keep list-tile ink inside the corners
       decoration: AppShape.decoration(
@@ -159,43 +168,56 @@ class DisplaySettingsCard extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: Column(children: [
-        SwitchListTile(
-          key: const ValueKey('simple-mode'),
-          secondary: Icon(Icons.text_increase, color: c.brand),
-          title: Text(l10n.simpleMode,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text(l10n.simpleModeHint),
-          value: simple,
-          onChanged: (on) {
-            HapticFeedback.mediumImpact();
-            context.read<SettingsCubit>().setSimpleMode(on);
-          },
-        ),
-        Divider(height: 1, color: c.border),
-        ListTile(
-          key: const ValueKey('theme-settings'),
-          leading: Icon(Icons.palette_outlined, color: c.brand),
-          title: Text(l10n.themeTitle),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => showThemeSheet(context),
-        ),
-        Divider(height: 1, color: c.border),
-        ListTile(
-          key: const ValueKey('language-settings'),
-          leading: Icon(Icons.language_outlined, color: c.brand),
-          title: Text(l10n.languageTitle),
-          subtitle: Text(languageLabel(l10n, language)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => showLanguageSheet(context),
-        ),
-        Divider(height: 1, color: c.border),
-        ListTile(
-          key: const ValueKey('customize-home'),
-          leading: Icon(Icons.dashboard_customize_outlined, color: c.brand),
-          title: Text(l10n.customizeHome),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => showCustomizeHomeSheet(context),
-        ),
+          SwitchListTile(
+            key: const ValueKey('originals-lock'),
+            secondary: Icon(Icons.lock_outline, color: c.brand),
+            title: Text(l10n.originalsLockSetting,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text(l10n.originalsLockSettingHint),
+            value: originalsLocked,
+            onChanged: (on) {
+              HapticFeedback.mediumImpact();
+              context.read<HealthBloc>().add(SetOriginalsLock(on));
+            },
+          ),
+          Divider(height: 1, color: c.border),
+          SwitchListTile(
+            key: const ValueKey('simple-mode'),
+            secondary: Icon(Icons.text_increase, color: c.brand),
+            title: Text(l10n.simpleMode,
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text(l10n.simpleModeHint),
+            value: simple,
+            onChanged: (on) {
+              HapticFeedback.mediumImpact();
+              context.read<SettingsCubit>().setSimpleMode(on);
+            },
+          ),
+          Divider(height: 1, color: c.border),
+          ListTile(
+            key: const ValueKey('theme-settings'),
+            leading: Icon(Icons.palette_outlined, color: c.brand),
+            title: Text(l10n.themeTitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showThemeSheet(context),
+          ),
+          Divider(height: 1, color: c.border),
+          ListTile(
+            key: const ValueKey('language-settings'),
+            leading: Icon(Icons.language_outlined, color: c.brand),
+            title: Text(l10n.languageTitle),
+            subtitle: Text(languageLabel(l10n, language)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showLanguageSheet(context),
+          ),
+          Divider(height: 1, color: c.border),
+          ListTile(
+            key: const ValueKey('customize-home'),
+            leading: Icon(Icons.dashboard_customize_outlined, color: c.brand),
+            title: Text(l10n.customizeHome),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showCustomizeHomeSheet(context),
+          ),
         ]),
       ),
     );
@@ -298,17 +320,20 @@ class _AccentSwatch extends StatelessWidget {
   Widget build(BuildContext context) {
     final (brand, _, hero, _) = dark ? accent.dark : accent.light;
     final c = context.colors;
+    void pick() {
+      HapticFeedback.selectionClick();
+      context.read<SettingsCubit>().setAccent(accent);
+    }
+
     return Semantics(
       button: true,
       selected: selected,
       label: label,
       excludeSemantics: true,
+      onTap: pick,
       child: GestureDetector(
         key: ValueKey('accent-${accent.name}'),
-        onTap: () {
-          HapticFeedback.selectionClick();
-          context.read<SettingsCubit>().setAccent(accent);
-        },
+        onTap: pick,
         child: Column(children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),

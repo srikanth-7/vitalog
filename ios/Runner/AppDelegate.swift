@@ -11,6 +11,9 @@ import VisionKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Reminders (flutter_local_notifications) also show while the app is open.
+    UNUserNotificationCenter.current().delegate = self
+    PrivacyCover.shared.start()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -22,6 +25,54 @@ import VisionKit
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "DocumentScannerPlugin") {
       DocumentScannerPlugin.register(with: registrar)
     }
+    // "Open Settings" after a permission was refused: this app's page in
+    // Settings (its Notifications page when that's what is off, iOS 16+).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AppSettingsPlugin") {
+      FlutterMethodChannel(name: "vitalog/app_settings", binaryMessenger: registrar.messenger())
+        .setMethodCallHandler { call, result in
+          var target = UIApplication.openSettingsURLString
+          if #available(iOS 16.0, *), call.arguments as? String == "notifications" {
+            target = UIApplication.openNotificationSettingsURLString
+          }
+          if let url = URL(string: target) { UIApplication.shared.open(url) }
+          result(nil)
+        }
+    }
+  }
+}
+
+/// Hides health data from the app switcher (security audit #2). iOS takes
+/// the switcher snapshot after the scene resigns active, so a plain cover
+/// in the brand colour (same as the launch screen) goes on first and comes
+/// off when the app is active again. Native, not Flutter: a Flutter frame
+/// may not be on screen before the snapshot is taken.
+final class PrivacyCover {
+  static let shared = PrivacyCover()
+  private var cover: UIView?
+
+  func start() {
+    let center = NotificationCenter.default
+    center.addObserver(forName: UIScene.willDeactivateNotification, object: nil, queue: .main) {
+      [weak self] note in self?.show(on: note.object as? UIWindowScene)
+    }
+    center.addObserver(forName: UIScene.didActivateNotification, object: nil, queue: .main) {
+      [weak self] _ in self?.hide()
+    }
+  }
+
+  private func show(on scene: UIWindowScene?) {
+    guard cover == nil, let window = scene?.windows.first(where: { $0.isKeyWindow }) ?? scene?.windows.first
+    else { return }
+    let view = UIView(frame: window.bounds)
+    view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.backgroundColor = UIColor(red: 0x17 / 255.0, green: 0x3D / 255.0, blue: 0x35 / 255.0, alpha: 1)
+    window.addSubview(view)
+    cover = view
+  }
+
+  private func hide() {
+    cover?.removeFromSuperview()
+    cover = nil
   }
 }
 

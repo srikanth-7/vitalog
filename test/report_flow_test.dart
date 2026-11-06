@@ -14,6 +14,7 @@ import 'package:vitalog/features/family_health/data/sync/report_sync_service.dar
 import 'package:vitalog/features/family_health/domain/entities/family_member.dart';
 import 'package:vitalog/features/family_health/domain/entities/health_report.dart';
 import 'package:vitalog/features/family_health/domain/reference/reference_range.dart';
+import 'package:vitalog/features/family_health/domain/repositories/family_health_repository.dart';
 
 /// OCR that answers only when [gate] completes.
 class _SlowRecognizer extends ReportTextRecognizer {
@@ -21,6 +22,22 @@ class _SlowRecognizer extends ReportTextRecognizer {
   @override
   Future<List<String>> recognize(Uint8List bytes, {required bool isPdf}) =>
       gate.future;
+}
+
+/// OCR that reads whatever [next] holds at the time.
+class _Lines extends ReportTextRecognizer {
+  List<String> next = const [];
+  @override
+  Future<List<String>> recognize(Uint8List bytes,
+          {required bool isPdf}) async =>
+      next;
+}
+
+/// OCR that fails, as a native Vision/ML Kit error would.
+class _BrokenRecognizer extends ReportTextRecognizer {
+  @override
+  Future<List<String>> recognize(Uint8List bytes, {required bool isPdf}) =>
+      Future.error(StateError('vision failed'));
 }
 
 void main() {
@@ -63,6 +80,28 @@ void main() {
     expect(File(report.filePath!).existsSync(), isFalse);
   });
 
+  test('a document with no tests is not kept: no row, no original', () async {
+    final ocr = _SlowRecognizer();
+    final r = repo(ocr);
+    final report = await upload(r);
+    final reading = r.processReport(report.id);
+    ocr.gate.complete(['Electricity bill', 'Amount due  1,250']);
+    final done = await reading;
+    expect(done!.resultCount, 0);
+    final data = await r.loadFamilyHealth();
+    expect(data.reports.where((x) => x.id == report.id), isEmpty);
+    expect(File(report.filePath!).existsSync(), isFalse);
+  });
+
+  test('a read that errors stays listed so it can be tried again', () async {
+    final r = repo(_BrokenRecognizer());
+    final report = await upload(r);
+    final done = await r.processReport(report.id);
+    expect(done!.status, ReportStatus.failed);
+    final data = await r.loadFamilyHealth();
+    expect(data.reports.where((x) => x.id == report.id), hasLength(1));
+  });
+
   test('a report that reads too long fails as timed out', () async {
     final r =
         repo(_SlowRecognizer(), timeout: const Duration(milliseconds: 50));
@@ -87,6 +126,33 @@ void main() {
     expect(FamilyMember.firstNameOf('Mr. Ramesh Kumar'), 'ramesh');
     expect(FamilyMember.looksLikeNickname('Dad'), isTrue);
     expect(FamilyMember.looksLikeNickname('Ramesh Kumar'), isFalse);
+  });
+
+  test('same first name: the closer full name wins (son vs Sr. dad)', () {
+    FamilyMember m(String id, String name) => FamilyMember(
+        id: id, name: name, relation: '', initials: '', colorValue: 0, age: 30);
+    final son = m('son', 'Danial Simmons');
+    final dad = m('dad', 'Danial Senior Simmons');
+    final family = [son, dad];
+    // The son's report uploaded under Dad: Dad is flagged, the son offered.
+    expect(dad.betterMatchIn(family, 'Mr. DANIAL SIMMONS')?.id, 'son');
+    expect(son.betterMatchIn(family, 'Mr. DANIAL SIMMONS'), isNull);
+    // Dad's report under the son, however the lab writes "senior".
+    expect(son.betterMatchIn(family, 'DANIAL SIMMONS SR')?.id, 'dad');
+    expect(son.betterMatchIn(family, 'Simmons Danial Senior')?.id, 'dad');
+    expect(dad.betterMatchIn(family, 'DANIAL SIMMONS SNR.'), isNull);
+    // Initials and an OCR typo: D.S. are Dad's initials (Danial Senior).
+    expect(son.matchesPrintedName('D.S.Simmions'), isTrue);
+    expect(dad.betterMatchIn(family, 'D.S.Simmions'), isNull);
+    expect(son.betterMatchIn(family, 'D.S.Simmions')?.id, 'dad');
+    // One initial is the son's.
+    expect(son.betterMatchIn(family, 'D. SIMMONS'), isNull);
+    expect(dad.betterMatchIn(family, 'D. SIMMONS')?.id, 'son');
+    // An initial is still a first name: a shared surname isn't enough.
+    expect(son.matchesPrintedName('M. Simmons'), isFalse);
+    // A one-letter slip is forgiven only in longer words.
+    expect(son.matchesPrintedName('Danlal Simmons'), isTrue); // l for i
+    expect(m('x', 'Ravi Kumar').matchesPrintedName('Rani Kumar'), isFalse);
   });
 
   test('moving a report files it and its results under the other member',
@@ -115,5 +181,204 @@ void main() {
     expect(again.initials, 'RK');
     expect(again.age, 61);
     expect(again.sex, Sex.male);
+  });
+
+  Future<HealthReport> uploadFor(FamilyHealthRepositoryImpl r, String who,
+      [String name = 'photo.jpg']) {
+    final source = File('${dir.path}/$name')
+      ..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xE0, ...name.codeUnits]);
+    return r.addReport(profileId: who, sourcePath: source.path, fileName: name);
+  }
+
+  test('removing a member with their reports clears everything of theirs',
+      () async {
+    final ocr = _SlowRecognizer()
+      ..gate
+          .complete(['Reported On: 11/10/2026', 'TSH  6.2  mIU/L  0.4 - 4.0']);
+    final r = repo(ocr);
+    final m =
+        await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+    final report = await uploadFor(r, m.id);
+    await r.processReport(report.id);
+    await expectLater(r.deleteMember(m.id), throwsA(isA<MemberHasReports>()));
+
+    await r.deleteMember(m.id, withReports: true);
+    final data = await r.loadFamilyHealth();
+    expect(data.members.where((x) => x.id == m.id), isEmpty);
+    expect(data.reports.where((x) => x.profileId == m.id), isEmpty);
+    expect(data.results.where((x) => x.profileId == m.id), isEmpty);
+    expect(File(report.filePath!).existsSync(), isFalse);
+  });
+
+  test('a report still being read when its member is removed saves nothing',
+      () async {
+    final ocr = _SlowRecognizer();
+    final r = repo(ocr);
+    final m =
+        await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+    final report = await uploadFor(r, m.id);
+    final reading = r.processReport(report.id);
+    await r.deleteMember(m.id, withReports: true);
+    ocr.gate
+        .complete(['Reported On: 11/10/2026', 'TSH  6.2  mIU/L  0.4 - 4.0']);
+    expect(await reading, isNull);
+    final data = await r.loadFamilyHealth();
+    expect(data.results.where((x) => x.reportId == report.id), isEmpty);
+  });
+
+  group('same report, a different file', () {
+    const lab = 'Sunrise Pathology Lab';
+    const date = 'Collected On: 10/10/2026   Reported On: 11/10/2026';
+    const tg = 'Triglycerides  210  mg/dL  < 150';
+    const hdl = 'HDL Cholesterol  52  mg/dL  > 40';
+
+    Future<HealthReport?> read(FamilyHealthRepositoryImpl r, _Lines ocr,
+        String file, List<String> lines) async {
+      ocr.next = lines;
+      return r.processReport((await uploadFor(r, 'maya', file)).id);
+    }
+
+    test('a new photo of the same paper report is a duplicate', () async {
+      final ocr = _Lines();
+      final r = repo(ocr);
+      final first = await read(r, ocr, 'scan.jpg', [lab, date, tg, hdl]);
+      await expectLater(
+          read(r, ocr, 'photo.jpg', [lab, date, tg, hdl]),
+          throwsA(isA<DuplicateReport>()
+              .having((e) => e.existing.id, 'existing', first!.id)));
+      final data = await r.loadFamilyHealth();
+      expect(data.reports.where((x) => x.fileName == 'photo.jpg'), isEmpty);
+    });
+
+    test('a re-take that reads fewer tests is still a duplicate', () async {
+      final ocr = _Lines();
+      final r = repo(ocr);
+      await read(r, ocr, 'scan.jpg', [lab, date, tg, hdl]);
+      await expectLater(read(r, ocr, 'photo.jpg', [lab, date, tg]),
+          throwsA(isA<DuplicateReport>()));
+    });
+
+    test('same date and lab but a changed value is a new report', () async {
+      final ocr = _Lines();
+      final r = repo(ocr);
+      await read(r, ocr, 'scan.jpg', [lab, date, tg, hdl]);
+      final second = await read(r, ocr, 'photo.jpg',
+          [lab, date, 'Triglycerides  180  mg/dL  < 150', hdl]);
+      expect(second!.resultCount, 2);
+    });
+
+    test('a copy with an extra test is a new report', () async {
+      final ocr = _Lines();
+      final r = repo(ocr);
+      await read(r, ocr, 'scan.jpg', [lab, date, tg]);
+      final second = await read(r, ocr, 'photo.jpg', [lab, date, tg, hdl]);
+      expect(second!.resultCount, 2);
+    });
+  });
+
+  test('editing a member renames them and re-judges by their sex', () async {
+    final ocr = _Lines()
+      ..next = ['Reported On: 11/10/2026', 'Hemoglobin  10.2  g/dL'];
+    final r = repo(ocr);
+    final m =
+        await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+    await r.processReport((await uploadFor(r, m.id)).id);
+    final before = (await r.loadFamilyHealth())
+        .results
+        .firstWhere((x) => x.profileId == m.id);
+    expect(before.usualRange, isNull); // sex unknown: no usual range guessed
+
+    await r.updateMember(FamilyMember(
+        id: m.id,
+        name: 'Ravi K Sharma',
+        relation: m.relation,
+        initials: m.initials,
+        colorValue: m.colorValue,
+        age: m.age,
+        sex: Sex.female));
+    final data = await r.loadFamilyHealth();
+    final edited = data.members.firstWhere((x) => x.id == m.id);
+    expect(edited.name, 'Ravi K Sharma');
+    expect(edited.initials, 'RS'); // first + last name
+    expect(edited.sex, Sex.female);
+    expect(data.results.firstWhere((x) => x.profileId == m.id).usualRange,
+        isNotNull);
+  });
+
+  test('editing a sample member shows them once, edited', () async {
+    final r = repo(_Lines());
+    final maya =
+        (await r.loadFamilyHealth()).members.firstWhere((x) => x.id == 'maya');
+    await r.updateMember(FamilyMember(
+        id: maya.id,
+        name: 'Maya S',
+        relation: maya.relation,
+        initials: maya.initials,
+        colorValue: maya.colorValue,
+        age: maya.age,
+        sex: maya.sex));
+    final members = (await r.loadFamilyHealth()).members;
+    expect(members.where((x) => x.id == 'maya').map((x) => x.name), ['Maya S']);
+  });
+
+  group('member photos', () {
+    final jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3, 4, 5, 6, 7, 8];
+    String pick() =>
+        (File('${dir.path}/face.jpg')..writeAsBytesSync(jpeg)).path;
+    List<File> photoFiles() {
+      final d = Directory('${dir.path}/photos');
+      return d.existsSync() ? d.listSync().whereType<File>().toList() : [];
+    }
+
+    test('a photo is kept encrypted on the phone and shown on the member',
+        () async {
+      final r = repo(_Lines());
+      final m =
+          await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+      await r.setMemberPhoto(m.id, pick());
+      final member =
+          (await r.loadFamilyHealth()).members.firstWhere((x) => x.id == m.id);
+      expect(member.photo, jpeg);
+      // On disk it is not the picture.
+      final stored = photoFiles().single.readAsBytesSync();
+      expect(stored, isNot(containsAllInOrder(jpeg)));
+    });
+
+    test('a photo can be removed, and goes when the member goes', () async {
+      final r = repo(_Lines());
+      final m =
+          await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+      await r.setMemberPhoto(m.id, pick());
+      await r.setMemberPhoto(m.id, null);
+      expect(
+          (await r.loadFamilyHealth())
+              .members
+              .firstWhere((x) => x.id == m.id)
+              .photo,
+          isNull);
+      await r.setMemberPhoto(m.id, pick());
+      await r.deleteMember(m.id);
+      expect(photoFiles(), isEmpty);
+    });
+
+    test('editing a member keeps their photo', () async {
+      final r = repo(_Lines());
+      final m =
+          await r.addMember(name: 'Ravi Kumar', relation: 'Parent', age: 61);
+      await r.setMemberPhoto(m.id, pick());
+      await r.updateMember(FamilyMember(
+          id: m.id,
+          name: 'Ravi K',
+          relation: m.relation,
+          initials: m.initials,
+          colorValue: m.colorValue,
+          age: m.age));
+      expect(
+          (await r.loadFamilyHealth())
+              .members
+              .firstWhere((x) => x.id == m.id)
+              .photo,
+          jpeg);
+    });
   });
 }

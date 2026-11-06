@@ -113,6 +113,34 @@ List<TestTrend> trendsFor(List<LabResult> results, {int max = 6}) {
   return (null, null);
 }
 
+/// Where [r]'s value sits in its printed (or usual) range: 0 = low edge,
+/// 1 = high edge, clamped. Null without a number or without both bounds.
+double? rangePosition(LabResult r) {
+  final v = double.tryParse(r.value);
+  final (low, high) = parseRange(
+      r.referenceRange.isNotEmpty ? r.referenceRange : (r.usualRange ?? ''));
+  if (v == null || low == null || high == null || high <= low) return null;
+  return ((v - low) / (high - low)).clamp(0.0, 1.0);
+}
+
+enum HistoryPeriod { all, year, sixMonths }
+
+/// The readings in [period], counted back from the latest one (so the
+/// latest is always shown, however long ago it was). [oldestFirst] in
+/// date order.
+List<LabResult> withinPeriod(
+    List<LabResult> oldestFirst, HistoryPeriod period) {
+  if (oldestFirst.isEmpty || period == HistoryPeriod.all) return oldestFirst;
+  final last = oldestFirst.last.reportDate;
+  final from = period == HistoryPeriod.year
+      ? DateTime(last.year - 1, last.month, last.day)
+      : DateTime(last.year, last.month - 6, last.day);
+  return [
+    for (final r in oldestFirst)
+      if (!r.reportDate.isBefore(from)) r
+  ];
+}
+
 // ---- colours ---------------------------------------------------------------
 
 Color chartColor(AppColors c, ResultStatus s) => switch (s) {
@@ -157,23 +185,16 @@ class HealthOverviewCard extends StatelessWidget {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Eyebrow(l10n.overviewTitle),
             const SizedBox(height: 8),
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              CountUpText('${tally.good}',
-                  style: TextStyle(
-                      fontSize: 48,
-                      height: 1,
-                      fontWeight: FontWeight.w700,
-                      color: c.textPrimary)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 5),
-                  child: Text(l10n.overviewOfTotal(tally.total),
-                      style: TextStyle(
-                          color: c.textSecondary, fontSize: 13, height: 1.3)),
-                ),
-              ),
-            ]),
+            // The one sentence to remember after ten seconds.
+            Text(
+                tally.good == tally.total
+                    ? l10n.homeVerdictAll(tally.total)
+                    : l10n.homeVerdict(tally.good, tally.total),
+                style: TextStyle(
+                    fontSize: 24,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary)),
             const SizedBox(height: 16),
             _StatusBar(tally: tally),
             const SizedBox(height: 14),
@@ -288,7 +309,13 @@ class _LegendKey extends StatelessWidget {
           style: TextStyle(
               fontWeight: FontWeight.w700, color: c.textPrimary, fontSize: 12)),
       const SizedBox(width: 4),
-      Text(label, style: TextStyle(color: c.textSecondary, fontSize: 12)),
+      // Narrowest phones in Simple mode: the word gives way, not the count.
+      Flexible(
+        child: Text(label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: c.textSecondary, fontSize: 12)),
+      ),
     ]);
   }
 }
@@ -349,6 +376,7 @@ class TrendTile extends StatelessWidget {
       button: true,
       label: l10n.trendSemantics(latest.name,
           '${latest.value} ${latest.unit}'.trim(), changeText, status),
+      onTap: onTap,
       child: ExcludeSemantics(
         child: SizedBox(
           width: 172,
@@ -581,6 +609,7 @@ class _AttentionRow extends StatelessWidget {
       button: true,
       label: '${result.name}. $sentence',
       excludeSemantics: true,
+      onTap: onTap,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -609,4 +638,182 @@ class _AttentionRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Out-of-range results as a horizontal row of cards: name, value, a status
+/// capsule (arrow + word, never colour alone) and where the value sits
+/// against its range. Tap → test history.
+class AttentionCards extends StatelessWidget {
+  const AttentionCards({super.key, required this.results, required this.onTap});
+  final List<LabResult> results;
+  final ValueChanged<LabResult> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(Icons.error_outline_rounded, size: 18, color: c.chartOut),
+        const SizedBox(width: 6),
+        Text(l10n.attentionTitle,
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+                fontSize: 17)),
+      ]),
+      const SizedBox(height: 10),
+      SizedBox(
+        // Grows with the system text size (only Simple mode clamps it).
+        height: 70 + MediaQuery.textScalerOf(context).scale(62),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          itemCount: results.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, i) => Reveal(
+              index: i,
+              child: _AttentionCard(
+                  result: results[i], onTap: () => onTap(results[i]))),
+        ),
+      ),
+    ]);
+  }
+}
+
+class _AttentionCard extends StatelessWidget {
+  const _AttentionCard({required this.result, required this.onTap});
+  final LabResult result;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final l10n = context.l10n;
+    final status =
+        result.status == ResultStatus.low ? l10n.shortLow : l10n.shortHigh;
+    final parsed = rangePosition(result);
+    // The lab's flag wins; a range that disagrees with it (e.g. a male/female
+    // range read as one) would put the marker in the band, so hide it.
+    final position = switch (result.status) {
+      ResultStatus.high when (parsed ?? 1) < 1 => null,
+      ResultStatus.low when (parsed ?? 0) > 0 => null,
+      _ => parsed,
+    };
+    return Semantics(
+      button: true,
+      label: '${result.name}. ${result.value} ${result.unit}. $status',
+      excludeSemantics: true,
+      onTap: onTap,
+      child: SizedBox(
+        width: 176,
+        child: TapCard(
+          onTap: onTap,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(result.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: c.textSecondary, fontSize: 13)),
+            const SizedBox(height: 6),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Flexible(
+                child: Text(result.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 24,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary)),
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(result.unit,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c.textMuted, fontSize: 11)),
+              ),
+            ]),
+            const Spacer(),
+            Row(children: [
+              Pill(
+                  icon: statusIcon(result.status),
+                  label: status,
+                  color: c.danger,
+                  background: c.dangerSoft),
+            ]),
+            if (position != null) ...[
+              const SizedBox(height: 10),
+              RangeGauge(position: position, status: result.status),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// The range as a soft band in the middle of a track, with a marker at the
+/// value. Values past an edge sit just beyond the band.
+class RangeGauge extends StatelessWidget {
+  const RangeGauge({super.key, required this.position, required this.status});
+  final double position;
+  final ResultStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    // Band spans 20–80 % of the track; outside values land at 8 % / 92 %.
+    final x = switch (status) {
+      ResultStatus.high when position >= 1 => .92,
+      ResultStatus.low when position <= 0 => .08,
+      _ => .2 + .6 * position,
+    };
+    return SizedBox(
+      height: 12,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _GaugePainter(
+            x: x,
+            track: c.border,
+            band: c.chartGood.withValues(alpha: .35),
+            marker: chartColor(c, status),
+            ring: c.surface),
+      ),
+    );
+  }
+}
+
+class _GaugePainter extends CustomPainter {
+  _GaugePainter(
+      {required this.x,
+      required this.track,
+      required this.band,
+      required this.marker,
+      required this.ring});
+  final double x;
+  final Color track, band, marker, ring;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final mid = size.height / 2;
+    const h = 6.0;
+    const r = Radius.circular(h / 2);
+    canvas.drawRRect(
+        RRect.fromLTRBR(0, mid - h / 2, size.width, mid + h / 2, r),
+        Paint()..color = track);
+    canvas.drawRRect(
+        RRect.fromLTRBR(
+            size.width * .2, mid - h / 2, size.width * .8, mid + h / 2, r),
+        Paint()..color = band);
+    final at = Offset(size.width * x, mid);
+    canvas.drawCircle(at, size.height / 2, Paint()..color = ring);
+    canvas.drawCircle(at, size.height / 2 - 2, Paint()..color = marker);
+  }
+
+  @override
+  bool shouldRepaint(_GaugePainter old) =>
+      old.x != x || old.marker != marker || old.track != track;
 }
