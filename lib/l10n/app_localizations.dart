@@ -863,11 +863,11 @@ abstract class AppLocalizations {
   /// **'Copy key'**
   String get recoveryKeyCopy;
 
-  /// No description provided for @recoveryKeyCopied.
+  /// No description provided for @recoveryKeyCopiedClears.
   ///
   /// In en, this message translates to:
-  /// **'Recovery key copied. Paste it somewhere safe.'**
-  String get recoveryKeyCopied;
+  /// **'Recovery key copied. Paste it somewhere safe now: it\'s cleared from the clipboard in 1 minute.'**
+  String get recoveryKeyCopiedClears;
 
   /// No description provided for @recoveryKeyDone.
   ///
@@ -2075,6 +2075,18 @@ abstract class AppLocalizations {
   /// **'No change'**
   String get trendNoChange;
 
+  /// No description provided for @trendUpStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Up {count, plural, other{{count} times}} in a row'**
+  String trendUpStreak(int count);
+
+  /// No description provided for @trendDownStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Down {count, plural, other{{count} times}} in a row'**
+  String trendDownStreak(int count);
+
   /// No description provided for @trendSemantics.
   ///
   /// In en, this message translates to:
@@ -2753,6 +2765,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not now'**
   String get claimNotNow;
+
+  /// No description provided for @combineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Combine with your own profile?'**
+  String get combineTitle;
+
+  /// No description provided for @combineMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a profile for yourself, {name}, with {count, plural, =0{no reports} =1{1 report} other{{count} reports}}. Combining moves them into this shared profile and removes the old one. Your name, sex and birth year are kept, and a file that\'s in both is kept once.'**
+  String combineMessage(String name, int count);
+
+  /// No description provided for @combineConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Combine'**
+  String get combineConfirm;
+
+  /// No description provided for @combineKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep separate'**
+  String get combineKeep;
 
   /// No description provided for @claimPrivacy.
   ///

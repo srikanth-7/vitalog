@@ -10,22 +10,27 @@
 --
 -- Data model (supabase/schema.sql, Sync v2 — everything is sealed):
 --   public.account_keys     user_id primary key (public key only)
---   public.profile_keys     (user_id, profile_id); sealed_* cascade off it
---   public.sealed_profiles  (user_id, id)
---   public.sealed_reports   (user_id, id), results are inside each box
+--   public.profile_keys     (user_id, profile_id) = access; when a profile's
+--                           last row goes, trigger drop_orphan_profile
+--                           deletes its sealed rows and invites
+--   public.sealed_profiles  id (shared by everyone with access)
+--   public.sealed_reports   id, profile_id; results are inside each box
 -- Original documents and OCR text never upload: no storage bucket to clean.
 
 -- 1. Look up accounts that own synced rows -------------------------------
 select u.email,
-       (select count(*) from public.sealed_reports r where r.user_id = u.id)  as reports,
-       (select count(*) from public.sealed_profiles p where p.user_id = u.id) as profiles,
+       (select count(*) from public.sealed_reports r
+          join public.profile_keys k on k.profile_id = r.profile_id
+         where k.user_id = u.id)                                             as reports,
+       (select count(*) from public.profile_keys k where k.user_id = u.id)   as profiles,
        exists (select 1 from public.account_keys k where k.user_id = u.id)    as has_key
 from auth.users u
 order by u.email;
 
 -- 2. Delete one account's rows — replace the email -----------------------
 -- Fail-safe: a wrong/placeholder email matches nothing and deletes nothing.
--- Deleting profile_keys cascades to sealed_profiles and sealed_reports.
+-- Deleting profile_keys drops a profile's sealed rows once nobody else
+-- has access (shared profiles stay with the others).
 -- Deleting the account key too means the next Sync makes a new key (and a
 -- new recovery key); the phone's saved key for this account is then stale,
 -- so also delete the app's data on test phones.

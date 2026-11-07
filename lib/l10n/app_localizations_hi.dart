@@ -545,8 +545,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String get recoveryKeyCopy => 'की कॉपी करें';
 
   @override
-  String get recoveryKeyCopied =>
-      'रिकवरी की कॉपी हो गई। इसे किसी सुरक्षित जगह पेस्ट करें।';
+  String get recoveryKeyCopiedClears =>
+      'Recovery key copied. Paste it somewhere safe now: it\'s cleared from the clipboard in 1 minute.';
 
   @override
   String get recoveryKeyDone => 'मैंने सेव कर ली';
@@ -1272,6 +1272,26 @@ class AppLocalizationsHi extends AppLocalizations {
   String get trendNoChange => 'कोई बदलाव नहीं';
 
   @override
+  String trendUpStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Up $_temp0 in a row';
+  }
+
+  @override
+  String trendDownStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Down $_temp0 in a row';
+  }
+
+  @override
   String trendSemantics(
       String name, String value, String change, String status) {
     return '$name, ताज़ा $value, $change, $status';
@@ -1608,166 +1628,187 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String shareMember(String name) {
-    return 'Share $name\'s reports';
+    return '$name की रिपोर्ट शेयर करें';
   }
 
   @override
   String shareIntro(String name) {
-    return 'Family you invite can see $name\'s reports and add new ones from their own phone. It\'s end-to-end encrypted: only your family can read it, not even Vitalog.';
+    return 'जिन्हें आप बुलाएँगे, वे $name की रिपोर्ट देख सकेंगे और अपने फ़ोन से नई रिपोर्ट जोड़ सकेंगे। यह एंड-टू-एंड एन्क्रिप्टेड है: इसे सिर्फ़ आपका परिवार पढ़ सकता है, Vitalog भी नहीं।';
   }
 
   @override
   String shareUploadNote(String name) {
-    return 'Inviting backs up $name\'s profile and reports to your account first, sealed.';
+    return 'बुलाने से पहले $name की प्रोफ़ाइल और रिपोर्ट सील होकर आपके खाते में बैकअप हो जाती हैं।';
   }
 
   @override
-  String get shareInvite => 'Invite someone';
+  String get shareInvite => 'किसी को बुलाएँ';
 
   @override
-  String get sharePeople => 'Who can see these reports';
+  String get sharePeople => 'ये रिपोर्ट कौन देख सकता है';
 
   @override
   String shareYou(String name) {
-    return '$name (you)';
+    return '$name (आप)';
   }
 
   @override
-  String get shareYouPlain => 'You';
+  String get shareYouPlain => 'आप';
 
   @override
-  String get shareSomeone => 'Someone in your family';
+  String get shareSomeone => 'आपके परिवार का कोई सदस्य';
 
   @override
-  String get sharePending => 'Invite waiting';
+  String get sharePending => 'न्योता बाकी है';
 
   @override
   String sharePendingUntil(String date) {
-    return 'Link works until $date';
+    return 'लिंक $date तक काम करेगा';
   }
 
   @override
-  String get shareCancelInvite => 'Cancel invite';
+  String get shareCancelInvite => 'न्योता रद्द करें';
 
   @override
-  String get shareRemove => 'Remove';
+  String get shareRemove => 'हटाएँ';
 
   @override
   String shareRemoveTitle(String name, String person) {
-    return 'Stop sharing $name\'s reports with $person?';
+    return '$name की रिपोर्ट $person के साथ शेयर करना बंद करें?';
   }
 
   @override
   String shareRemoveMessage(String person) {
-    return '$person won\'t get new reports. Reports already on their phone stay there.';
+    return '$person को नई रिपोर्ट नहीं मिलेंगी। जो रिपोर्ट पहले से उनके फ़ोन पर हैं, वे वहीं रहेंगी।';
   }
 
   @override
-  String get shareRemoveConfirm => 'Stop sharing';
+  String get shareRemoveConfirm => 'शेयर करना बंद करें';
 
   @override
   String shareMessage(String name, String link) {
-    return 'I\'ve shared $name\'s health reports with you on Vitalog. Open this link on your phone to see them. It works once, for 7 days.\n$link';
+    return 'मैंने Vitalog पर $name की सेहत की रिपोर्ट आपके साथ शेयर की हैं। उन्हें देखने के लिए यह लिंक अपने फ़ोन पर खोलें। यह 7 दिन तक, सिर्फ़ एक बार काम करेगा।\n$link';
   }
 
   @override
   String shareSubject(String name) {
-    return '$name\'s health reports';
+    return '$name की सेहत की रिपोर्ट';
   }
 
   @override
   String get shareSignIn =>
-      'Sign in to share. Your family see the reports on their own phones, through your account.';
+      'शेयर करने के लिए साइन इन करें। आपके खाते के ज़रिए आपका परिवार अपने फ़ोन पर रिपोर्ट देखेगा।';
 
   @override
   String get shareFailed =>
-      'Couldn\'t reach your account. Check your connection and try again.';
+      'आपके खाते तक नहीं पहुँच पाए। कनेक्शन जाँचें और फिर से कोशिश करें।';
 
   @override
   String get shareSample =>
-      'Sample people can\'t be shared. Add your own family member first.';
+      'नमूना लोगों को शेयर नहीं किया जा सकता। पहले अपने परिवार का कोई सदस्य जोड़ें।';
 
   @override
-  String get claimTitle => 'Family invite';
+  String get claimTitle => 'परिवार का न्योता';
 
   @override
   String claimShared(String from, String name) {
-    return '$from shared $name\'s reports with you';
+    return '$from ने $name की रिपोर्ट आपके साथ शेयर की हैं';
   }
 
   @override
   String claimSharedNoFrom(String name) {
-    return '$name\'s reports were shared with you';
+    return '$name की रिपोर्ट आपके साथ शेयर की गई हैं';
   }
 
   @override
   String claimWho(String name) {
-    return 'Who is $name to you?';
+    return '$name आपके क्या लगते हैं?';
   }
 
   @override
-  String get claimAccept => 'Add to my family';
+  String get claimAccept => 'मेरे परिवार में जोड़ें';
 
   @override
-  String get claimNotNow => 'Not now';
+  String get claimNotNow => 'अभी नहीं';
+
+  @override
+  String get combineTitle => 'अपनी प्रोफ़ाइल के साथ मिला दें?';
+
+  @override
+  String combineMessage(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count रिपोर्ट हैं',
+      one: '1 रिपोर्ट है',
+      zero: 'कोई रिपोर्ट नहीं है',
+    );
+    return 'आपकी अपनी एक प्रोफ़ाइल $name पहले से है, जिसमें $_temp0। मिलाने पर वे इस शेयर की गई प्रोफ़ाइल में चली जाएँगी और पुरानी प्रोफ़ाइल हट जाएगी। आपका नाम, लिंग और जन्म का साल वही रहेंगे, और जो फ़ाइल दोनों में है वह एक ही बार रखी जाएगी।';
+  }
+
+  @override
+  String get combineConfirm => 'मिला दें';
+
+  @override
+  String get combineKeep => 'अलग रखें';
 
   @override
   String claimPrivacy(String name) {
-    return 'The reports come to this phone, end-to-end encrypted. You can add reports for $name too, and everyone sharing them sees them.';
+    return 'रिपोर्ट एंड-टू-एंड एन्क्रिप्टेड होकर इस फ़ोन पर आती हैं। आप भी $name के लिए रिपोर्ट जोड़ सकते हैं, और शेयर करने वाले सभी लोग उन्हें देखेंगे।';
   }
 
   @override
   String get claimSignIn =>
-      'Sign in to accept. The reports come to your account, sealed so only your family can read them.';
+      'स्वीकार करने के लिए साइन इन करें। रिपोर्ट आपके खाते में सील होकर आती हैं, ताकि सिर्फ़ आपका परिवार उन्हें पढ़ सके।';
 
   @override
-  String get claimAlready => 'You already have these reports.';
+  String get claimAlready => 'ये रिपोर्ट आपके पास पहले से हैं।';
 
   @override
-  String get claimOpen => 'Open';
+  String get claimOpen => 'खोलें';
 
   @override
   String get claimInvalid =>
-      'This isn\'t a Vitalog invite link. Check that you copied all of it.';
+      'यह Vitalog का न्योता लिंक नहीं है। देखें कि आपने पूरा लिंक कॉपी किया है।';
 
   @override
-  String get claimGone =>
-      'This invite doesn\'t work any more. Ask for a new link.';
+  String get claimGone => 'यह न्योता अब काम नहीं करता। नया लिंक माँगें।';
 
   @override
   String get claimUsed =>
-      'Someone already used this invite. Each link works once, so ask for a new one.';
+      'इस न्योते का इस्तेमाल पहले ही हो चुका है। हर लिंक एक ही बार काम करता है, इसलिए नया माँगें।';
 
   @override
   String get claimExpired =>
-      'This invite has expired. Links work for 7 days, so ask for a new one.';
+      'इस न्योते की अवधि खत्म हो गई है। लिंक 7 दिन तक काम करते हैं, इसलिए नया माँगें।';
 
   @override
   String get claimLimited =>
-      'Too many tries. Wait an hour, then open the link again.';
+      'बहुत ज़्यादा कोशिशें। एक घंटा रुकें, फिर लिंक दोबारा खोलें।';
 
   @override
   String get claimFailed =>
-      'Couldn\'t reach Vitalog. Check your connection and try again.';
+      'Vitalog तक नहीं पहुँच पाए। कनेक्शन जाँचें और फिर से कोशिश करें।';
 
   @override
   String get claimRecoveryKey =>
-      'Enter your recovery key first, then open the link again.';
+      'पहले अपनी रिकवरी की डालें, फिर लिंक दोबारा खोलें।';
 
   @override
-  String get openInviteRow => 'Open an invite link';
+  String get openInviteRow => 'न्योता लिंक खोलें';
 
   @override
-  String get openInviteRowDetail => 'Family sent you a link? Paste it here.';
+  String get openInviteRowDetail =>
+      'परिवार ने लिंक भेजा है? उसे यहाँ पेस्ट करें।';
 
   @override
-  String get pasteInviteTitle => 'Paste the invite link';
+  String get pasteInviteTitle => 'न्योता लिंक पेस्ट करें';
 
   @override
-  String get pasteInviteOpen => 'Open';
+  String get pasteInviteOpen => 'खोलें';
 
   @override
   String noticeInviteAccepted(String name) {
-    return '$name\'s reports are on your phone now';
+    return '$name की रिपोर्ट अब आपके फ़ोन पर हैं';
   }
 }

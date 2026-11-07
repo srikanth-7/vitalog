@@ -57,8 +57,30 @@ class TestTrend {
   final double? high;
 
   double get change => points.last.$2 - points[points.length - 2].$2;
+  int get streak => trendStreak([for (final p in points) p.$2]);
   DateTime get previousDate => points[points.length - 2].$1;
 }
+
+/// Moves the same way in a row, ending at the latest value: +n = it went up
+/// n times running, -n = down n times, 0 = the last move was flat. Says what
+/// happened, never what it means (docs/FEATURE_IDEAS_2026-11-06.md #6).
+/// [oldestFirst] must be one test in one unit.
+int trendStreak(List<double> oldestFirst) {
+  var streak = 0;
+  for (var i = oldestFirst.length - 1; i > 0; i--) {
+    final move = (oldestFirst[i] - oldestFirst[i - 1]).sign.toInt();
+    if (move == 0 || (streak != 0 && move != streak.sign)) break;
+    streak += move;
+  }
+  return streak;
+}
+
+/// "Up 3 times in a row": shown from 3 moves the same way; null otherwise.
+String? streakNote(BuildContext context, int streak) => streak >= 3
+    ? context.l10n.trendUpStreak(streak)
+    : streak <= -3
+        ? context.l10n.trendDownStreak(-streak)
+        : null;
 
 /// Tests with at least two numeric results in the same unit. Outside-range
 /// tests first (they're what the reader came for), then the longest histories.
@@ -371,11 +393,13 @@ class TrendTile extends StatelessWidget {
     final changeText = change == 0
         ? l10n.trendNoChange
         : '${change > 0 ? '+' : '−'}${change.abs().toStringAsFixed(decimals)} $since';
+    final note = streakNote(context, trend.streak);
 
     return Semantics(
       button: true,
       label: l10n.trendSemantics(latest.name,
-          '${latest.value} ${latest.unit}'.trim(), changeText, status),
+          '${latest.value} ${latest.unit}'.trim(),
+          note == null ? changeText : '$changeText, $note', status),
       onTap: onTap,
       child: ExcludeSemantics(
         child: SizedBox(
@@ -428,6 +452,14 @@ class TrendTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: c.textMuted, fontSize: 10.5)),
+              if (note != null)
+                Text(note,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: c.textSecondary,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600)),
               const Spacer(),
               SizedBox(
                 height: 54,

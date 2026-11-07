@@ -1,5 +1,7 @@
 # Vitalog — first-run tester runbook
 
+> **Superseded by `docs/TEST_GUIDE.md` (2026-11-06)**, which merges this file with every later feature and sealed Sync v2. Kept for history.
+
 Use this checklist to test the app as a new tester, starting with an empty
 installation. Record each case as **Pass**, **Fail**, **Blocked**, or **Not
 run**. The report files in `test-data/reports/` contain synthetic data only.
@@ -38,7 +40,7 @@ run**. The report files in `test-data/reports/` contain synthetic data only.
    git-ignored local config:
 
    ```bash
-   flutter run -d 00008120-000E48CE0CBBA01E --dart-define-from-file=supabase.local.json
+   flutter run -d 00008120-000E48CE0CBBA01E --dart-define-from-file=supabase.staging.local.json
    ```
 
 4. Put the synthetic sample files on the device. For an iOS simulator, drag a
@@ -108,7 +110,7 @@ expected results:
 
 ## F. Email account and Supabase (synthetic data only)
 
-Run this section only with `supabase.local.json` configured for the dev project.
+Run this section only with `supabase.staging.local.json` configured for the staging project.
 
 | ID | Steps | Expected |
 |---|---|---|

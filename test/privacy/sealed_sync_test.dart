@@ -34,9 +34,15 @@ void main() {
       () async {
     final key = await SharingCrypto.newProfileKey();
     final box = {
-      'report': {'id': 'r1', 'lab': 'Sunrise Lab'},
+      'report': {'id': 'r1', 'profile_id': 'p1', 'lab': 'Sunrise Lab'},
       'results': [
-        {'id': 'x', 'name': 'Haemoglobin', 'value': '12.8'}
+        {
+          'id': 'x',
+          'report_id': 'r1',
+          'profile_id': 'p1',
+          'name': 'Haemoglobin',
+          'value': '12.8'
+        }
       ],
     };
     final sealed = await ReportSyncService.sealBox(key, 'report', 'r1', box);
@@ -55,6 +61,29 @@ void main() {
         await ReportSyncService.openBox(
             await SharingCrypto.newProfileKey(), row, 'report'),
         isNull);
+    // Sealed with the right key, but filed under another profile or report
+    // inside (a co-sharer planting results in someone's private history).
+    for (final bad in [
+      {...box, 'report': {'id': 'r1', 'profile_id': 'p2'}},
+      {
+        ...box,
+        'results': [
+          {'id': 'y', 'report_id': 'r9', 'profile_id': 'p1'}
+        ]
+      },
+      {
+        ...box,
+        'results': [
+          {'id': 'y', 'report_id': 'r1', 'profile_id': 'p2'}
+        ]
+      },
+    ]) {
+      final planted = {
+        ...row,
+        'sealed': await ReportSyncService.sealBox(key, 'report', 'r1', bad)
+      };
+      expect(await ReportSyncService.openBox(key, planted, 'report'), isNull);
+    }
     final bytes = base64.decode(sealed)..[20] ^= 1;
     expect(
         await ReportSyncService.openBox(

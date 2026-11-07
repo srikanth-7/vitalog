@@ -21,20 +21,74 @@
   "greetingAfternoon": "శుభ మధ్యాహ్నం",
   "greetingEvening": "శుభ సాయంత్రం",
   "greetingWithName": "{greeting}, {name}",
-  "@greetingWithName": { "placeholders": { "greeting": { "type": "String" }, "name": { "type": "String" } } },
+  "@greetingWithName": {
+    "placeholders": {
+      "greeting": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "homeVerdict": "{total} ఫలితాల్లో {good} పరిధిలో ఉన్నాయి",
-  "@homeVerdict": { "placeholders": { "good": { "type": "int" }, "total": { "type": "int" } } },
+  "@homeVerdict": {
+    "placeholders": {
+      "good": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "homeVerdictAll": "{total, plural, =1{మీ 1 ఫలితం పరిధిలో ఉంది} other{మొత్తం {total} ఫలితాలు పరిధిలో ఉన్నాయి}}",
-  "@homeVerdictAll": { "placeholders": { "total": { "type": "int" } } },
+  "@homeVerdictAll": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "homeSnapshotFor": "{name} ఆరోగ్య సారాంశం ఇదిగో",
-  "@homeSnapshotFor": { "placeholders": { "name": { "type": "String" } } },
+  "@homeSnapshotFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "lastTested": "చివరి పరీక్ష {date}",
-  "@lastTested": { "placeholders": { "date": { "type": "String" } } },
+  "@lastTested": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "periodAll": "అన్నీ",
   "periodYear": "1 సంవత్సరం",
   "periodSixMonths": "6 నెలలు",
   "historySemantics": "{test}: {from} నుండి {to} వరకు {count} రీడింగ్‌లు. తాజాది {value}.",
-  "@historySemantics": { "placeholders": { "test": { "type": "String" }, "count": { "type": "int" }, "from": { "type": "String" }, "to": { "type": "String" }, "value": { "type": "String" } } },
+  "@historySemantics": {
+    "placeholders": {
+      "test": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "homeGreetingTitle": "{name} తాజా వివరాలు",
   "tourMemberTitle": "ఒక వ్యక్తితో మొదలుపెట్టండి",
   "tourMemberBody": "మిమ్మల్ని లేదా మీరు చూసుకునే వారిని జోడించండి. ప్రతి ఒక్కరి నివేదికలు వేరుగా ఉంటాయి.",
@@ -49,7 +103,16 @@
   "walkthroughSkip": "పరిచయాన్ని దాటవేయండి",
   "walkthroughDone": "పూర్తి",
   "walkthroughStep": "{count}లో {step}వ దశ",
-  "@walkthroughStep": {"placeholders": {"step": {"type": "int"}, "count": {"type": "int"}}},
+  "@walkthroughStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "cancel": "రద్దు చేయండి",
   "switchProfileTooltip": "కుటుంబ ప్రొఫైల్ మార్చండి",
   "viewingHealthFor": "వీరి ఆరోగ్యాన్ని చూస్తున్నారు",
@@ -239,6 +302,22 @@
   },
   "noticeNothingToSync": "అన్నీ ఇప్పటికే సింక్ అయ్యాయి.",
   "noticeSyncFailed": "సింక్ విఫలమైంది. నివేదికలు ఈ ఫోన్‌లో సురక్షితంగా ఉన్నాయి — తర్వాత మళ్లీ ప్రయత్నించండి.",
+  "recoveryKeyTitle": "మీ రికవరీ కీని సేవ్ చేయండి",
+  "recoveryKeyBody": "మీ బ్యాకప్ లాక్ చేయబడింది, కాబట్టి దాన్ని మీరు మాత్రమే చదవగలరు — Vitalog కూడా చదవలేదు. ఈ ఫోన్ పోయినా లేదా రీసెట్ చేసినా, కొత్త ఫోన్‌లో మీ బ్యాకప్‌ను ఈ కీ తెరుస్తుంది.",
+  "recoveryKeyICloud": "ఇది మీ iCloud Keychainలో కూడా ఉంటుంది, కాబట్టి అదే Apple IDతో సైన్ ఇన్ అయిన iPhoneకి అడగకుండానే వస్తుంది.",
+  "recoveryKeySave": "నా పాస్‌వర్డ్‌లలో సేవ్ చేయి",
+  "recoveryKeyCopy": "కీని కాపీ చేయి",
+  "recoveryKeyDone": "నేను సేవ్ చేశాను",
+  "recoveryKeyLater": "ఈ కీని కుటుంబం ట్యాబ్‌లో మళ్లీ చూడవచ్చు.",
+  "recoveryKeyAskTitle": "మీ రికవరీ కీని ఎంటర్ చేయండి",
+  "recoveryKeyAskBody": "మీరు మొదటిసారి సింక్ చేసినప్పుడు సేవ్ చేసిన కీతో మీ బ్యాకప్ లాక్ చేయబడింది. సేవ్ చేసిన పాస్‌వర్డ్‌ల నుంచి నింపడానికి బాక్స్‌ను నొక్కండి, లేదా పేస్ట్ చేయండి.",
+  "recoveryKeyHint": "ABCD-EFGH-…",
+  "recoveryKeyUse": "నా బ్యాకప్‌ను తెరువు",
+  "recoveryKeyNotNow": "ఇప్పుడు కాదు",
+  "recoveryKeyRow": "రికవరీ కీ",
+  "recoveryKeyRowDetail": "కొత్త ఫోన్‌లో మీ బ్యాకప్‌ను తెరుస్తుంది.",
+  "noticeRecoveryKeyWrong": "ఈ కీ ఈ ఖాతా బ్యాకప్‌ను తెరవదు. కీని సరిచూసి మళ్లీ ప్రయత్నించండి.",
+  "noticeRecoveryKeyAccepted": "బ్యాకప్ తెరుచుకుంది. మీ నివేదికలను తిరిగి తెస్తున్నాం…",
   "noticeSignInRequired": "మీ నివేదికలను సింక్ చేయడానికి సైన్ ఇన్ చేయండి.",
   "noticeBackendNotConfigured": "ఈ బిల్డ్‌లో క్లౌడ్ సింక్ ఇంకా సెటప్ కాలేదు.",
   "foreignAccountTitle": "భిన్న ఖాతా సైన్ ఇన్ అయింది",
@@ -250,7 +329,13 @@
   "foreignAccountClear": "ఫోన్ తుడిచి, తిరిగి తెచ్చుకో",
   "restoreFetching": "మీ ఖాతా డేటా తీసుకోబడుతోంది…",
   "memberRemoveNamed": "“{name}” తొలగించాలా?",
-  "@memberRemoveNamed": { "placeholders": { "name": { "type": "String" } } },
+  "@memberRemoveNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "memberRemoveDetail": "వారి వివరాలు ఈ ఫోన్ నుంచి తొలగించబడతాయి.",
   "@memberRemoveDetail": {},
   "memberRemoveSyncedNote": "ఖాతా క్లౌడ్ బ్యాకప్ నుంచి కూడా ఇది తొలగించబడుతుంది.",
@@ -258,15 +343,42 @@
   "memberRemoveConfirm": "తొలగించు",
   "@memberRemoveConfirm": {},
   "familyMemberRemoved": "{name} తొలగించబడింది.",
-  "@familyMemberRemoved": { "placeholders": { "name": { "type": "String" } } },
+  "@familyMemberRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "memberRemoveBlocked": "{name} పేరుపై ఇంకా నివేదికలు ఉన్నాయి. ముందుగా వాటిని మార్చండి లేదా తొలగించండి.",
-  "@memberRemoveBlocked": { "placeholders": { "name": { "type": "String" } } },
+  "@memberRemoveBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "memberRemoveWithReports": "{name} మరియు {count} నివేదికలను తీసివేయాలా?",
-  "@memberRemoveWithReports": { "placeholders": { "name": { "type": "String" }, "count": { "type": "int" } } },
+  "@memberRemoveWithReports": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "memberRemoveWithReportsDetail": "వారి నివేదికలు, ఫలితాలు, అసలు ఫైళ్లు ఈ ఫోన్ నుండి తొలగించబడతాయి. దీన్ని రద్దు చేయలేరు.",
   "memberRemoveWithReportsConfirm": "నివేదికలతో సహా తీసివేయండి",
   "noticeMemberUpdated": "{name} మార్పులు సేవ్ అయ్యాయి",
-  "@noticeMemberUpdated": { "placeholders": { "name": { "type": "String" } } },
+  "@noticeMemberUpdated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "editMember": "వివరాలు మార్చండి",
   "saveChanges": "మార్పులు సేవ్ చేయండి",
   "photoTake": "ఫోటో తీయండి",
@@ -302,11 +414,29 @@
   "reminderInPast": "ఇంకా రాని సమయాన్ని ఎంచుకోండి",
   "remindersNotificationsOff": "రిమైండర్ సేవ్ అయింది. కానీ Vitalogకి నోటిఫికేషన్లు చూపడానికి అనుమతి లేదు, కాబట్టి గుర్తు చేయలేదు. సెట్టింగ్స్ తెరవండి నొక్కి నోటిఫికేషన్లను ఆన్ చేయండి.",
   "reminderBody": "{name} కోసం రిమైండర్",
-  "@reminderBody": { "placeholders": { "name": { "type": "String" } } },
+  "@reminderBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "reminderNext": "తదుపరి: {when}",
-  "@reminderNext": { "placeholders": { "when": { "type": "String" } } },
+  "@reminderNext": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "deleteReminderTitle": "“{title}” తొలగించాలా?",
-  "@deleteReminderTitle": { "placeholders": { "title": { "type": "String" } } },
+  "@deleteReminderTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAccountButton": "ఖాతాను తొలగించు",
   "@deleteAccountButton": {},
   "deleteAccountTitle": "ఈ ఖాతాను తొలగించాలా?",
@@ -347,11 +477,6 @@
   "sampleDataNote": "మొదటి నాలుగు ప్రొఫైళ్లు నమూనా డేటా. మీరు జోడించే సభ్యులు, అప్‌లోడ్ చేసే నివేదికలు ఈ ఫోన్‌లోనే ఉంటాయి.",
   "accountTitle": "ఖాతా",
   "signedInAs": "{email}గా సైన్ ఇన్ అయ్యారు",
-  "signOutDetail": "మీ నివేదికలు ఈ ఫోన్‌లోనే ఉంటాయి.",
-  "deleteAccountDetail": "మీ క్లౌడ్ బ్యాకప్‌ను శాశ్వతంగా తొలగిస్తుంది.",
-  "accountStatMembers": "సభ్యులు",
-  "accountStatReports": "నివేదికలు",
-  "accountStatUnsynced": "సింక్ చేయాలి",
   "@signedInAs": {
     "placeholders": {
       "email": {
@@ -359,6 +484,11 @@
       }
     }
   },
+  "signOutDetail": "మీ నివేదికలు ఈ ఫోన్‌లోనే ఉంటాయి.",
+  "deleteAccountDetail": "మీ క్లౌడ్ బ్యాకప్‌ను శాశ్వతంగా తొలగిస్తుంది.",
+  "accountStatMembers": "సభ్యులు",
+  "accountStatReports": "నివేదికలు",
+  "accountStatUnsynced": "సింక్ చేయాలి",
   "signedOutMessage": "నివేదికలను క్లౌడ్‌లో బ్యాకప్ చేయడానికి Sync ద్వారా సైన్ ఇన్ చేయండి.",
   "signIn": "సైన్ ఇన్",
   "signOut": "సైన్ అవుట్",
@@ -760,5 +890,51 @@
   "notifyAskNext": "తర్వాత మీ ఫోన్ అడుగుతుంది. “అనుమతించు” నొక్కండి.",
   "notifyAskContinue": "కొనసాగించు",
   "notifyAskNotNow": "ఇప్పుడు కాదు",
-  "notifyAskLater": "దీన్ని మీ ఫోన్ సెట్టింగ్స్‌లో ఎప్పుడైనా మార్చవచ్చు."
+  "notifyAskLater": "దీన్ని మీ ఫోన్ సెట్టింగ్స్‌లో ఎప్పుడైనా మార్చవచ్చు.",
+  "shareMember": "{name} నివేదికలను షేర్ చేయండి",
+  "shareIntro": "మీరు ఆహ్వానించిన కుటుంబ సభ్యులు {name} నివేదికలను చూడగలరు, తమ ఫోన్ నుంచే కొత్తవి జోడించగలరు. ఇది ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్ చేయబడింది: మీ కుటుంబం మాత్రమే చదవగలదు, Vitalog కూడా చదవలేదు.",
+  "shareUploadNote": "ఆహ్వానించే ముందు {name} ప్రొఫైల్, నివేదికలు సీల్ చేయబడి మీ ఖాతాలో బ్యాకప్ అవుతాయి.",
+  "shareInvite": "ఎవరినైనా ఆహ్వానించండి",
+  "sharePeople": "ఈ నివేదికలను ఎవరు చూడగలరు",
+  "shareYou": "{name} (మీరు)",
+  "shareYouPlain": "మీరు",
+  "shareSomeone": "మీ కుటుంబంలో ఒకరు",
+  "sharePending": "ఆహ్వానం పెండింగ్‌లో ఉంది",
+  "sharePendingUntil": "లింక్ {date} వరకు పనిచేస్తుంది",
+  "shareCancelInvite": "ఆహ్వానాన్ని రద్దు చేయండి",
+  "shareRemove": "తీసివేయండి",
+  "shareRemoveTitle": "{name} నివేదికలను {person}తో షేర్ చేయడం ఆపాలా?",
+  "shareRemoveMessage": "{person}కి కొత్త నివేదికలు రావు. ఇప్పటికే వారి ఫోన్‌లో ఉన్న నివేదికలు అక్కడే ఉంటాయి.",
+  "shareRemoveConfirm": "షేర్ చేయడం ఆపండి",
+  "shareMessage": "{name} ఆరోగ్య నివేదికలను Vitalogలో మీతో షేర్ చేశాను. వాటిని చూడడానికి ఈ లింక్‌ను మీ ఫోన్‌లో తెరవండి. ఇది 7 రోజుల పాటు, ఒక్కసారి మాత్రమే పనిచేస్తుంది.\n{link}",
+  "shareSubject": "{name} ఆరోగ్య నివేదికలు",
+  "shareSignIn": "షేర్ చేయడానికి సైన్ ఇన్ చేయండి. మీ ఖాతా ద్వారా మీ కుటుంబం తమ ఫోన్‌లలో నివేదికలను చూస్తారు.",
+  "shareFailed": "మీ ఖాతాను చేరుకోలేకపోయాం. కనెక్షన్ చూసి మళ్లీ ప్రయత్నించండి.",
+  "shareSample": "నమూనా వ్యక్తులను షేర్ చేయలేరు. ముందుగా మీ కుటుంబ సభ్యుడిని జోడించండి.",
+  "claimTitle": "కుటుంబ ఆహ్వానం",
+  "claimShared": "{from} {name} నివేదికలను మీతో షేర్ చేశారు",
+  "claimSharedNoFrom": "{name} నివేదికలు మీతో షేర్ చేయబడ్డాయి",
+  "claimWho": "{name} మీకు ఏమవుతారు?",
+  "claimAccept": "నా కుటుంబంలో చేర్చండి",
+  "claimNotNow": "ఇప్పుడు కాదు",
+  "combineTitle": "మీ సొంత ప్రొఫైల్‌తో కలపాలా?",
+  "combineMessage": "మీ కోసం ఇప్పటికే {name} అనే ప్రొఫైల్ ఉంది, అందులో {count, plural, =0{నివేదికలు లేవు} =1{1 నివేదిక ఉంది} other{{count} నివేదికలు ఉన్నాయి}}. కలిపితే అవి ఈ షేర్ చేసిన ప్రొఫైల్‌లోకి వెళ్తాయి, పాత ప్రొఫైల్ తీసివేయబడుతుంది. మీ పేరు, లింగం, పుట్టిన సంవత్సరం అలాగే ఉంటాయి; రెండింటిలో ఉన్న ఫైల్ ఒక్కసారే ఉంచబడుతుంది.",
+  "combineConfirm": "కలపండి",
+  "combineKeep": "వేర్వేరుగా ఉంచండి",
+  "claimPrivacy": "నివేదికలు ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్ చేయబడి ఈ ఫోన్‌కి వస్తాయి. మీరు కూడా {name} కోసం నివేదికలు జోడించవచ్చు, షేర్ చేసుకునే అందరూ వాటిని చూస్తారు.",
+  "claimSignIn": "అంగీకరించడానికి సైన్ ఇన్ చేయండి. మీ కుటుంబం మాత్రమే చదవగలిగేలా సీల్ చేయబడి నివేదికలు మీ ఖాతాకు వస్తాయి.",
+  "claimAlready": "ఈ నివేదికలు ఇప్పటికే మీ దగ్గర ఉన్నాయి.",
+  "claimOpen": "తెరవండి",
+  "claimInvalid": "ఇది Vitalog ఆహ్వాన లింక్ కాదు. పూర్తిగా కాపీ చేశారో లేదో చూడండి.",
+  "claimGone": "ఈ ఆహ్వానం ఇక పనిచేయదు. కొత్త లింక్ అడగండి.",
+  "claimUsed": "ఈ ఆహ్వానాన్ని ఇప్పటికే ఎవరో ఉపయోగించారు. ప్రతి లింక్ ఒక్కసారే పనిచేస్తుంది, కాబట్టి కొత్తది అడగండి.",
+  "claimExpired": "ఈ ఆహ్వానం గడువు ముగిసింది. లింక్‌లు 7 రోజులు పనిచేస్తాయి, కాబట్టి కొత్తది అడగండి.",
+  "claimLimited": "చాలా ఎక్కువ ప్రయత్నాలు. ఒక గంట ఆగి, లింక్‌ను మళ్లీ తెరవండి.",
+  "claimFailed": "Vitalogను చేరుకోలేకపోయాం. కనెక్షన్ చూసి మళ్లీ ప్రయత్నించండి.",
+  "claimRecoveryKey": "ముందుగా మీ రికవరీ కీని ఎంటర్ చేసి, తర్వాత లింక్‌ను మళ్లీ తెరవండి.",
+  "openInviteRow": "ఆహ్వాన లింక్‌ను తెరవండి",
+  "openInviteRowDetail": "కుటుంబం మీకు లింక్ పంపారా? ఇక్కడ పేస్ట్ చేయండి.",
+  "pasteInviteTitle": "ఆహ్వాన లింక్‌ను పేస్ట్ చేయండి",
+  "pasteInviteOpen": "తెరవండి",
+  "noticeInviteAccepted": "{name} నివేదికలు ఇప్పుడు మీ ఫోన్‌లో ఉన్నాయి"
 }

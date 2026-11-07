@@ -544,8 +544,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recoveryKeyCopy => 'Copy key';
 
   @override
-  String get recoveryKeyCopied =>
-      'Recovery key copied. Paste it somewhere safe.';
+  String get recoveryKeyCopiedClears =>
+      'Recovery key copied. Paste it somewhere safe now: it\'s cleared from the clipboard in 1 minute.';
 
   @override
   String get recoveryKeyDone => 'I\'ve saved it';
@@ -1274,6 +1274,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trendNoChange => 'No change';
 
   @override
+  String trendUpStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Up $_temp0 in a row';
+  }
+
+  @override
+  String trendDownStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Down $_temp0 in a row';
+  }
+
+  @override
   String trendSemantics(
       String name, String value, String change, String status) {
     return '$name, latest $value, $change, $status';
@@ -1713,6 +1733,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get claimNotNow => 'Not now';
+
+  @override
+  String get combineTitle => 'Combine with your own profile?';
+
+  @override
+  String combineMessage(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reports',
+      one: '1 report',
+      zero: 'no reports',
+    );
+    return 'You already have a profile for yourself, $name, with $_temp0. Combining moves them into this shared profile and removes the old one. Your name, sex and birth year are kept, and a file that\'s in both is kept once.';
+  }
+
+  @override
+  String get combineConfirm => 'Combine';
+
+  @override
+  String get combineKeep => 'Keep separate';
 
   @override
   String claimPrivacy(String name) {

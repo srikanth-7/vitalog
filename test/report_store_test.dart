@@ -242,6 +242,40 @@ void main() {
     expect((await store.load()).reports, hasLength(3));
   });
 
+  test('combining a profile into a shared one moves reports, keeps a file once',
+      () async {
+    final store = LocalReportStore(
+        directory: () async => dir, cipher: cipher, vault: vault);
+    final repo = FamilyHealthRepositoryImpl(MockFamilyHealthDataSource(),
+        store: store, recognizer: _Recognizer(), sync: ReportSyncService());
+    File photo(String name, List<int> bytes) =>
+        File('${dir.path}/$name')..writeAsBytesSync(bytes);
+    const jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 1, 2, 3];
+    final own = await repo.addMember(name: 'Ramesh K', relation: 'You', age: 60);
+    final shared =
+        await repo.addMember(name: 'Ramesh Kumar', relation: 'You', age: 61);
+    for (final (who, file, bytes) in [
+      (shared.id, 's.jpg', jpeg),
+      (own.id, 'dup.jpg', jpeg),
+      (own.id, 'mine.jpg', [...jpeg, 9]),
+    ]) {
+      await repo.addReport(
+          profileId: who, sourcePath: photo(file, bytes).path, fileName: file);
+    }
+
+    await repo.combineMembers(own.id, shared.id);
+
+    final members = await store.loadMembers();
+    expect(members.map((m) => m.id), [shared.id]);
+    expect(members.single.name, 'Ramesh K');
+    expect(members.single.age, 60);
+    final reports = (await store.load()).reports;
+    expect(reports, hasLength(2));
+    expect(reports.every((r) => r.profileId == shared.id), isTrue);
+    expect(reports.where((r) => r.fileName == 'mine.jpg').single.synced,
+        isFalse);
+  });
+
   test('reminders are stored encrypted and wiped with the phone data',
       () async {
     final store = LocalReportStore(

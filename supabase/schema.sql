@@ -172,6 +172,10 @@ grant execute on function public.may_take_profile(text) to authenticated;
 create or replace function public.drop_orphan_profile() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
+  -- Whoever lost access can't use a fresh claim (may_take_profile's
+  -- 10 minutes) to walk straight back in: the invite counts as old.
+  update public.invites set used_at = '-infinity'
+    where profile_id = old.profile_id and used_by = old.user_id;
   if not exists (select 1 from public.profile_keys
                  where profile_id = old.profile_id) then
     delete from public.sealed_reports where profile_id = old.profile_id;
@@ -189,7 +193,7 @@ create trigger profile_keys_orphan after delete on public.profile_keys
 -- 6. Opening and claiming an invite. The phone sends the claim token (hex);
 -- the server checks sha256(token) against claim_hash. Returns a status, not
 -- an error, so a wrong token's count survives (an exception would roll it
--- back). Wrong, unknown and locked invites all answer 'gone'.
+-- back). Wrong and unknown invites both answer 'gone'.
 create or replace function public.open_invite(
   p_id text, p_token text, p_claim boolean default false)
 returns jsonb language plpgsql security definer set search_path = '' as $$
@@ -201,14 +205,19 @@ begin
   if uid is null then
     return jsonb_build_object('status', 'signed_out');
   end if;
+  delete from public.invite_failures
+    where user_id = uid and at < now() - interval '1 hour';
   if (select count(*) from public.invite_failures f
       where f.user_id = uid and f.at > now() - interval '1 hour') >= 10 then
     return jsonb_build_object('status', 'limited');
   end if;
   select * into inv from public.invites i where i.id = p_id for update;
   -- Step by step: SQL doesn't promise to short-circuit OR, and decode()
-  -- must never see a malformed token.
-  ok := found and inv.failed_attempts < 5 and p_token ~ '^[0-9a-f]{64}$';
+  -- must never see a malformed token. No per-invite lockout: the token is
+  -- 256 bits (unguessable), and a lockout would let anyone who saw the
+  -- link's id (host logs) burn the invite with 5 wrong tries.
+  -- failed_attempts is still counted, for the record.
+  ok := found and p_token ~ '^[0-9a-f]{64}$';
   if ok then
     ok := rtrim(translate(encode(sha256(decode(p_token, 'hex')), 'base64'),
                           '+/', '-_'), '=') = inv.claim_hash;

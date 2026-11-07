@@ -206,58 +206,67 @@ class CategoryCard extends StatelessWidget {
     final c = context.colors;
     final l10n = context.l10n;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final meta = lastDate == null
+        ? l10n.testsCount(testCount)
+        : '${l10n.testsCount(testCount)} · ${formatDate(lastDate!)}';
     return TapCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
       // Each group in its own soft tint, icon on a surface circle.
       color: categorySoft(category.color, c, dark: dark),
       borderColor: categorySoft(category.color, c, dark: dark),
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: ShapeDecoration(
-                    shape: const CircleBorder(), color: c.surface),
-                child: Icon(category.icon,
-                    size: 19,
-                    color: categoryInk(category.color, c, dark: dark)),
-              ),
-              const Spacer(),
-              // Narrow tiles (two panes, long languages): shrink, don't spill.
-              if (flaggedCount > 0)
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Pill(
-                        label: l10n.outsideRangeCount(flaggedCount),
-                        color: c.danger,
-                        background: c.dangerSoft),
-                  ),
+      // Screen readers hear the group name first; the pill sits before it visually.
+      child: Semantics(
+        label: [
+          category.label(l10n),
+          if (flaggedCount > 0) l10n.outsideRangeCount(flaggedCount),
+          meta,
+        ].join(', '),
+        excludeSemantics: true,
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: ShapeDecoration(
+                      shape: const CircleBorder(), color: c.surface),
+                  child: Icon(category.icon,
+                      size: 19,
+                      color: categoryInk(category.color, c, dark: dark)),
                 ),
+                const Spacer(),
+                // Narrow tiles (two panes, long languages): shrink, don't spill.
+                if (flaggedCount > 0)
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Pill(
+                          label: l10n.outsideRangeCount(flaggedCount),
+                          color: c.danger,
+                          background: c.dangerSoft),
+                    ),
+                  ),
+              ]),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(category.label(l10n),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                        fontSize: 13)),
+                const SizedBox(height: 3),
+                Text(meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: c.textSecondary))
+              ]),
             ]),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(category.label(l10n),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: c.textPrimary,
-                      fontSize: 13)),
-              const SizedBox(height: 3),
-              Text(
-                  lastDate == null
-                      ? l10n.testsCount(testCount)
-                      : '${l10n.testsCount(testCount)} · ${formatDate(lastDate!)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: c.textSecondary))
-            ]),
-          ]),
+      ),
     );
   }
 }

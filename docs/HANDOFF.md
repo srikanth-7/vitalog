@@ -13,7 +13,7 @@ flutter analyze                         # expect: No issues found
 flutter test                            # expect: All tests passed (60)
 ```
 
-`supabase.local.json` (project root, git-ignored) holds the dev Supabase
+`supabase.staging.local.json` (project root, git-ignored) holds the staging Supabase
 URL + publishable key. Never commit it; never add the secret/service-role key.
 
 ## 1. Android build (blocked on the office network)
@@ -24,7 +24,7 @@ URL + publishable key. Never commit it; never add the secret/service-role key.
 Android build currently fails until it's fetched once**:
 
 ```bash
-flutter build apk --debug --dart-define-from-file=supabase.local.json
+flutter build apk --debug --dart-define-from-file=supabase.staging.local.json
 ```
 
 - If `16.0.0-beta1` doesn't resolve, check the latest version on
@@ -39,7 +39,7 @@ On Xcode 27.1, `flutter build ios --simulator` fails a two-architecture
 `lipo` check (Flutter bug, not ours). Use:
 
 ```bash
-flutter run -d "iPhone 16 Plus" --dart-define-from-file=supabase.local.json
+flutter run -d "iPhone 16 Plus" --dart-define-from-file=supabase.staging.local.json
 ```
 
 ## 3. Supabase email sign-up + Sync (PENDING #1) — fake data only

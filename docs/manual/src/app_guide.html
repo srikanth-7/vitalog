@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Vitalog App Guide</title>
+<link rel="stylesheet" href="style.css"></head><body>
+
+<section class="cover">
+  <div class="mark"><svg width="44" height="44" viewBox="0 0 44 44"><path d="M4 22h8l4-10 6 22 5-16 3 4h6" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="37" cy="22" r="3.4" fill="#E86A55"/></svg></div>
+  <h1>Vitalog — App Guide</h1>
+  <div class="sub">Every feature, how it works underneath, and how we got here</div>
+  <div class="meta">Family health records · Flutter (iOS &amp; Android) · Status as of 6 November 2026<br>
+  Branch <code>family-health-architecture</code> · 72 Dart source files (~20,500 lines) · 33 test files, 169 automated tests · analyzer clean</div>
+  <p class="small" style="margin-top:30pt">Companion: <b>Vitalog User Manual</b> (how to use each screen, with screenshots). Sources this guide is built from: AGENTS.md, docs/HOW_IT_WORKS.md, docs/PENDING_TASKS.md, docs/SHARING.md, the security audit, the handoff notes, and the transcripts of all 15 Claude Code sessions on this project (26 Oct – 6 Nov 2026).</p>
+</section>
+
+<section class="toc"><h2>Contents</h2><ol>
+<li>What Vitalog is</li><li>Product rules (non-negotiable)</li><li>The big picture</li><li>Screens and navigation</li>
+<li>Adding a report: the reading pipeline</li><li>The parser and categories</li><li>Judging results: printed and usual ranges</li>
+<li>Home dashboard, charts and trends</li><li>Editing, review and "wrong person"</li><li>Family members, photos, duplicates</li>
+<li>Reminders</li><li>Display settings, Simple mode, themes, languages</li><li>Privacy and encryption on the phone</li>
+<li>Accounts, Sync v2 and the recovery key</li><li>Family sharing and invites</li><li>Big screens: iPhone Duo and foldables</li>
+<li>Design system and motion</li><li>Backend (Supabase)</li><li>Code map</li><li>Testing</li>
+<li>Project history (all sessions)</li><li>Security work</li><li>Status, pending work and next steps</li><li>Feature ideas</li></ol></section>
+
+<section class="chapter"><h2>1. What Vitalog is</h2>
+<p>Vitalog is a <b>private family health record for lab reports</b>. You pick a family member, add a lab report (camera photo, photo from the library, PDF, or almost any file), and the app reads it <b>on the phone</b>, pulls out every test (name, value, unit, reference range, high/low), files each test into a health group (Blood &amp; CBC, Glucose, Kidney, Liver, Lipid, Thyroid, Vitamins, Iron, Urine and more), and shows it on a per-person timeline and dashboard. Over time it shows how each value changes.</p>
+<p>It is <b>not</b> a medical provider: it never diagnoses, never invents a "health score", and only summarises what the lab printed.</p>
+<div class="note"><b>The one-sentence promise:</b> reports are read on this phone and nothing leaves it unless you tap <b>Sync</b> — and even then the server only stores sealed (end-to-end encrypted) boxes it cannot read.</div>
+<h3>Who it is for</h3>
+<ul><li>A family member (often the adult child) who looks after the reports of parents, partner and children.</li>
+<li>Older people themselves — hence <b>Simple mode</b>, plain-language permission prompts, big buttons, and Telugu / Hindi.</li>
+<li>India-first: Indian lab formats (Thyrocare, SRL, Dr Lal PathLabs, Apollo, Metropolis), Indian number grouping (2,50,000), day-first dates, Indian reference sources.</li></ul>
+</section>
+
+<section class="chapter"><h2>2. Product rules (non-negotiable)</h2>
+<table><tr><th>Rule</th><th>What it means in practice</th></tr>
+<tr><td>Offline-first / privacy</td><td>Health data never leaves the device except via explicit Sync. No analytics, crash reporters, cloud OCR or AI calls that see report content without the product owner's sign-off.</td></tr>
+<tr><td>No manual data entry</td><td>Users never type results in. Anything the parser is unsure of is tagged <i>Needs review</i>; users may <i>correct</i> a value but never enter one from scratch.</td></tr>
+<tr><td>No health score, no judging</td><td>Status comes from the printed H/L flag or the printed range. Built-in "usual ranges" are used only when nothing is printed, and labelled as such.</td></tr>
+<tr><td>Status is never colour-only</td><td>Every high/low has a word and an icon as well as a colour.</td></tr>
+<tr><td>No hard-coded strings / colours</td><td>Strings in <code>lib/l10n/app_en.arb</code>; colours from <code>context.colors</code> tokens (light + dark).</td></tr>
+<tr><td>Motion</td><td>UI animations ≤ 250 ms, transform/opacity only, and everything honours the system "Reduce Motion".</td></tr>
+<tr><td>Architecture</td><td>presentation → domain → data. Screens talk only to <code>HealthBloc</code>.</td></tr>
+<tr><td>Never rename stored identifiers</td><td>The app was renamed from <i>Fammo</i>. Encryption tags <code>FAMMO1/FAMMO2</code>, Keychain entries <code>fammo.*</code> and the accent id <code>fammo</code> keep the old name so existing data still opens.</td></tr></table>
+<h3>Key product decisions (with dates)</h3>
+<table><tr><th>Date</th><th>Decision</th></tr>
+<tr><td>2026-10-22</td><td>After Sync everything stays on the phone; Sync is a backup. Original documents never upload. The server sees only opaque profile ids.</td></tr>
+<tr><td>2026-10-23</td><td>Sharing is end-to-end encrypted: equal access (no owner), "You" is per account, no email matching, invites are links with the secret in the <code>#fragment</code>.</td></tr>
+<tr><td>2026-10-25</td><td>Restore has no button: signing in quietly pulls the account's data. Pushing still needs the Sync tap.</td></tr>
+<tr><td>2026-10-26</td><td>The Face ID / fingerprint lock on original documents is the user's choice (opt-in), explained before any system prompt.</td></tr>
+<tr><td>2026-11-03</td><td>Member names reach the server only sealed (Sync v2). Never send a member field outside a sealed box.</td></tr>
+<tr><td>2026-11-06</td><td><code>vitalog.app</code> is owned by someone else — a new invite domain must be bought before anyone outside the team creates an invite.</td></tr></table>
+</section>
+
+<section class="chapter"><h2>3. The big picture</h2>
+<pre>
+ ┌──────────────────────────── your phone ─────────────────────────────┐
+ │  Screens (presentation/) ──events──▶ HealthBloc ──▶ Repository       │
+ │        ▲                                 │              │            │
+ │        └──────────── new state ──────────┘              ▼            │
+ │   DocumentReader → OCR (Apple Vision / ML Kit) → Parser → Store      │
+ │                                              (AES-256-GCM files)     │
+ └──────────────────────────────────────────┬──────────────────────────┘
+                                            │ only when you tap Sync
+                                            ▼
+              Supabase: Auth + Postgres (row-level security), sealed boxes only
+</pre>
+<ul><li><b>Everything happens on the phone</b>: reading, sorting, judging high/low, charts. Works in airplane mode.</li>
+<li><b>The server is an encrypted backup and the sharing channel</b>. It never sees original documents, names, test names, values or dates.</li>
+<li><b>Layers</b>: <i>presentation</i> (screens, bloc), <i>domain</i> (plain entities and rules), <i>data</i> (reading files, OCR, parser, encryption, storage, sync). <code>family_health_dependencies.dart</code> is the composition root.</li></ul>
+<h3>Technology</h3>
+<table><tr><th>Area</th><th>Choice</th></tr>
+<tr><td>App</td><td>Flutter / Dart, BLoC (flutter_bloc 9), clean architecture</td></tr>
+<tr><td>OCR</td><td>iOS: Apple Vision + PDFKit (<code>ReportOcrPlugin</code> in AppDelegate.swift). Android: ML Kit text recognition (bundled Latin model) + PdfRenderer (MainActivity.kt). Both over the <code>vitalog/report_ocr</code> channel.</td></tr>
+<tr><td>Storage</td><td>Encrypted JSON files in the app's documents folder; keys in Keychain / Keystore</td></tr>
+<tr><td>Crypto</td><td>AES-256-GCM at rest; X25519 + HKDF + AES-GCM for sealed sync and sharing; Ed25519 for signed range tables</td></tr>
+<tr><td>Backend</td><td>Supabase (Auth: email/password + native Google sign-in; Postgres with RLS; one edge function <code>delete-account</code>)</td></tr>
+<tr><td>Notifications</td><td>flutter_local_notifications (phone-only reminders)</td></tr>
+<tr><td>Links</td><td>app_links (invite links), share_plus</td></tr>
+<tr><td>Languages</td><td>English, Telugu, Hindi (ARB files, <code>flutter gen-l10n</code>)</td></tr></table>
+</section>
+
+<section class="chapter"><h2>4. Screens and navigation</h2>
+<pre>
+App start ─▶ Splash (logo draws itself; the coral dot beats while data loads)
+          ─▶ first launch only: 3 welcome pages ─▶ sign-in offer ─▶ first-run tour
+          ─▶ Dashboard: 4 tabs + floating bottom tray
+               ├─ Home ........ greeting, At a glance, Needs attention, trends,
+               │                latest report, categories, recent results
+               ├─ Categories .. tested groups, then "Yet to test" / "When your doctor advises"
+               │                 └─ group ─▶ category results ─▶ test history (chart, Edit)
+               ├─ Reports ..... timeline, Add (camera / photos / file), Sync
+               │                 └─ report ─▶ report dashboard (Home for that report only)
+               └─ Family ...... members, add/edit/remove, share, account card,
+                                reminders, settings, recovery key, open an invite link
+</pre>
+<h3>The bottom tray (thumb zone)</h3>
+<p>"Read at the top, act at the bottom." One floating container holds the <b>dock row</b> — member switcher (always shows who you're viewing), Sync chip (on Reports), <b>Add a report</b> — and the <b>tabs</b>. The selected tab opens into a pill with its label over a sliding brand-coloured tile; the others show only their painted glyph. Each glyph plays a small moment when selected (the house draws a pulse, a tile becomes the dot, report lines scan in, the child hops). The dock hides on the Family tab.</p>
+<h3>Item actions</h3>
+<p>Long-press any item → bottom sheet of actions; a ⋯ button offers the same for discoverability. Menus are iOS-style pull-downs (<code>showPullDownMenu</code>); anything irreversible goes through an action-sheet (<code>showDestructiveSheet</code>) that says exactly what will be removed.</p>
+<h3>The 10-second rule</h3>
+<p>Shown the Home screen for 10 seconds, a stranger must be able to say "it's for family lab results". So the headline says what you're looking at ("Here's Maya's health snapshot"), the time greeting is the small line above, and empty screens show the health groups instead of a blank page.</p>
+</section>
+
+<section class="chapter"><h2>5. Adding a report: the reading pipeline</h2>
+<pre>
+ReportsScreen ──Add sheet──▶ camera / image_picker / file_picker
+     │ UploadReport(path, name)
+     ▼
+HealthBloc ─▶ Repository.addReport
+     │   LocalReportStore.keepOriginal  (encrypt with the vault key)
+     │   save report (status: processing) ──▶ timeline shows "Reading…"
+     ├─▶ processReport
+     │     readOriginal (decrypt in memory — never written to disk in plain)
+     │     DocumentReader: detect type from the BYTES
+     │        PDF / image → native OCR (rows)      .docx/.xlsx/CSV/text/HTML → read in Dart
+     │        .eml → attached PDF/photo or body    .doc/.xls/zip/binary → Unsupported
+     │     LabReportParser (in Isolate.run, UI stays smooth)
+     │     judge (printed flag → printed range → usual range) ; save (under a lock)
+     ▼
+HealthNotice (ready | needs review | failed | duplicate | other person) → snackbar with "View"
+</pre>
+<table><tr><th>Status</th><th>When</th><th>User can</th></tr>
+<tr><td><b>Reading…</b></td><td>While OCR + parsing run (the user keeps using the app; a scan-beam animation shows on the card)</td><td>Cancel (deletes the report)</td></tr>
+<tr><td><b>Ready</b></td><td>Tests found, date found, every test has a usable range</td><td>Open it</td></tr>
+<tr><td><b>Needs review</b></td><td>Report date not found, or any test without a usable range, or an unknown test needing a category</td><td>Edit / "Looks right" / pick a category</td></tr>
+<tr><td><b>Failed</b></td><td>No tests found, OCR error, timed out after 90 s, or unsupported file</td><td>Try again (not for unsupported files)</td></tr></table>
+<h3>Safety nets</h3>
+<ul><li><b>Size caps</b>: huge files and zip bombs are refused (including zip entries that lie about their size).</li>
+<li><b>Timeout</b>: reading stops after 90 seconds (<i>timed out</i>, Try again).</li>
+<li><b>Vanished report</b>: if the user deletes/cancels while reading, nothing is saved.</li>
+<li><b>Leftover copies</b>: temporary <code>scan-*.pdf</code> files left by a killed upload are swept on next start; Android cache copies are deleted after reading.</li>
+<li><b>Duplicates</b>: the same file is caught on upload (file hash); the same paper report from another file is caught after reading (same member, printed date, lab, and every test with the same value). The copy is dropped and "View" opens the one kept. Undated reports are never called duplicates.</li>
+<li><b>Wrong person</b>: the parser reads the printed patient name (kept on the phone only). If it doesn't match the member's first name, the timeline offers <i>Keep here</i> / <i>Move to…</i>.</li></ul>
+</section>
+
+<section class="chapter"><h2>6. The parser and categories</h2>
+<p><code>LabReportParser</code> is rule-based (no AI). Input: one string per printed row, columns joined by two spaces.</p>
+<ul><li>A row is a test if its start matches a <b>catalog alias</b> (~300 spellings in <code>lab_test_catalog.dart</code>, matched in one pass with an <code>AliasTrie</code>; longest wins).</li>
+<li>Unknown tests are accepted only under a recognised section heading <i>and</i> with value + unit + range. A complete row the catalog doesn't know and that isn't under a known heading goes to <b>Other</b> as <i>Needs review</i>; the user files it once and the choice is remembered (encrypted) for later reports.</li>
+<li>Values must be standalone numbers (so "25-OH" or "T3" aren't values). Indian grouping <code>2,50,000</code> is supported.</li>
+<li>Status: printed H/L flag wins; otherwise value vs. printed range. Ranges printed per sex ("M: 13–17 F: 12–15.5") are judged with the member's sex.</li>
+<li>Dates are day-first (India/UK) unless impossible; date-of-birth lines are ignored. Report date, collection date and upload date are kept separate — upload date is never used as a medical date.</li>
+<li>Lab name is cut at the first address/contact marker; unknown test names lose phones, emails and links (<code>Redactor</code>).</li>
+<li>OCR quirks handled: Cyrillic-misread units → catalog's typical unit; <code>HIU/mL</code> → <code>µIU/mL</code>.</li></ul>
+<h3>Categories (predefined, 17 groups)</h3>
+<p>Defined in <code>domain/health_categories.dart</code>, each with its <b>key tests</b>. The Categories tab shows <b>Tested</b> groups (with "Not yet: …" listing missing key tests) and then greyed <b>Yet to test</b> groups. "On advice" groups — pancreas, cancer markers, hormones, infections, clotting — list example tests under "When your doctor advises" and are never flagged as missing. Key tests only point out what's missing; they never judge results. A test can belong to more than one group.</p>
+</section>
+
+<section class="chapter"><h2>7. Judging results: printed and usual ranges</h2>
+<ol><li><b>The printed range always wins</b> (and a printed H/L flag wins over everything).</li>
+<li>If <b>no range is printed</b>, the repository tries a built-in <b>usual range</b> (<code>domain/reference/</code>, compiled as constants; sources: WHO, Indian, ADA/RSSDI, ATP III, KDIGO; the only source document is <code>docs/REFERENCE_RANGES.md</code>).</li>
+<li>A usual range is applied only when <b>unit, sex and age band are all known</b> — it never guesses. Adult ranges are skipped for under-18s (except the WHO haemoglobin cut-off).</li>
+<li>Results judged this way show <i>usual range</i> wording and the source — never "per report". This judgement stays on the phone and is never synced.</li></ol>
+<p>Future range updates from a server must pass <code>verifyRangeTable</code>: an Ed25519 signature check with the public key shipped in the app, and no downgrade to older editions. The private signing seed lives in the original Mac's Keychain.</p>
+<div class="warn">Open: the built-in ranges need a clinician's sign-off before launch; pediatric ranges need clinical sources.</div>
+</section>
+
+<section class="chapter"><h2>8. Home dashboard, charts and trends</h2>
+<p>Home order: greeting → <b>At a glance</b> / <b>Needs attention</b> → <b>trends</b> → latest report → categories → recent results.</p>
+<ul><li><b>At a glance</b>: hero count of latest results within range, a stacked status bar, and a legend with icon + word + count (never colour-only).</li>
+<li><b>Needs attention</b>: latest high/low results. No confetti when anything needs attention.</li>
+<li><b>Trend tiles</b>: latest value, change since previous, a sparkline drawn over the printed-range band; tap → the test's history. After 3 moves the same way a tile says "Up 3 times in a row" / "Down…" — it states what happened, never what it means. Readings in different units are never mixed.</li>
+<li><b>Category tiles</b>: count each test's latest high/low as "N outside range".</li>
+<li><b>Test history</b>: every dated value, a chart of same-unit readings over the range band, Edit at the bottom.</li>
+<li>Chart colours are dedicated <code>chart*</code> tokens validated for colour-blind distinguishability in both themes.</li>
+<li>Pure helpers (<code>latestPerTest</code>, <code>StatusTally</code>, <code>trendsFor</code>, <code>trendStreak</code>, <code>parseRange</code>) are unit-tested.</li>
+<li>Trends are hidden in Simple mode and on a single report's dashboard. Home sections can be hidden in settings; hidden sections aren't built at all.</li></ul>
+<p>Tapping a report on the timeline opens the <b>report dashboard</b>: the same Home screen narrowed to that report's results (always shows every section, updates live while reading).</p>
+</section>
+
+<section class="chapter"><h2>9. Editing, review and "wrong person"</h2>
+<ul><li><b>Edit</b> (test detail → bottom bar): fix value, unit, range or category. <code>updateResult</code> re-judges the status, marks the result <i>edited</i>, and flips a <i>Needs review</i> report to <i>Ready</i> once nothing is left to review.</li>
+<li><b>Looks right</b>: confirms a flagged result without changing it.</li>
+<li><b>Compare with original</b>: shows the original document next to the value — decrypted in memory only.</li>
+<li><b>Category picker</b>: files an unknown test; remembered by lowercased test name for future reports.</li>
+<li><b>Move to…</b>: moves a report to another member (<code>assignReport</code>), re-judging usual ranges for the new person's sex/age.</li></ul>
+</section>
+
+<section class="chapter"><h2>10. Family members, photos, duplicates</h2>
+<ul><li><b>Add</b> (Family tab or the member switcher): name, relation (stored as a fixed key so it translates), age (stored as a birth year so it stays current), sex (or Not set); photo via Edit details. Saved encrypted in <code>members.json</code>.</li>
+<li><b>Edit details</b>: long-press on the Family tab; re-judges usual ranges.</li>
+<li><b>Remove</b>: if the member has reports, one confirmation names how many go; removes reports, results, originals, photo and (when signed in) their server rows. For a <i>shared</i> member, removing means leaving — shared reports stay for the others.</li>
+<li><b>Photos</b>: <code>photos/&lt;id&gt;.bin</code>, encrypted, never in members.json or anything synced.</li>
+<li><b>Switching</b>: from the dock keeps the current tab; from the Family list goes to Home.</li>
+<li>Real installs start <b>empty</b> (no sample family). The sample family (Maya, Arjun, Anika, Meera) exists only in tests and the manual's screenshots.</li></ul>
+</section>
+
+<section class="chapter"><h2>11. Reminders</h2>
+<p><code>lib/features/reminders/</code>: phone-only scheduled notifications (e.g. "Next thyroid test"). Stored encrypted in <code>reminders.json</code>. <code>RemindersCubit</code> schedules the next 4 occurrences per reminder and re-syncs on start and whenever members change (a removed member's reminders go). Entry points: the bell on Home (with a dot when one is due within 7 days) and the Family tab.</p>
+<p><b>Privacy on the lock screen</b>: only the user's own title and "Reminder for {name}" — never test names or values. Before Android's permission prompt the app explains why; after a refusal it offers <i>Open Settings</i>.</p>
+<p class="small">Not built: reminders that reach other family members' phones (needs sharing to be live).</p>
+</section>
+
+<section class="chapter"><h2>12. Display settings, Simple mode, themes, languages</h2>
+<p>Saved in a plain <code>settings.json</code> (not health data) via <code>SettingsCubit</code>.</p>
+<table><tr><th>Setting</th><th>Effect</th></tr>
+<tr><td><b>Simple mode</b></td><td>Text ≥ 1.3×, bold text, darker greys, 56 px buttons and bigger icons, a big "Add a report" button, categories grid hidden, plain status words ("Higher than range"), numbers without count-up, notices stay 10 s, trends hidden.</td></tr>
+<tr><td>Home sections</td><td>Show/hide: At a glance, trends, latest report, categories, recent results, range note.</td></tr>
+<tr><td>Theme</td><td>System / Light / Dark.</td></tr>
+<tr><td>Accent</td><td>Vitalog, Ocean, Plum, Ember, Graphite — re-hues brand colours and near-grey neutrals (hue only, so contrast holds). Status colours and the logo never change.</td></tr>
+<tr><td>Language</td><td>System, English, తెలుగు, हिन्दी. All strings are translated (drafts awaiting native-speaker review: <code>docs/translations_review.csv</code>).</td></tr>
+<tr><td>Lock originals</td><td>Face ID / fingerprint / screen-lock PIN before showing an original document (see §13).</td></tr></table>
+</section>
+
+<section class="chapter"><h2>13. Privacy and encryption on the phone</h2>
+<table><tr><th>What</th><th>How it's protected</th></tr>
+<tr><td>reports.json, members.json, category choices, reminders, photos</td><td>AES-256-GCM, tag <code>FAMMO1</code>; key in Keychain (iOS) / Keystore (Android), this device only, no prompt. Old plaintext files are migrated automatically.</td></tr>
+<tr><td>Original documents</td><td>AES-256-GCM with the separate <b>vault</b> key, tag <code>FAMMO2</code>. Opt-in lock: iOS Keychain <code>userPresence</code> (Face ID / passcode); Android 11+ Keystore key needing fingerprint/face or screen-lock PIN per use (not invalidated by enrolling a new fingerprint). Re-locks after 2 minutes away.</td></tr>
+<tr><td>Decrypted content</td><td>Only ever in memory (OCR and "Compare with original").</td></tr>
+<tr><td>App switcher</td><td>A brand-coloured cover hides health data in Recents (iOS native cover; Android 13+ no thumbnail, older uses FLAG_SECURE).</td></tr>
+<tr><td>Backups</td><td>Android backup and device-to-device transfer exclude app data.</td></tr>
+<tr><td>Recovery key copy</td><td>Clipboard is cleared 60 s after Copy.</td></tr>
+<tr><td>Permission prompts</td><td>Plain explanation before every system prompt (camera, photos, Face ID, notifications), written for older users; Open Settings after a refusal.</td></tr></table>
+<p>Before the first report the app explains the originals lock and only "Turn on" leads to a system prompt; a toggle on the Family tab changes it later.</p>
+</section>
+
+<section class="chapter"><h2>14. Accounts, Sync v2 and the recovery key</h2>
+<h3>Sign-in</h3>
+<p>Optional. Email/password (confirmation email, reset) or native Google sign-in (<code>google_sign_in</code> → <code>signInWithIdToken</code>). Builds without the Supabase <code>--dart-define</code>s run fully offline and say "Cloud sync isn't set up in this build yet."</p>
+<h3>Sync v2 (sealed)</h3>
+<ol><li>Every family profile has its own random AES-256 <b>profile key</b>.</li>
+<li>Each report (with its results) and each member is <b>sealed</b> with that key on the phone.</li>
+<li>Profile keys are <b>wrapped</b> for the account's X25519 public key.</li>
+<li>Server tables: <code>account_keys</code>, <code>profile_keys</code>, <code>sealed_profiles</code>, <code>sealed_reports</code>. The server sees opaque ids, sizes and timestamps — never names, lab, file names, test names, values, ranges or dates.</li>
+<li>Data stays on the phone after Sync. Originals never upload.</li>
+<li>Deleting a report or member deletes its server rows (real deletes). <b>Delete account</b> (Family tab) removes everything via the <code>delete-account</code> edge function.</li></ol>
+<h3>The account key and recovery key</h3>
+<p>The account's private key lives in the Keychain (iOS: synchronizable → iCloud Keychain, so a new iPhone gets it) plus a <b>recovery key</b> shown once after the first Sync ("Save to my passwords" or Copy; again from the Family tab). A phone without the key asks "Enter your recovery key". The account key is never replaced — that would orphan every sealed row.</p>
+<h3>Restore</h3>
+<p>No button: signing in quietly pulls and merges the account's reports, results and members. Nothing is uploaded until the user taps Sync.</p>
+<div class="warn">Status: built and unit-tested, but the Supabase projects (staging, prod) haven't had <code>schema.sql</code> + <code>hardening.sql</code> applied yet, so Sync, restore and invites have not been tried end to end.</div>
+</section>
+
+<section class="chapter"><h2>15. Family sharing and invites</h2>
+<ul><li><b>Equal access</b>: no owner. Anyone with access can add reports, remove someone, or leave.</li>
+<li><b>Invite</b>: long-press a member → Share → family card → <i>Invite someone</i>. The app syncs that member, then opens the share sheet with <code>https://&lt;invite host&gt;/i/&lt;id&gt;#&lt;secret&gt;</code>. The secret is in the <code>#fragment</code>, which browsers never send to a server.</li>
+<li><b>Claim</b>: the link opens the app (app_links), or the user pastes it via Family → <i>Open an invite link</i>. The claim screen shows a preview (sealed with the link's secret), asks "Who is X to you?", and on accept pulls the profile and its reports and opens Home on them. Single use, expiry, rate limit enforced by the server (<code>open_invite</code>).</li>
+<li><b>Combine</b>: accepting as "You" when the phone already has a "You" offers Combine / Keep separate; combine moves reports across, drops a file already present, keeps your own name/sex/birth year/photo/reminders.</li>
+<li><b>Family card</b>: who has access (with the name each person goes by), pending invites with Cancel, Remove.</li></ul>
+<div class="warn"><b>Launch blockers:</b> buy a new invite domain (vitalog.app is taken — <code>docs/INVITE_DOMAIN.md</code>), host <code>invite_site/</code>, verified App Links + iOS Associated Domains (paid Apple team), then remove the <code>com.vitalog.app://</code> hand-over button. Not built: key rotation after removal, notifications to others on remove/combine.</div>
+</section>
+
+<section class="chapter"><h2>16. Big screens: iPhone Duo and foldables</h2>
+<ul><li><b>Side layout</b> when width ≥ 700 and wider than tall. Upright and folded keep the phone layout.</li>
+<li><b>Side tray</b>: the bottom tray stood on its side on the <b>left</b> edge (product owner's call over Apple's right-side default): person on top, vertical tabs, Sync on Reports, Add report at the bottom. Content keeps clear of the Duo's right-hand status column.</li>
+<li><b>Two panes</b> split at the fold: Home = status | history; Categories = groups | results; Reports = timeline | report; Family = people | settings. Navigation opens into the right pane.</li>
+<li>Tablets (&gt; 736 pt) use a centred 640 pt reading column.</li></ul>
+</section>
+
+<section class="chapter"><h2>17. Design system and motion</h2>
+<ul><li><b>Logo = splash = launcher icon</b>: a pulse trace forming a "V" over ruled log lines, ending in a coral "latest reading" dot. The splash slides the lines in, draws the trace, pops the dot and beats it (~67 bpm) as the loader, then lifts away. Brand colour <code>#173D35</code>.</li>
+<li><b>Shapes</b>: Apple-style continuous corners (<code>AppRadius</code> 8 / 12 / 16 / 20 / 26 / 30, superellipse). Nested shapes are concentric (inner = outer − gap).</li>
+<li><b>Colours</b>: <code>AppColors</code> tokens for light and dark, accents, a coral <code>reading</code> token, dedicated chart tokens.</li>
+<li><b>Motion primitives</b>: <code>Reveal</code> (staggered entry), <code>CountUpText</code>, <code>ScanBeam</code> (report being read), <code>celebrate()</code> (confetti + haptic when a report is ready and nothing needs attention), <code>PressScale</code>/<code>TapCard</code> (press feedback with a haptic tick). All honour Reduce Motion.</li>
+<li><b>Empty states</b>: illustrations that assemble and idle like the onboarding pictures (~20 s, then rest), centred, with the health groups shown so the app explains itself.</li>
+<li><b>Onboarding</b>: 3 welcome pages whose illustrations assemble with the swipe, then the sign-in offer ("Not now" skips it), then a spotlight tour (replay: "Take a quick tour").</li></ul>
+</section>
+
+<section class="chapter"><h2>18. Backend (Supabase)</h2>
+<table><tr><th>Piece</th><th>Detail</th></tr>
+<tr><td>Projects</td><td><b>staging</b> and <b>prod</b>. Keys in git-ignored <code>supabase.staging.local.json</code> / <code>supabase.prod.local.json</code>, passed with <code>--dart-define-from-file</code>. Only the URL + publishable key go in the app; never the service-role key.</td></tr>
+<tr><td>Schema</td><td><code>supabase/schema.sql</code> (sealed Sync v2 tables, invites, RLS via <code>has_profile</code>, functions <code>open_invite</code>, <code>may_take_profile</code>, <code>drop_orphan_profile</code>) then <code>hardening.sql</code>. Every function has <code>set search_path = ''</code>.</td></tr>
+<tr><td>Edge function</td><td><code>delete-account</code> (uses the service-role key on the server only).</td></tr>
+<tr><td>Auth</td><td>Email (confirm), Google (both client ids, "Skip nonce check"), redirect <code>com.vitalog.app://login-callback</code>. Prod adds CAPTCHA, redirect allow-list, backups (<code>supabase/PROD_SETUP.md</code>).</td></tr>
+<tr><td>Setup guides</td><td><code>docs/plans/2026-11-04-supabase-sync-v2-setup.md</code> (staging), <code>supabase/PROD_SETUP.md</code> (prod).</td></tr></table>
+<pre>
+# Run offline (no account features)
+flutter run -d "iPhone 16 Plus"
+# Run with staging sync
+flutter run --dart-define-from-file=supabase.staging.local.json
+</pre>
+</section>
+
+<section class="chapter"><h2>19. Code map</h2>
+<table><tr><th>Path</th><th>Role</th></tr>
+<tr><td><code>lib/main.dart</code></td><td>App root: theme, l10n, BlocProviders, Backend.init, splash → onboarding → dashboard, invite-link listener</td></tr>
+<tr><td><code>lib/core/</code></td><td>backend (Supabase + auth), brand (logo, splash), layout (readable width, insets), settings (SettingsCubit), theme (AppColors, AppShape)</td></tr>
+<tr><td><code>lib/features/onboarding/</code></td><td>Welcome pages, OnboardingGate</td></tr>
+<tr><td><code>lib/features/auth/</code></td><td>Sign-in screen (Google, email sign in / up / reset)</td></tr>
+<tr><td><code>lib/features/reminders/</code></td><td>Reminder model, scheduler, cubit, screen</td></tr>
+<tr><td><code>family_health/domain/</code></td><td>Entities (FamilyMember, HealthReport, LabResult, HealthCategory, FamilyHealthSnapshot, sharing), predefined categories, reference ranges, repository contract</td></tr>
+<tr><td><code>family_health/data/extraction/</code></td><td>DocumentReader, ReportTextRecognizer (native channel), LabReportParser, lab_test_catalog, AliasTrie</td></tr>
+<tr><td><code>family_health/data/local/</code></td><td>LocalReportStore (encrypted files), ReportCipher (FAMMO1/FAMMO2), vault keys</td></tr>
+<tr><td><code>family_health/data/privacy/</code></td><td>Redactor</td></tr>
+<tr><td><code>family_health/data/sync/</code></td><td>ReportSyncService (sealed v2), account_key (X25519, recovery key)</td></tr>
+<tr><td><code>family_health/data/sharing/</code></td><td>sharing_crypto (profile keys, wrapping, invite links, claim tokens)</td></tr>
+<tr><td><code>family_health/data/repositories/</code></td><td>FamilyHealthRepositoryImpl — the heart: composes everything, write lock, usual-range judging, learned categories, sync, sharing</td></tr>
+<tr><td><code>presentation/bloc/</code></td><td>HealthBloc, events, state, HealthNotice (one-off snackbars)</td></tr>
+<tr><td><code>presentation/pages/</code></td><td>dash_board (tabs, tray, notices), home, health_subscreens (categories, results, test detail), reports, report_dashboard, profile (Family tab), claim_invite, empty_family_experience (tour), navigation</td></tr>
+<tr><td><code>presentation/widgets/</code></td><td>health_widgets, health_charts, motion, edit_result_sheet, add_member_sheet, display_settings, apple_menus, vitalog_nav_bar, side_layout, share_profile_sheet, recovery_key_sheets, permission_help, empty_art, header_wash</td></tr>
+<tr><td><code>ios/Runner/AppDelegate.swift</code></td><td>Vision OCR + PDFKit, document camera, privacy cover, UIScene setup</td></tr>
+<tr><td><code>android/.../MainActivity.kt</code></td><td>ML Kit OCR, PdfRenderer, document scanner, VaultKey (biometric Keystore), recents cover</td></tr>
+<tr><td><code>supabase/</code>, <code>invite_site/</code></td><td>SQL, edge function, prod guide; invite web page + app-link files</td></tr></table>
+</section>
+
+<section class="chapter"><h2>20. Testing</h2>
+<pre>
+flutter analyze        # must say "No issues found"
+flutter test -j 2      # 169 tests pass (widget tests are timing-sensitive at full concurrency)
+</pre>
+<table><tr><th>Area</th><th>Tests</th></tr>
+<tr><td>Parser</td><td>test/extraction/ — incl. a regression case from real Vision output, sex-banded ranges, document reader (zip bombs, forged sizes)</td></tr>
+<tr><td>Privacy &amp; crypto</td><td>test/privacy/ — redaction, sealed sync (no member field outside a box), sharing crypto, leftover copies</td></tr>
+<tr><td>Ranges</td><td>reference_ranges_test (signature, downgrade)</td></tr>
+<tr><td>Bloc &amp; store</td><td>health_bloc_test (upload → read → notice; failure; sync gating), report_store_test, report_sync_restore_test</td></tr>
+<tr><td>Screens</td><td>widget_test (tour, profile switch, upload → timeline → report dashboard, sideways layout), category card semantics, health_charts_test</td></tr>
+<tr><td>Manual screenshots</td><td>integration_test/manual_screenshots_test.dart (regenerates the User Manual's pictures)</td></tr></table>
+<p>Manual test plans: <code>docs/TEST_PLAN.md</code>, <code>docs/TEST_USER_RUNBOOK.md</code>.</p>
+</section>
+
+<section class="chapter"><h2>21. Project history (all sessions)</h2>
+<p>Reconstructed from git history and all Claude Code session transcripts. Before 26 Oct the app was built and committed in five commits; from 26 Oct several sessions ran in parallel on the same folder.</p>
+<table><tr><th>Date</th><th>What happened</th></tr>
+<tr><td>22 Oct</td><td>Mock family-health architecture, then the first real build of Vitalog (on-device OCR on iOS, parser, timeline, report dashboard, Supabase sync v1). Decision: Sync is a backup; originals never upload.</td></tr>
+<tr><td>23 Oct</td><td>"Complete Vitalog experience": categories, edit, usual ranges, charts, Simple mode, themes, onboarding. Sharing designed as end-to-end encrypted (SHARING.md). Supabase project created.</td></tr>
+<tr><td>25 Oct</td><td>Real Android port (ML Kit OCR, PdfRenderer). Server-side deletes, account lifecycle (delete account), auto-restore on sign-in, Keychain hardening.</td></tr>
+<tr><td>26 Oct</td><td><b>Security audit</b> (14 findings, S1–S14); fixed S1 (Android cache copies), S3 (vault re-lock), S9 (size caps), S12–S14 (Android biometric vault, opt-in lock). Ran on the Android phone. Empty states redesigned like onboarding; "Move to another member" for wrong-person reports; welcoming tour for signed-out users; Doherty-threshold check; <b>iPhone Duo / sideways layout</b> with left side tray and two panes; alignment fixes across screens.</td></tr>
+<tr><td>27 Oct</td><td>"10-second home screen" review and redesign plan; frosted/greener light-theme background; Duo full-width fix; members, duplicates and reminders features; design skills installed (unslop, stageshow, better-interface, find-animation-opportunities).</td></tr>
+<tr><td>2 Nov</td><td><b>Tab bar restyle</b>: sliding tile, label pill, painted animated glyphs in brand colours (run on the Duo simulator); empty-state animations restored.</td></tr>
+<tr><td>3 Nov</td><td><b>Sync v2 (sealed)</b>, account key + recovery key, member names sealed (S4/S5); app-switcher cover (S2), release signing (S7), backup exclusions (S8), pinned supabase-js (S10), SQL search_path (S11). Plain-language permission prompts for older users. Ten small bugs fixed. Cross-session status reports.</td></tr>
+<tr><td>4 Nov</td><td><b>Invite family</b>: share links, claim screen, family card, shared ids, app links; expert/tester cross-check. Smaller items: zip-size check, sex-banded ranges, package upgrades, range-signing key, accessibility pass, <b>Hindi</b>. Staging/prod Supabase setup plan written. Handoff file + zip for another Mac.</td></tr>
+<tr><td>6 Nov</td><td>Pulled from GitHub (srikanth-7/vitalog). Security review of sharing (box/row binding, re-entry window, invite lockout). <b>Combine "You" profiles</b>. Clipboard clear for recovery key, leftover-scan sweep, CategoryCard screen-reader order, <b>trend notes</b>. Telugu/Hindi completed (review CSV). Cleanup (#26) + prod setup guide. Invite-domain guide (vitalog.app found to be taken). Feature ideas doc. This guide and the user manual.</td></tr></table>
+</section>
+
+<section class="chapter"><h2>22. Security work</h2>
+<table><tr><th>#</th><th>Finding (2026-10-26 audit)</th><th>Status</th></tr>
+<tr><td>S1</td><td>Readable report copies in Android cache</td><td class="part">Fixed, phone check pending</td></tr>
+<tr><td>S2</td><td>App-switcher snapshot shows results</td><td class="part">Fixed, phone check pending</td></tr>
+<tr><td>S3</td><td>Vault never re-locks</td><td class="part">Fixed (2 min away)</td></tr>
+<tr><td>S4</td><td>Member names synced</td><td class="done">Fixed — only sealed</td></tr>
+<tr><td>S5</td><td>Sync v1 plaintext on server</td><td class="part">Sealed Sync v2 built; server setup pending</td></tr>
+<tr><td>S6</td><td>Dashboard password exposed in chat; gates open</td><td class="todo">Owner: change password, 2FA, CAPTCHA</td></tr>
+<tr><td>S7</td><td>Release build falls back to debug key</td><td class="done">Fixed</td></tr>
+<tr><td>S8</td><td>Android device transfer copies data</td><td class="done">Fixed</td></tr>
+<tr><td>S9</td><td>No input size cap</td><td class="done">Fixed</td></tr>
+<tr><td>S10/S11</td><td>Unpinned supabase-js; SQL search_path</td><td class="done">Fixed</td></tr>
+<tr><td>S12/S13</td><td>supabase.json not ignored; extension parsing</td><td class="done">Fixed</td></tr>
+<tr><td>S14</td><td>No Android biometric lock on originals</td><td class="part">Fixed, phone check pending</td></tr></table>
+<p><b>2026-11-06 review</b> (sharing): report boxes must match their row's profile and results their report; closed a 10-minute re-entry window after removal; dropped a per-invite lockout anyone could trigger. Open: own the invite domain; replace the custom-scheme hand-over with verified links; bind the invite's wrapped key to its profile id; rotate profile keys after removal.</p>
+<p>Threat model: <code>docs/THREAT_MODEL.md</code> (stolen device, rooted phone, curious apps, network, server staff, accidental pairing, enumeration, supply chain, telemetry creep).</p>
+</section>
+
+<section class="chapter"><h2>23. Status, pending work and next steps</h2>
+<h3>Needs the product owner (unblocks the most)</h3>
+<ol><li>Apply <code>schema.sql</code> + <code>hardening.sql</code> on <b>staging</b>, then prod (Sync, restore and invites can't be tested until then).</li>
+<li>Plug the Android phone back in — nothing since 2 Nov has been tried on a phone (phone checklist in PENDING_TASKS.md).</li>
+<li>S6: change the Supabase dashboard password, turn on two-factor.</li>
+<li>Buy the invite domain; Google sign-in config (client ids, Android SHA-1); final bundle id and signing; privacy policy and store disclosures; clinician review of built-in ranges; native-speaker review of Telugu/Hindi.</li></ol>
+<h3>Launch blockers</h3>
+<ul><li>Server set up and Sync/restore/invites tested end to end.</li><li>Tested on 20–50 real reports from the top labs.</li><li>Final bundle id, signing, store disclosures (DPDP Act, medical disclaimer, App Privacy, Play Data safety).</li><li>Invite domain + verified links.</li><li>Clinical review of reference ranges.</li></ul>
+<h3>Engineering backlog</h3>
+<ul><li>Android document scanner dependency (blocked by office network); Flutter SDK upgrade (same).</li>
+<li>Pediatric and age-banded ranges; non-English reports.</li>
+<li>Local store → SQLite only if saves get slow (deliberately deferred).</li>
+<li>Sharing: key rotation after removal, notifications, edits by others.</li>
+<li>VoiceOver / TalkBack pass on a real phone.</li></ul>
+</section>
+
+<section class="chapter"><h2>24. Feature ideas (2026-11-06)</h2>
+<table><tr><th>#</th><th>Idea</th><th>Value</th><th>Effort</th></tr>
+<tr><td>1</td><td>Open in Vitalog — receive a report from WhatsApp/email via the share sheet</td><td>Very high</td><td>2–4 days</td></tr>
+<tr><td>2</td><td>Doctor summary PDF</td><td>Very high</td><td>2–4 days</td></tr>
+<tr><td>3</td><td>Same test across units (mg/dL ↔ mmol/L)</td><td>High</td><td>~1 day + clinical check</td></tr>
+<tr><td>4</td><td>Retest reminder suggestion</td><td>Medium</td><td>~1 day</td></tr>
+<tr><td>5</td><td>"What is this test?" (reviewed text)</td><td>Medium</td><td>2–4 days</td></tr>
+<tr><td>6</td><td>Factual trend notes</td><td>Medium</td><td class="done">Built 6 Nov</td></tr>
+<tr><td>7</td><td>Home screen widget</td><td>Low–medium</td><td>2–4 days</td></tr>
+<tr><td>8</td><td>Apple Health / Google Fit import</td><td>Medium</td><td>a week+</td></tr></table>
+<p><b>Not recommended</b>: medication/condition lists and emergency cards (manual entry), AI chat or summaries (would send report content off the phone), a health score.</p>
+</section>
+</body></html>

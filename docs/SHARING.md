@@ -159,13 +159,18 @@ SUPABASE_REQUIREMENTS.md before any real data is synced.
   link's secret, so the claim screen can show it before anything is used up.
 - **The claim token** is HKDF(secret, id, "vitalog/claim/v1"), sent as hex;
   the server stores `base64url(sha256(token))`.
+- **Combine** (2026-11-06): accepting as "You" while the phone already has
+  a "You" offers *Combine / Keep separate* on the claim screen.
+  `combineMembers` moves the old profile's reports (unsynced, so the next
+  Sync seals them with the shared key), drops a file already in the shared
+  profile (same `fileHash`), keeps the old name/sex/birth year, photo and
+  reminders, then leaves the old profile on the server. No notice to the
+  others yet (see Notifications).
 - **Removing a member from your phone** never deletes the shared reports on
   the server; deleting one *report* deletes it for everyone (equal access).
 
 ### Not built yet
 
-- **Combine duplicates** (Dad already made his own profile): accepting as
-  "You" next to an existing "You" leaves two profiles. ⏳
 - **Key rotation after a removal**: RLS already stops the removed account
   reading new rows; rotation only matters against a server breach plus an
   old key. ⏳ (`ponytail:` note in `report_sync_service.dart`)
@@ -176,7 +181,7 @@ SUPABASE_REQUIREMENTS.md before any real data is synced.
   free (personal) Apple team can't use. Until then iPhones open the link's
   web page, whose button hands over via `com.vitalog.app://invite/…`.
 
-### The invite domain (👤 open)
+### The invite domain (👤 open — steps in `docs/INVITE_DOMAIN.md`)
 
 `InviteLink.host` (placeholder `vitalog.app`) and the `https` intent filter in
 `AndroidManifest.xml` must name the same host, which serves `invite_site/`:

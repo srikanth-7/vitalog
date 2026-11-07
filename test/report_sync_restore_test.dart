@@ -48,6 +48,23 @@ void main() {
       };
 
   group('sync restore: pull → merge', () {
+    test('a report with no printed date still says so after a restore', () {
+      final uploaded = DateTime(2026, 10, 1, 10, 30);
+      final undated = HealthReport(
+          id: 'r9',
+          profileId: 'm1',
+          fileName: 'scan.jpg',
+          lab: 'Test Lab',
+          reportDate: uploaded, // no printed date: falls back to upload time
+          uploadDate: uploaded,
+          status: ReportStatus.needsReview,
+          resultCount: 0);
+      expect(undated.undated, isTrue);
+      final back = FamilyHealthRepositoryImpl.reportFromRow(
+          ReportSyncService.reportRow(undated));
+      expect(back!.undated, isTrue);
+    });
+
     test(
         'usual ranges are re-judged from the member pulled back; dates and '
         'lab ride the report, the result count is recomputed', () {

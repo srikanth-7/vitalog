@@ -516,62 +516,61 @@ class AppLocalizationsTe extends AppLocalizations {
       'సింక్ విఫలమైంది. నివేదికలు ఈ ఫోన్‌లో సురక్షితంగా ఉన్నాయి — తర్వాత మళ్లీ ప్రయత్నించండి.';
 
   @override
-  String get recoveryKeyTitle => 'Save your recovery key';
+  String get recoveryKeyTitle => 'మీ రికవరీ కీని సేవ్ చేయండి';
 
   @override
   String get recoveryKeyBody =>
-      'Your backup is locked so only you can read it — not even Vitalog can. If you lose or reset this phone, this key unlocks your backup on the new one.';
+      'మీ బ్యాకప్ లాక్ చేయబడింది, కాబట్టి దాన్ని మీరు మాత్రమే చదవగలరు — Vitalog కూడా చదవలేదు. ఈ ఫోన్ పోయినా లేదా రీసెట్ చేసినా, కొత్త ఫోన్‌లో మీ బ్యాకప్‌ను ఈ కీ తెరుస్తుంది.';
 
   @override
   String get recoveryKeyICloud =>
-      'It\'s also kept in your iCloud Keychain, so an iPhone signed in to the same Apple ID gets it without asking.';
+      'ఇది మీ iCloud Keychainలో కూడా ఉంటుంది, కాబట్టి అదే Apple IDతో సైన్ ఇన్ అయిన iPhoneకి అడగకుండానే వస్తుంది.';
 
   @override
-  String get recoveryKeySave => 'Save to my passwords';
+  String get recoveryKeySave => 'నా పాస్‌వర్డ్‌లలో సేవ్ చేయి';
 
   @override
-  String get recoveryKeyCopy => 'Copy key';
+  String get recoveryKeyCopy => 'కీని కాపీ చేయి';
 
   @override
-  String get recoveryKeyCopied =>
-      'Recovery key copied. Paste it somewhere safe.';
+  String get recoveryKeyCopiedClears =>
+      'Recovery key copied. Paste it somewhere safe now: it\'s cleared from the clipboard in 1 minute.';
 
   @override
-  String get recoveryKeyDone => 'I\'ve saved it';
+  String get recoveryKeyDone => 'నేను సేవ్ చేశాను';
 
   @override
-  String get recoveryKeyLater =>
-      'You can see this key again on the Family tab.';
+  String get recoveryKeyLater => 'ఈ కీని కుటుంబం ట్యాబ్‌లో మళ్లీ చూడవచ్చు.';
 
   @override
-  String get recoveryKeyAskTitle => 'Enter your recovery key';
+  String get recoveryKeyAskTitle => 'మీ రికవరీ కీని ఎంటర్ చేయండి';
 
   @override
   String get recoveryKeyAskBody =>
-      'Your backup is locked with the key you saved when you first synced. Tap the box to fill it from your saved passwords, or paste it.';
+      'మీరు మొదటిసారి సింక్ చేసినప్పుడు సేవ్ చేసిన కీతో మీ బ్యాకప్ లాక్ చేయబడింది. సేవ్ చేసిన పాస్‌వర్డ్‌ల నుంచి నింపడానికి బాక్స్‌ను నొక్కండి, లేదా పేస్ట్ చేయండి.';
 
   @override
   String get recoveryKeyHint => 'ABCD-EFGH-…';
 
   @override
-  String get recoveryKeyUse => 'Unlock my backup';
+  String get recoveryKeyUse => 'నా బ్యాకప్‌ను తెరువు';
 
   @override
-  String get recoveryKeyNotNow => 'Not now';
+  String get recoveryKeyNotNow => 'ఇప్పుడు కాదు';
 
   @override
-  String get recoveryKeyRow => 'Recovery key';
+  String get recoveryKeyRow => 'రికవరీ కీ';
 
   @override
-  String get recoveryKeyRowDetail => 'Unlocks your backup on a new phone.';
+  String get recoveryKeyRowDetail => 'కొత్త ఫోన్‌లో మీ బ్యాకప్‌ను తెరుస్తుంది.';
 
   @override
   String get noticeRecoveryKeyWrong =>
-      'That key doesn\'t unlock this account\'s backup. Check it and try again.';
+      'ఈ కీ ఈ ఖాతా బ్యాకప్‌ను తెరవదు. కీని సరిచూసి మళ్లీ ప్రయత్నించండి.';
 
   @override
   String get noticeRecoveryKeyAccepted =>
-      'Backup unlocked. Bringing your reports back…';
+      'బ్యాకప్ తెరుచుకుంది. మీ నివేదికలను తిరిగి తెస్తున్నాం…';
 
   @override
   String get noticeSignInRequired =>
@@ -1260,6 +1259,26 @@ class AppLocalizationsTe extends AppLocalizations {
   String get trendNoChange => 'మార్పు లేదు';
 
   @override
+  String trendUpStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Up $_temp0 in a row';
+  }
+
+  @override
+  String trendDownStreak(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+    );
+    return 'Down $_temp0 in a row';
+  }
+
+  @override
   String trendSemantics(
       String name, String value, String change, String status) {
     return '$name, తాజా $value, $change, $status';
@@ -1597,166 +1616,187 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String shareMember(String name) {
-    return 'Share $name\'s reports';
+    return '$name నివేదికలను షేర్ చేయండి';
   }
 
   @override
   String shareIntro(String name) {
-    return 'Family you invite can see $name\'s reports and add new ones from their own phone. It\'s end-to-end encrypted: only your family can read it, not even Vitalog.';
+    return 'మీరు ఆహ్వానించిన కుటుంబ సభ్యులు $name నివేదికలను చూడగలరు, తమ ఫోన్ నుంచే కొత్తవి జోడించగలరు. ఇది ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్ చేయబడింది: మీ కుటుంబం మాత్రమే చదవగలదు, Vitalog కూడా చదవలేదు.';
   }
 
   @override
   String shareUploadNote(String name) {
-    return 'Inviting backs up $name\'s profile and reports to your account first, sealed.';
+    return 'ఆహ్వానించే ముందు $name ప్రొఫైల్, నివేదికలు సీల్ చేయబడి మీ ఖాతాలో బ్యాకప్ అవుతాయి.';
   }
 
   @override
-  String get shareInvite => 'Invite someone';
+  String get shareInvite => 'ఎవరినైనా ఆహ్వానించండి';
 
   @override
-  String get sharePeople => 'Who can see these reports';
+  String get sharePeople => 'ఈ నివేదికలను ఎవరు చూడగలరు';
 
   @override
   String shareYou(String name) {
-    return '$name (you)';
+    return '$name (మీరు)';
   }
 
   @override
-  String get shareYouPlain => 'You';
+  String get shareYouPlain => 'మీరు';
 
   @override
-  String get shareSomeone => 'Someone in your family';
+  String get shareSomeone => 'మీ కుటుంబంలో ఒకరు';
 
   @override
-  String get sharePending => 'Invite waiting';
+  String get sharePending => 'ఆహ్వానం పెండింగ్‌లో ఉంది';
 
   @override
   String sharePendingUntil(String date) {
-    return 'Link works until $date';
+    return 'లింక్ $date వరకు పనిచేస్తుంది';
   }
 
   @override
-  String get shareCancelInvite => 'Cancel invite';
+  String get shareCancelInvite => 'ఆహ్వానాన్ని రద్దు చేయండి';
 
   @override
-  String get shareRemove => 'Remove';
+  String get shareRemove => 'తీసివేయండి';
 
   @override
   String shareRemoveTitle(String name, String person) {
-    return 'Stop sharing $name\'s reports with $person?';
+    return '$name నివేదికలను $personతో షేర్ చేయడం ఆపాలా?';
   }
 
   @override
   String shareRemoveMessage(String person) {
-    return '$person won\'t get new reports. Reports already on their phone stay there.';
+    return '$personకి కొత్త నివేదికలు రావు. ఇప్పటికే వారి ఫోన్‌లో ఉన్న నివేదికలు అక్కడే ఉంటాయి.';
   }
 
   @override
-  String get shareRemoveConfirm => 'Stop sharing';
+  String get shareRemoveConfirm => 'షేర్ చేయడం ఆపండి';
 
   @override
   String shareMessage(String name, String link) {
-    return 'I\'ve shared $name\'s health reports with you on Vitalog. Open this link on your phone to see them. It works once, for 7 days.\n$link';
+    return '$name ఆరోగ్య నివేదికలను Vitalogలో మీతో షేర్ చేశాను. వాటిని చూడడానికి ఈ లింక్‌ను మీ ఫోన్‌లో తెరవండి. ఇది 7 రోజుల పాటు, ఒక్కసారి మాత్రమే పనిచేస్తుంది.\n$link';
   }
 
   @override
   String shareSubject(String name) {
-    return '$name\'s health reports';
+    return '$name ఆరోగ్య నివేదికలు';
   }
 
   @override
   String get shareSignIn =>
-      'Sign in to share. Your family see the reports on their own phones, through your account.';
+      'షేర్ చేయడానికి సైన్ ఇన్ చేయండి. మీ ఖాతా ద్వారా మీ కుటుంబం తమ ఫోన్‌లలో నివేదికలను చూస్తారు.';
 
   @override
   String get shareFailed =>
-      'Couldn\'t reach your account. Check your connection and try again.';
+      'మీ ఖాతాను చేరుకోలేకపోయాం. కనెక్షన్ చూసి మళ్లీ ప్రయత్నించండి.';
 
   @override
   String get shareSample =>
-      'Sample people can\'t be shared. Add your own family member first.';
+      'నమూనా వ్యక్తులను షేర్ చేయలేరు. ముందుగా మీ కుటుంబ సభ్యుడిని జోడించండి.';
 
   @override
-  String get claimTitle => 'Family invite';
+  String get claimTitle => 'కుటుంబ ఆహ్వానం';
 
   @override
   String claimShared(String from, String name) {
-    return '$from shared $name\'s reports with you';
+    return '$from $name నివేదికలను మీతో షేర్ చేశారు';
   }
 
   @override
   String claimSharedNoFrom(String name) {
-    return '$name\'s reports were shared with you';
+    return '$name నివేదికలు మీతో షేర్ చేయబడ్డాయి';
   }
 
   @override
   String claimWho(String name) {
-    return 'Who is $name to you?';
+    return '$name మీకు ఏమవుతారు?';
   }
 
   @override
-  String get claimAccept => 'Add to my family';
+  String get claimAccept => 'నా కుటుంబంలో చేర్చండి';
 
   @override
-  String get claimNotNow => 'Not now';
+  String get claimNotNow => 'ఇప్పుడు కాదు';
+
+  @override
+  String get combineTitle => 'మీ సొంత ప్రొఫైల్‌తో కలపాలా?';
+
+  @override
+  String combineMessage(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count నివేదికలు ఉన్నాయి',
+      one: '1 నివేదిక ఉంది',
+      zero: 'నివేదికలు లేవు',
+    );
+    return 'మీ కోసం ఇప్పటికే $name అనే ప్రొఫైల్ ఉంది, అందులో $_temp0. కలిపితే అవి ఈ షేర్ చేసిన ప్రొఫైల్‌లోకి వెళ్తాయి, పాత ప్రొఫైల్ తీసివేయబడుతుంది. మీ పేరు, లింగం, పుట్టిన సంవత్సరం అలాగే ఉంటాయి; రెండింటిలో ఉన్న ఫైల్ ఒక్కసారే ఉంచబడుతుంది.';
+  }
+
+  @override
+  String get combineConfirm => 'కలపండి';
+
+  @override
+  String get combineKeep => 'వేర్వేరుగా ఉంచండి';
 
   @override
   String claimPrivacy(String name) {
-    return 'The reports come to this phone, end-to-end encrypted. You can add reports for $name too, and everyone sharing them sees them.';
+    return 'నివేదికలు ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్ చేయబడి ఈ ఫోన్‌కి వస్తాయి. మీరు కూడా $name కోసం నివేదికలు జోడించవచ్చు, షేర్ చేసుకునే అందరూ వాటిని చూస్తారు.';
   }
 
   @override
   String get claimSignIn =>
-      'Sign in to accept. The reports come to your account, sealed so only your family can read them.';
+      'అంగీకరించడానికి సైన్ ఇన్ చేయండి. మీ కుటుంబం మాత్రమే చదవగలిగేలా సీల్ చేయబడి నివేదికలు మీ ఖాతాకు వస్తాయి.';
 
   @override
-  String get claimAlready => 'You already have these reports.';
+  String get claimAlready => 'ఈ నివేదికలు ఇప్పటికే మీ దగ్గర ఉన్నాయి.';
 
   @override
-  String get claimOpen => 'Open';
+  String get claimOpen => 'తెరవండి';
 
   @override
   String get claimInvalid =>
-      'This isn\'t a Vitalog invite link. Check that you copied all of it.';
+      'ఇది Vitalog ఆహ్వాన లింక్ కాదు. పూర్తిగా కాపీ చేశారో లేదో చూడండి.';
 
   @override
-  String get claimGone =>
-      'This invite doesn\'t work any more. Ask for a new link.';
+  String get claimGone => 'ఈ ఆహ్వానం ఇక పనిచేయదు. కొత్త లింక్ అడగండి.';
 
   @override
   String get claimUsed =>
-      'Someone already used this invite. Each link works once, so ask for a new one.';
+      'ఈ ఆహ్వానాన్ని ఇప్పటికే ఎవరో ఉపయోగించారు. ప్రతి లింక్ ఒక్కసారే పనిచేస్తుంది, కాబట్టి కొత్తది అడగండి.';
 
   @override
   String get claimExpired =>
-      'This invite has expired. Links work for 7 days, so ask for a new one.';
+      'ఈ ఆహ్వానం గడువు ముగిసింది. లింక్‌లు 7 రోజులు పనిచేస్తాయి, కాబట్టి కొత్తది అడగండి.';
 
   @override
   String get claimLimited =>
-      'Too many tries. Wait an hour, then open the link again.';
+      'చాలా ఎక్కువ ప్రయత్నాలు. ఒక గంట ఆగి, లింక్‌ను మళ్లీ తెరవండి.';
 
   @override
   String get claimFailed =>
-      'Couldn\'t reach Vitalog. Check your connection and try again.';
+      'Vitalogను చేరుకోలేకపోయాం. కనెక్షన్ చూసి మళ్లీ ప్రయత్నించండి.';
 
   @override
   String get claimRecoveryKey =>
-      'Enter your recovery key first, then open the link again.';
+      'ముందుగా మీ రికవరీ కీని ఎంటర్ చేసి, తర్వాత లింక్‌ను మళ్లీ తెరవండి.';
 
   @override
-  String get openInviteRow => 'Open an invite link';
+  String get openInviteRow => 'ఆహ్వాన లింక్‌ను తెరవండి';
 
   @override
-  String get openInviteRowDetail => 'Family sent you a link? Paste it here.';
+  String get openInviteRowDetail =>
+      'కుటుంబం మీకు లింక్ పంపారా? ఇక్కడ పేస్ట్ చేయండి.';
 
   @override
-  String get pasteInviteTitle => 'Paste the invite link';
+  String get pasteInviteTitle => 'ఆహ్వాన లింక్‌ను పేస్ట్ చేయండి';
 
   @override
-  String get pasteInviteOpen => 'Open';
+  String get pasteInviteOpen => 'తెరవండి';
 
   @override
   String noticeInviteAccepted(String name) {
-    return '$name\'s reports are on your phone now';
+    return '$name నివేదికలు ఇప్పుడు మీ ఫోన్‌లో ఉన్నాయి';
   }
 }

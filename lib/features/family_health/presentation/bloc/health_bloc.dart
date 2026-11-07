@@ -41,6 +41,7 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
         // Cold start with an existing session counts as a sign-in: quietly
         // bring anything the account has (no upload, no "already synced").
         _restoreLater();
+        _sweepOnce().ignore();
       } catch (error) {
         emit(HealthLoadFailure(error.toString()));
       }
@@ -477,6 +478,12 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
     return out;
   }
 
+  /// After accepting as "You": merges this account's own "You" into it.
+  Future<void> combineMembers(String fromId, String intoId) async {
+    await _repository.combineMembers(fromId, intoId);
+    add(_SharingDone(memberId: intoId));
+  }
+
   /// A phone without this account's key can't share or accept: the usual
   /// "Enter your recovery key" ask shows, and the caller still hears why.
   /// A key made just before a failure is still shown once.
@@ -584,6 +591,34 @@ class HealthBloc extends Bloc<HealthEvent, HealthState> {
           selectedMemberId: selection,
           selectedTab: selectTab,
           adding: adding));
+    }
+  }
+
+  static bool _swept = false;
+
+  /// Once per app run, on the first load (before anything can be scanned).
+  static Future<void> _sweepOnce() async {
+    if (_swept) return;
+    _swept = true;
+    await sweepScanCopies(
+        [Directory.systemTemp.path, (await getTemporaryDirectory()).path]);
+  }
+
+  /// A scanner copy (`scan-*.pdf`, written by AppDelegate.swift and
+  /// MainActivity.kt) outlives its upload only if the app was killed in
+  /// between. It's a readable report: remove any left in [dirs].
+  static Future<void> sweepScanCopies(Iterable<String> dirs) async {
+    final scan = RegExp(r'^scan-.*\.pdf$');
+    for (final dir in dirs.toSet()) {
+      try {
+        await for (final f in Directory(dir).list()) {
+          if (f is File && scan.hasMatch(f.uri.pathSegments.last)) {
+            await f.delete();
+          }
+        }
+      } catch (_) {
+        // Missing folder or a file in use: the next start tries again.
+      }
     }
   }
 

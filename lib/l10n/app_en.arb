@@ -314,7 +314,7 @@
   "recoveryKeyICloud": "It's also kept in your iCloud Keychain, so an iPhone signed in to the same Apple ID gets it without asking.",
   "recoveryKeySave": "Save to my passwords",
   "recoveryKeyCopy": "Copy key",
-  "recoveryKeyCopied": "Recovery key copied. Paste it somewhere safe.",
+  "recoveryKeyCopiedClears": "Recovery key copied. Paste it somewhere safe now: it's cleared from the clipboard in 1 minute.",
   "recoveryKeyDone": "I've saved it",
   "recoveryKeyLater": "You can see this key again on the Family tab.",
   "recoveryKeyAskTitle": "Enter your recovery key",
@@ -677,6 +677,18 @@
     }
   },
   "trendNoChange": "No change",
+  "trendUpStreak": "Up {count, plural, other{{count} times}} in a row",
+  "@trendUpStreak": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "trendDownStreak": "Down {count, plural, other{{count} times}} in a row",
+  "@trendDownStreak": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
   "trendSemantics": "{name}, latest {value}, {change}, {status}",
   "@trendSemantics": {
     "placeholders": {
@@ -1029,6 +1041,16 @@
   },
   "claimAccept": "Add to my family",
   "claimNotNow": "Not now",
+  "combineTitle": "Combine with your own profile?",
+  "combineMessage": "You already have a profile for yourself, {name}, with {count, plural, =0{no reports} =1{1 report} other{{count} reports}}. Combining moves them into this shared profile and removes the old one. Your name, sex and birth year are kept, and a file that's in both is kept once.",
+  "@combineMessage": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "combineConfirm": "Combine",
+  "combineKeep": "Keep separate",
   "claimPrivacy": "The reports come to this phone, end-to-end encrypted. You can add reports for {name} too, and everyone sharing them sees them.",
   "@claimPrivacy": {
     "placeholders": {

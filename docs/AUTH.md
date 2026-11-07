@@ -72,7 +72,7 @@ invalidates the refresh token server-side (GoTrue default) and
 ## Testing auth locally (from TEST_USER_RUNBOOK)
 
 ```bash
-flutter run --dart-define-from-file=supabase.local.json   # project dev keys
+flutter run --dart-define-from-file=supabase.staging.local.json   # staging keys
 # Sign-up → confirm mail (dev inbox) → sync + sign out + sign back in;
 # then confirm the session lives in the Keychain:
 #   `security find-generic-password -s flutter_secure_storage -a vitalog` (iOS sim)

@@ -5,8 +5,14 @@ out, and the rules every change must follow. Companion docs:
 
 - `docs/SUPABASE_REQUIREMENTS.md` — what the backend must provide (schema, RLS, auth).
 - `docs/PENDING_TASKS.md` — what is not done yet, in priority order.
-- `docs/HANDOFF_2026-11-04.md` — latest change log (no git history): what
-  changed, what didn't travel in the zip, how to verify. Read it on a new Mac.
+- `docs/HANDOFF_2026-11-06.md` — latest change log (before it:
+  `HANDOFF_2026-11-04.md`): what changed, what doesn't travel in git, what's
+  left, how to verify. Read it on a new Mac.
+- `docs/TEST_GUIDE.md` — the complete test guide (supersedes TEST_PLAN.md).
+- `docs/manual/` — Vitalog_User_Manual.pdf (with screenshots) and
+  Vitalog_App_Guide.pdf; HTML sources in `src/`. Refresh screenshots with
+  `flutter drive --driver test_driver/manual_screenshots.dart --target
+  integration_test/manual_screenshots_test.dart -d "iPhone 16 Plus"`.
 - `graphify-out/GRAPH_REPORT.md` — generated code graph (communities, hubs).
   Refresh after code changes with `graphify update .` (local, no LLM).
 
@@ -203,7 +209,7 @@ left to review. Decrypted originals never touch disk: OCR and the
   sections `overview` and `trends`): an "At a glance" card (hero count of
   latest results within range + status stacked bar + icon/label/count legend)
   and trend tiles (latest value, change since previous, sparkline over the
-  printed-range band; tap → test history). Data helpers `latestPerTest`,
+  printed-range band; tap → test history). A tile (and the test page) adds "Up/Down N times in a row" from 3 same-way moves (`trendStreak`; says what happened, never what it means). Data helpers `latestPerTest`,
   `StatusTally`, `trendsFor`, `parseRange` are pure and unit-tested. Rules:
   summarise what the lab printed, never a computed "health score"; status is
   never colour-only; chart colours are the `chart*` tokens in `AppColors`,
@@ -295,7 +301,7 @@ left to review. Decrypted originals never touch disk: OCR and the
   Links reach `ClaimInviteScreen` via app_links (`InviteLinkListener` in
   main.dart; Flutter's own deep linking is off) or Family → *Open an invite
   link*. Accepting pulls the profile + reports and opens Home on them.
-  Relation is per account (`profile_keys.sealed_meta`). Removing a member =
+  Relation is per account (`profile_keys.sealed_meta`). Accepting as "You" next to an existing "You" offers Combine (`combineMembers`: reports move, a file in both kept once, own name/sex/birth year kept). Removing a member =
   leaving; it never deletes shared reports server-side. Server rules live
   in supabase/schema.sql (`open_invite`, `may_take_profile`,
   `drop_orphan_profile`); web page + app-link files in `invite_site/`.

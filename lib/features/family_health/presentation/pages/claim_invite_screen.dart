@@ -5,10 +5,13 @@ import '../../../../core/backend/backend.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/sign_in_screen.dart';
+import '../../../reminders/reminders_cubit.dart';
 import '../../domain/entities/sharing.dart';
 import '../../domain/repositories/family_health_repository.dart';
 import '../bloc/health_bloc.dart';
+import '../bloc/health_state.dart';
 import '../health_presentation.dart';
+import '../widgets/apple_menus.dart';
 import '../widgets/health_widgets.dart';
 
 /// Opened from an invite link (or one pasted on the Family tab): says who
@@ -63,7 +66,12 @@ class _ClaimInviteScreenState extends State<ClaimInviteScreen> {
       final out = await _bloc.acceptInvite(widget.link, relation: _relation);
       if (!mounted) return;
       if (out.memberId != null) {
-        Navigator.of(context).pop();
+        try {
+          await _offerCombine(out.memberId!);
+        } catch (_) {
+          // Combining is optional: the invite is accepted either way.
+        }
+        if (mounted) Navigator.of(context).pop();
         return;
       }
       _error = _statusText(l10n, out.status);
@@ -73,6 +81,32 @@ class _ClaimInviteScreenState extends State<ClaimInviteScreen> {
       _error = l10n.claimFailed;
     }
     if (mounted) setState(() => _busy = false);
+  }
+
+  /// Accepted as "You" while this phone already has its own "You": offer to
+  /// fold that one in, so there's one profile of you (docs/SHARING.md).
+  Future<void> _offerCombine(String intoId) async {
+    final s = _bloc.state;
+    if (_relation != 'You' || s is! HealthLoaded) return;
+    final own = s.data.members
+        .where((m) => m.relation == 'You' && m.id != intoId)
+        .firstOrNull;
+    if (own == null) return;
+    final l10n = context.l10n;
+    final combine = await showDestructiveSheet(context,
+        title: l10n.combineTitle,
+        message: l10n.combineMessage(own.name,
+            s.data.reports.where((r) => r.profileId == own.id).length),
+        confirmLabel: l10n.combineConfirm,
+        cancelLabel: l10n.combineKeep,
+        icon: Icons.merge_rounded);
+    if (!combine || !mounted) return;
+    // Reminders follow the person; the old id's would be dropped.
+    final reminders = context.read<RemindersCubit>();
+    for (final r in [...reminders.state.where((r) => r.memberId == own.id)]) {
+      await reminders.update(r.copyWith(memberId: intoId));
+    }
+    await _bloc.combineMembers(own.id, intoId);
   }
 
   static String _statusText(AppLocalizations l10n, InviteStatus s) =>

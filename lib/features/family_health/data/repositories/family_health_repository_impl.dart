@@ -370,6 +370,68 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
       });
 
   @override
+  Future<void> combineMembers(String fromId, String intoId) =>
+      _locked(() async {
+        final saved = await _store.loadMembers();
+        final from = saved.where((m) => m.id == fromId).firstOrNull;
+        final into = saved.where((m) => m.id == intoId).firstOrNull;
+        if (from == null || into == null || fromId == intoId) return;
+        // Their own spelling, sex and birth year win (docs/SHARING.md).
+        final merged = FamilyMember(
+          id: intoId,
+          name: from.name,
+          relation: into.relation,
+          initials: from.initials,
+          colorValue: into.colorValue,
+          age: from.age,
+          sex: from.sex ?? into.sex,
+        );
+        // The same file already in the shared profile is kept once.
+        final before = await _store.load();
+        final shared = {
+          for (final r in before.reports)
+            if (r.profileId == intoId && r.fileHash != null) r.fileHash
+        };
+        await _deleteReportsUnlocked({
+          for (final r in before.reports)
+            if (r.profileId == fromId && shared.contains(r.fileHash)) r.id
+        }, server: false);
+        // The rest move over unsynced: the next Sync seals them with the
+        // shared profile's key.
+        final local = await _store.load();
+        await _store.save([
+          for (final r in local.reports)
+            r.profileId == fromId
+                ? r.copyWith(profileId: intoId, synced: false)
+                : r
+        ], [
+          for (final r in local.results)
+            r.profileId == fromId || r.profileId == intoId
+                ? _judgeByUsualRange(r.copyWith(profileId: intoId), merged)
+                : r
+        ]);
+        final photos = await _store.loadPhotos();
+        if (photos[fromId] != null && photos[intoId] == null) {
+          await _store.savePhoto(intoId, photos[fromId]!);
+        }
+        await _store.deletePhoto(fromId);
+        await _store.saveMembers([
+          for (final m in saved)
+            if (m.id == intoId) merged else if (m.id != fromId) m
+        ]);
+        // Leave the old profile; the server drops it when nobody else has
+        // it (drop_orphan_profile). Offline: a later Sync settles it.
+        // ponytail: if the old profile was shared with someone else, its
+        // moved report ids still sit there; pushing them under the shared
+        // profile then fails RLS. Give moved reports new ids if that bites.
+        if (Backend.configured && Backend.signedIn) {
+          try {
+            await _sync.deleteServerMember(fromId);
+          } catch (_) {}
+        }
+      });
+
+  @override
   Future<FamilyMember> addMember(
           {required String name,
           required String relation,
@@ -766,6 +828,7 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
   /// — an odd row must never stop the rest of the restore.
   static HealthReport? reportFromRow(Map<String, dynamic> row) {
     try {
+      final uploaded = DateTime.parse(row['uploaded_at'] as String);
       return HealthReport(
         id: row['id'] as String,
         profileId: row['profile_id'] as String,
@@ -773,11 +836,14 @@ class FamilyHealthRepositoryImpl implements FamilyHealthRepository {
         // name); the server only ever kept the extension.
         fileName: row['file_name'] as String,
         lab: (row['lab'] ?? '') as String,
-        reportDate: DateTime.parse(row['report_date'] as String),
+        // Undated reports keep reportDate == uploadDate ("Date not found").
+        reportDate: row['undated'] == true
+            ? uploaded
+            : DateTime.parse(row['report_date'] as String),
         collectionDate: row['collection_date'] == null
             ? null
             : DateTime.parse(row['collection_date'] as String),
-        uploadDate: DateTime.parse(row['uploaded_at'] as String),
+        uploadDate: uploaded,
         status: ReportStatus.values.byName(row['status'] as String),
         resultCount: 0, // recomputed once the pulled results have joined
         // The original was never uploaded: a restored report has no local

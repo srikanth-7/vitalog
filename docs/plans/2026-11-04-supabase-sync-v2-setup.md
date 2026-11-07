@@ -54,12 +54,18 @@ Creates:
 | `profile_keys` | One key per family member, locked with the account key | Nothing useful |
 | `sealed_profiles` | Members: name, relation, sex, birth year (sealed) | Only an opaque id |
 | `sealed_reports` | Each report with its results (sealed) | Opaque ids, which profile, size |
+| `invites` | Invite links for family sharing (key sealed with the link's secret) | Link id, which profile, expiry, used or not |
+| `invite_failures` | Wrong invite attempts, for the per-account limit | Account and time |
 
-Every table has row-level security: a user sees and writes only their own
-rows. Deleting the auth user cascades to all four.
+Every table has row-level security: a user sees and writes only the
+profiles they have access to (a row in `profile_keys`).
 
-**Check:** sidebar → **Table Editor** shows the four tables; `reports`,
+**Check:** sidebar → **Table Editor** shows the six tables; `reports`,
 `lab_results`, `family_members` are gone.
+
+> `schema.sql` and `hardening.sql` changed on 2026-11-04 afternoon (family
+> sharing). Both are safe to run again and migrate an older setup: if you
+> ran them before that, run A1 then A2 again.
 
 ### A2. Add the safety checks (`hardening.sql`)
 
@@ -151,50 +157,9 @@ Any failure: copy the exact error text into a session.
 
 ## Part C — prod (only after Part B passes)
 
-### C1. Look before deleting
-
-Open prod's **Table Editor** before running `schema.sql`:
-- `reports`, `lab_results`, `family_members` empty or absent → continue.
-- **Rows present → stop.** Test rows can be dropped. Any real person's
-  data was stored unencrypted: plan its move and how to tell those users
-  before deleting.
-
-### C2. Same steps as staging
-
-A1 (`schema.sql`), A2 (`hardening.sql`), **A3 lockout hook: on in prod**,
-A4 (`delete-account`, same version).
-
-### C3. Prod-only settings (`docs/SECURITY_CHECKLIST.md` Phase 2)
-
-| Where | Set |
-|---|---|
-| Authentication → Sign In / Providers → Email | **Confirm email** on; minimum password length **8** |
-| Authentication → Attack Protection | **CAPTCHA** on (hCaptcha or Turnstile). ⚠ The app must then send the captcha token: an app change, not done yet |
-| Authentication → URL Configuration | Redirect allow-list exactly `com.vitalog.app://login-callback`; no wildcards, no staging URLs |
-| Authentication → Providers → Google | Both client ids (iOS + web); "Skip nonce check" on only as decided in `docs/AUTH.md` |
-| Authentication → Third-party auth | Off unless used |
-| Database → Backups | **Point-in-Time Recovery** on (paid plan) |
-| SQL: `select * from pg_policies where roles @> '{anon}'` | 0 rows |
-| Account (avatar) → Security | **Two-factor login** on (covers both projects) |
-| Account → password | Change it: it was typed in a chat on 2026-10-24 (security #6) |
-
-### C4. Prod keys
-
-`supabase.prod.local.json`, same shape as A5, with prod's URL and
-publishable key. Use it **only** for release builds:
-
-```bash
-flutter build appbundle --dart-define-from-file=supabase.prod.local.json
-```
-
-Day-to-day `flutter run` always uses the staging file, so test syncs never
-land in prod.
-
-### C5. Never on prod
-
-- `supabase/cleanup_test_data.sql`
-- Fake reports from `test-data/`, or test accounts
-- The service-role key on a laptop or inside the app
+Follow **`supabase/PROD_SETUP.md`**: look before deleting, the same SQL +
+function as staging (lockout hook **on**), prod-only settings, prod keys,
+and what never runs on prod.
 
 ---
 
@@ -220,12 +185,9 @@ land in prod.
 
 - [x] A1 staging `schema.sql` (2026-11-04)
 - [x] A2 staging `hardening.sql` (2026-11-04)
-- [ ] A3 staging lockout hook (optional) — skipped on staging; **on in prod** (C2)
+- [ ] A3 staging lockout hook (optional) — skipped on staging; **on in prod** (`supabase/PROD_SETUP.md`)
 - [ ] A4 staging `delete-account` + version checked
 - [ ] A5 `supabase.staging.local.json`
 - [ ] B1–B7 staging checks
-- [ ] C1 prod old tables inspected
-- [ ] C2 prod SQL + hook + function
-- [ ] C3 prod settings
-- [ ] C4 `supabase.prod.local.json`
+- [ ] Part C prod — tracked in `supabase/PROD_SETUP.md` → Progress
 - [ ] App change: CAPTCHA token (after the provider is chosen)

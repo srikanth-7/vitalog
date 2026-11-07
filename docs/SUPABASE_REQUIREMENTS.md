@@ -156,7 +156,7 @@ updating this doc:
 
 - [ ] Create project (region chosen), copy URL + publishable key.
 - [ ] Run `supabase/schema.sql`.
-- [ ] Run `supabase/schema_restore.sql`, then `supabase/hardening.sql`.
+- [ ] Run `supabase/hardening.sql`.
 - [ ] Auth → Rate Limits and Attack Protection as above; Auth → Hooks → password verification hook.
 - [ ] Auth → enable Email (confirm email on, min length 8).
 - [ ] Auth → enable Google with a Google Cloud *Web* OAuth client.

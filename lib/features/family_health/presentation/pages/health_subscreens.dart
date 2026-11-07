@@ -465,9 +465,15 @@ class TestDetailScreen extends StatelessWidget {
                   const SizedBox(height: 22),
                   SectionHeading(title: l10n.history),
                   const SizedBox(height: 5),
-                  if (chartable)
-                    _HistoryChart(history: history)
-                  else
+                  if (chartable) ...[
+                    _HistoryChart(history: history),
+                    if (streakNote(context,
+                            trendStreak(numeric.cast<double>()))
+                        case final note?)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(note, style: detail)),
+                  ] else
                     EmptyMessage(
                         title: l10n.trendEmptyTitle,
                         message: l10n.trendEmptyMessage),

@@ -68,3 +68,9 @@ app.*.map.json
 
 # iOS workspace build output (xcodebuild)
 ios/build/
+
+# Local agent / tool scratch
+.superpowers/
+.claude/scheduled_tasks.lock
+android/build/
+test/failures/

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -119,9 +120,9 @@ class _SaveKeySheetState extends State<_SaveKeySheet> {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () {
-                  Clipboard.setData(ClipboardData(text: widget.recoveryKey));
+                  copySecret(widget.recoveryKey);
                   ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                      SnackBar(content: Text(l10n.recoveryKeyCopied)));
+                      SnackBar(content: Text(l10n.recoveryKeyCopiedClears)));
                 },
                 icon: const Icon(Icons.copy_rounded),
                 label: Text(l10n.recoveryKeyCopy),
@@ -228,4 +229,16 @@ class _EnterKeySheetState extends State<_EnterKeySheet> {
       ),
     );
   }
+}
+
+/// Copies [secret] and empties the clipboard [after] a minute: the recovery
+/// key opens the whole account, and clipboards are synced to other devices
+/// and read by other apps (security review 2026-11-06). Cleared without
+/// reading it first: reading asks "Allow paste?" on iOS. ponytail: that can
+/// wipe something copied since; iOS's own expiring pasteboard
+/// (UIPasteboard expirationDate) needs a platform channel if that bites.
+Future<void> copySecret(String secret,
+    {Duration after = const Duration(seconds: 60)}) async {
+  await Clipboard.setData(ClipboardData(text: secret));
+  Timer(after, () => Clipboard.setData(const ClipboardData(text: '')));
 }

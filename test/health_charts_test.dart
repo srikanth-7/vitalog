@@ -104,4 +104,34 @@ void main() {
     expect(values(HistoryPeriod.sixMonths), ['120', '110']);
     expect(withinPeriod(const [], HistoryPeriod.year), isEmpty);
   });
+
+  test('trend streak counts same-way moves ending at the latest value', () {
+    expect(trendStreak([1, 2, 3, 4]), 3); // up, up, up → "Up 3 times"
+    expect(trendStreak([9, 5, 4, 3, 2]), -4);
+    expect(trendStreak([1, 2, 1, 2]), 1); // up/down/up: no run
+    expect(trendStreak([1, 2, 3, 3]), 0); // last move flat
+    expect(trendStreak([1, 2, 3]), 2); // fewer than 3 moves: no note
+    expect(trendStreak([5]), 0);
+  });
+
+  test('trends keep units apart, so a streak never mixes them', () {
+    LabResult r(String id, int month, String value, String unit) => LabResult(
+        id: id,
+        profileId: 'p',
+        name: 'Glucose',
+        categoryIds: const ['glucose'],
+        value: value,
+        unit: unit,
+        referenceRange: '70-100',
+        status: ResultStatus.withinRange,
+        reportDate: DateTime(2026, month),
+        lab: 'Lab');
+    final trends = trendsFor([
+      r('a', 1, '80', 'mg/dL'),
+      r('b', 2, '90', 'mg/dL'),
+      r('c', 3, '5.5', 'mmol/L'),
+      r('d', 4, '5.6', 'mmol/L'),
+    ]);
+    expect(trends.map((t) => t.streak), everyElement(1));
+  });
 }

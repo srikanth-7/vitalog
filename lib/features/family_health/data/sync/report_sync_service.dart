@@ -477,7 +477,17 @@ class ReportSyncService {
       final box = jsonDecode(utf8.decode(clear)) as Map<String, dynamic>;
       // The box must be about the row it sits in.
       final inner = kind == 'report' ? box['report'] as Map : box;
-      return inner['id'] == row['id'] ? box : null;
+      if (inner['id'] != row['id']) return null;
+      // Anyone sharing this profile holds its key: a report box must not
+      // file itself, or its results, under another profile or report.
+      if (kind == 'report' &&
+          (inner['profile_id'] != row['profile_id'] ||
+              (box['results'] as List).any((r) =>
+                  r['report_id'] != row['id'] ||
+                  r['profile_id'] != row['profile_id']))) {
+        return null;
+      }
+      return box;
     } catch (_) {
       return null;
     }
@@ -501,6 +511,8 @@ class ReportSyncService {
             r.collectionDate == null ? null : _date(r.collectionDate!),
         'uploaded_at': r.uploadDate.toUtc().toIso8601String(),
         'status': r.status.name,
+        // No printed date: report_date is only the upload day.
+        if (r.undated) 'undated': true,
       };
 
   static Map<String, dynamic> resultRow(LabResult r) => {

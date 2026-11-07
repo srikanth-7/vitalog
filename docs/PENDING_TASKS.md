@@ -64,7 +64,7 @@ second fails in `mergeDebugResources`.
 - 🟡 **Ten small bugs** (2026-11-03): right pane picks by report date; restored failed reports lose "Try again"; undated reports say "Date not found"; account stats skip sample reports; Home setting renamed "Last tested date"; chart labels no longer overlap; relation saved as a fixed key; photo-picker errors handled; Android notification icon; channel name localized
 - 🟡 **Design** (2026-11-02/03): new tab bar (sliding tile, painted animated icons, coral `reading` token); rounded scroll edges (`ScrollCut`); Home 10-second rule; empty-state pictures animate like onboarding; overflow fixes
 - ✅ Android builds on the office network: `android/build.gradle.kts` forces AGP 8.11.1 / Kotlin 2.2.20 for every plugin (don't revert)
-- ✅ 158 automated tests, analyzer clean (2026-11-04)
+- ✅ 169 automated tests, analyzer clean (2026-11-06)
 
 ## P0 — needed before anyone else uses it
 
@@ -85,10 +85,10 @@ second fails in `mergeDebugResources`.
 - ✅ Crypto core: profile keys, wrap for account, invite links (+ tests)
 - 🟡 Account key + recovery key; Sync v2 sealed push + pull. ⏳ Android silent Google backup of the key (Block Store), once Gradle can fetch it
 - 🟡 Shared ids + access = `profile_keys` rows (`has_profile`), migration in schema.sql
-- 🟡 **Invites:** share link, claim screen, paste a link, app scheme hand-over. ⏳ combine duplicates, iOS Universal Links (paid Apple team)
+- 🟡 **Invites:** share link, claim screen, paste a link, app scheme hand-over. ✅ combine duplicates (2026-11-06). ⏳ iOS Universal Links (paid Apple team)
 - 🟡 **Family card:** who has access, pending invite / cancel, remove (leave = remove the member)
 - ⏳ **Reminders on other family members' phones** (tester item #13) — needs the above
-- ⏳ 👤 Decide the invite domain (`InviteLink.host`, placeholder today)
+- ⏳ 👤 Decide the invite domain (`InviteLink.host`, placeholder today) — `docs/INVITE_DOMAIN.md`
 
 ## P1 — product gaps
 
@@ -99,7 +99,7 @@ second fails in `mergeDebugResources`.
 11. 🟡 **Deletes sync** — deleting a report or member removes its server rows (real deletes, not tombstones).
 12. 🟡 **Account deletion in-app** — Family tab → Delete account → `delete-account` edge function (redeploy: plan A4).
 13. ✅ **Settings** — theme, accent, Simple mode, Home sections, language.
-14. 🟡 **More languages** — Hindi added 2026-11-04 (`app_hi.arb`, iOS `hi.lproj`). 👤 Hindi and Telugu need a native speaker's review; Telugu is missing the 17 `recoveryKey*` strings.
+14. 🟡 **More languages** — Hindi added 2026-11-04 (`app_hi.arb`, iOS `hi.lproj`). 👤 Hindi and Telugu need a native speaker's review; Missing translations (2026-11-06): 3 in each (`recoveryKeyCopiedClears`, `trendUpStreak`, `trendDownStreak`); they show in English until added. Review drafts: `docs/translations_review.csv`.
 15. ✅ **"See all" on Home** switches to the Categories tab.
 
 ## P2 — hardening and before launch
@@ -109,15 +109,23 @@ second fails in `mergeDebugResources`.
 18. ⏳ **Parser edge cases** — ✅ ranges printed per sex are judged by the member's sex (2026-11-04). Still open: age-banded printed ranges (need sample rows from real reports), non-English reports.
 19. ✅ **Duplicate uploads.**
 20. ⏳ 👤 🔒 **Privacy policy & store disclosures** — DPDP Act, medical disclaimer, App Privacy labels, Play Data safety + Health apps declaration. Say that health data and names are stored end-to-end encrypted.
-21. 🟡 **Accessibility** — code pass done 2026-11-04 (tappable cards read as buttons, tab bar/accent swatch usable by screen reader, reminder switches labelled, count-up values read once, reminder dot not colour-only). 👤 Still: try VoiceOver/TalkBack on a phone; CategoryCard reads its "N outside range" before the group name.
+21. 🟡 **Accessibility** — code pass done 2026-11-04 (tappable cards read as buttons, tab bar/accent swatch usable by screen reader, reminder switches labelled, count-up values read once, reminder dot not colour-only). ✅ CategoryCard reads the group name first (`test/presentation/category_card_semantics_test.dart`). 👤 Still: try VoiceOver/TalkBack on a phone.
 22. 🟡 **Dependency upgrades** — packages upgraded 2026-11-04 (bloc/flutter_bloc 9, flutter_lints 6, file_picker 13.3, archive 4.6; tests pass, needs a phone check). ⏳ Flutter SDK itself (3.38.10): `flutter upgrade` blocked by the office SSL proxy — run it on another network, then retest.
-23. ⏳ 👤 🔒 **Prod-only Supabase settings** — confirm email, CAPTCHA, redirect allow-list, backups (plan C3). CAPTCHA also needs an app change to send the token once the provider is chosen.
+23. ⏳ 👤 🔒 **Prod-only Supabase settings** — confirm email, CAPTCHA, redirect allow-list, backups (`supabase/PROD_SETUP.md` step 3). CAPTCHA also needs an app change to send the token once the provider is chosen.
 24. ✅ **Zip size check** — archive ≥ 4.5.2 stops inflating an entry at its stated size; a forged size now fails as `UnsupportedDocument` (test in `document_reader_test.dart`).
 25. ✅ **Temporary "You" name** — removed (2026-11-04).
-26. ⏳ **Cleanup** — ✅ unused root-level Gradle project deleted (2026-11-04). Still: remove the bulk-delete section of `cleanup_test_data.sql` once staging is clean.
+26. 🟡 **Cleanup** — ✅ unused root-level Gradle project deleted (2026-11-04). ✅ `supabase/schema_restore.sql` deleted and `supabase.local.json` mentions repointed to `supabase.staging.local.json`; prod steps in `supabase/PROD_SETUP.md` (2026-11-06). Still: remove the bulk-delete section of `cleanup_test_data.sql` once staging is clean.
+
+27. 🟡 **Security review 2026-11-06.** Fixed: a report box must match its row's profile and its results must match the report (`openBox`); `schema.sql` closes the 10-minute window for re-entry after removal, drops the per-invite lockout (anyone with the link id could burn an invite), and trims `invite_failures`; `cleanup_test_data.sql` updated for shared ids. Open:
+    - 🔒 👤 Own the invite domain before anyone outside the team makes an invite: the placeholder host's owner could read the `#secret`. Steps: `docs/INVITE_DOMAIN.md` (`vitalog.app` is already registered by someone else, 2026-11-06: pick another)
+    - 🔒 Invite hand-over via `com.vitalog.app://` can be taken by another app that registers the same scheme: verified App Links (Android) + Associated Domains (iOS, paid team), then drop the scheme button from `invite.html`
+    - ✅ Recovery key Copy clears the clipboard after 60 s (`copySecret`, says so in the snackbar)
+    - ✅ Leftover `scan-*.pdf` copies (app killed mid-upload) are swept on the first load (`HealthBloc.sweepScanCopies`). Phone check still: the Android document scanner may keep its *own* PDF in `cache/` (`adb shell run-as com.app.vitalog.dev ls -R cache`)
+    - Bind the invite's wrapped key to its profile id (AAD), and rotate the profile key after a removal (already a `ponytail:` note)
 
 ## Later (planned, not started)
 
+- **Feature ideas** (2026-11-06): docs/FEATURE_IDEAS_2026-11-06.md, priority order and details.
 - **Scans & imaging** (X-ray, CT, MRI, ECG). Waiting for the go-ahead.
 - **Apple Health / Google Fit import** — docs/HEALTH_APPS_SYNC_PLAN.md.
 - Known build quirk: on Xcode 27.1 `flutter build ios --simulator` fails a `lipo` check; use `flutter run` (docs/GO_LIVE.md §6).

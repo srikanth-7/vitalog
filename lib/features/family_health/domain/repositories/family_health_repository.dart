@@ -140,6 +140,11 @@ abstract class FamilyHealthRepository {
   /// [relation] as this account's view of it; its reports are pulled.
   Future<AcceptedInvite> acceptInvite(String link, {required String relation});
 
+  /// Folds [fromId] (a profile this account made of the same person) into
+  /// the shared [intoId]: reports move over (a file already there is kept
+  /// once), [fromId]'s name, sex and birth year are kept, [fromId] goes.
+  Future<void> combineMembers(String fromId, String intoId);
+
   /// Saves the account key from the user's recovery key (a new or reset
   /// phone). False when it isn't this account's key.
   Future<bool> useRecoveryKey(String text);

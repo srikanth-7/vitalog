@@ -210,8 +210,8 @@ see docs/PENDING_TASKS.md and docs/GO_LIVE.md.
 | `ios/Runner/Info.plist` | Camera/photos/Face ID permission texts, URL schemes for sign-in links. |
 | `android/app/src/main/kotlin/…/MainActivity.kt` | Android OCR plugin (ML Kit, PdfRenderer). |
 | `android/app/src/main/AndroidManifest.xml` | Permissions, sign-in deep link. |
-| `supabase/schema.sql` | Current (superseded) database tables and security policies. |
-| `supabase.local.json` | Your dev Supabase URL + publishable key (git-ignored). |
+| `supabase/schema.sql` | Sealed Sync v2 tables and security policies (prod steps: `supabase/PROD_SETUP.md`). |
+| `supabase.staging.local.json` | Staging Supabase URL + publishable key (git-ignored). Prod uses `supabase.prod.local.json`, release builds only. |
 | `tool/` | App icon generation. |
 | `test/` | Automated tests (parser, reader, privacy, crypto, ranges, bloc, screens). |
 | `test-data/reports/` | Fake sample reports for manual testing. |

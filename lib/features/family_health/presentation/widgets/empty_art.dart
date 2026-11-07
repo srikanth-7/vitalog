@@ -55,7 +55,7 @@ class _EmptyArtState extends State<EmptyArt> with TickerProviderStateMixin {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final onView = TickerMode.of(context);
+    final onView = TickerMode.valuesOf(context).enabled;
     if (_still) {
       _intro.value = 1;
       _loop.value = 0;

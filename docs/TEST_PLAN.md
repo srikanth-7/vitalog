@@ -1,5 +1,7 @@
 # Vitalog — test plan
 
+> **Superseded by `docs/TEST_GUIDE.md` (2026-11-06)**, which merges this file with every later feature and sealed Sync v2. Kept for history.
+
 Two parts: **A. local testing** (simulator / emulator / your own phone, fake
 data) and **B. staging with real user data** (what has to be true first, and
 how to run it safely).
@@ -17,9 +19,9 @@ how to run it safely).
 
 | What | How |
 |---|---|
-| Supabase keys | `supabase.local.json` in the project root (git-ignored) holds the URL and publishable key. |
-| iPhone simulator | `flutter run -d "iPhone 16 Plus" --dart-define-from-file=supabase.local.json` |
-| Android emulator / phone | `flutter run -d <device> --dart-define-from-file=supabase.local.json` (list devices with `flutter devices`), or install the built APK: `adb install -r build/app/outputs/flutter-apk/app-debug.apk` |
+| Supabase keys | `supabase.staging.local.json` in the project root (git-ignored) holds the URL and publishable key. |
+| iPhone simulator | `flutter run -d "iPhone 16 Plus" --dart-define-from-file=supabase.staging.local.json` |
+| Android emulator / phone | `flutter run -d <device> --dart-define-from-file=supabase.staging.local.json` (list devices with `flutter devices`), or install the built APK: `adb install -r build/app/outputs/flutter-apk/app-debug.apk` |
 | Offline build (no cloud) | Same commands without `--dart-define-from-file`. Sign-in/Sync then say cloud sync isn't set up. |
 | Fake reports | `test-data/reports/` (below). Get them onto the device: **iOS simulator** drag the file onto the simulator window (it lands in Files); **Android emulator** drag onto the emulator (lands in Downloads); **real phone** AirDrop / email / Google Drive, then save to Files. |
 | Reset the app | Delete the app from the device and reinstall (wipes reports, keys, settings). |
@@ -151,7 +153,7 @@ applies as in production. Before any real report is synced:
    values.
 2. **A separate staging Supabase project** (e.g. `vitalog-staging`), never
    the one used for development, in the Mumbai region. Its keys live in a
-   `supabase.staging.json` (git-ignored, like `supabase.local.json`).
+   `supabase.staging.local.json` (git-ignored).
 3. **Paid plan** (free projects pause and have no backups/point-in-time
    recovery) and, if any user is in the US, a signed BAA.
 4. **Written consent** from every tester (India DPDP Act): what is stored,
